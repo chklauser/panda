@@ -25,6 +25,10 @@ namespace Panda
         [PublicAPI]
         public abstract bool IsRoot { get; }
 
+        [PublicAPI]
+        [CanBeNull]
+        public abstract VirtualDirectory ParentDirectory { get; }
+
         #endregion
 
         [PublicAPI]
@@ -75,11 +79,21 @@ namespace Panda
         public abstract Task ExportAsync(string path);
 
         [PublicAPI]
-        [NotNull]
         public virtual void Export(string path)
         {
             ExportAsync(path).RunSynchronously();
         }
+
+        [NotNull]
+        public abstract VirtualDirectory CreateDirectory([NotNull] string name);
+
+        /// <summary>
+        /// Retrieve a file system node based on a relative path. Returns null if any part of the path does not exist.
+        /// </summary>
+        /// <param name="path">A relative path.</param>
+        /// <returns>The virtual node pointed to by the path, or null if any part of the path does not exist.</returns>
+        [CanBeNull]
+        public abstract VirtualNode Navigate(string path);
 
         #region IEnumerable implementation
 

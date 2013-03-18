@@ -29,6 +29,7 @@ namespace Panda
         /// Creates a new virtual disk.
         /// </summary>
         /// <param name="path">Path where the Panda virtual disk file should be created in the local file system.</param>
+        /// <param name="capacity">Maximum disk capacity in number of bytes.</param>
         /// <returns>A <see cref="VirtualDisk"/> object that can be used to interact with the virtual file system located on the disk.</returns>
         /// <exception cref="ArgumentNullException">path is null</exception>
         /// <exception cref="ArgumentException">path is empty</exception>
@@ -36,8 +37,10 @@ namespace Panda
         /// <exception cref="InvalidOperationException">The file already exists.</exception>
         [PublicAPI]
         [NotNull]
-        public static VirtualDisk CreateNew([NotNull] string path)
+        public static VirtualDisk CreateNew([NotNull] string path, long capacity)
         {
+            if(capacity < 0)
+                throw new ArgumentOutOfRangeException("capacity","Capacity must be positive.");
             throw new NotImplementedException("VirtualDisk::Create");
         }
 
