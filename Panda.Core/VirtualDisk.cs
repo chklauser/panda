@@ -100,6 +100,12 @@ namespace Panda
 
         #endregion
 
+        [PublicAPI]
+        public abstract VirtualDirectory Root { get; }
 
+        public VirtualNode Navigate(string path)
+        {
+            return Root.Navigate(path);
+        }
     }
 }
