@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-
-namespace Panda.Core
+﻿namespace Panda.Core.Blocks
 {
     public abstract class FileBlock : OffsetListBlock
     {

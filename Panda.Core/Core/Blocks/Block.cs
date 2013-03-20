@@ -1,8 +1,6 @@
-﻿using System;
 using System.Threading;
-using JetBrains.Annotations;
 
-namespace Panda.Core
+namespace Panda.Core.Blocks
 {
     public abstract class Block
     {

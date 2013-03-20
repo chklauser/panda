@@ -1,7 +1,7 @@
 ﻿using System;
 using JetBrains.Annotations;
 
-namespace Panda.Core
+namespace Panda.Core.Blocks
 {
     public sealed class DirectoryEntry : IEquatable<DirectoryEntry>
     {
