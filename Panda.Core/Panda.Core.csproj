@@ -38,8 +38,13 @@
     <Compile Include="Core\AscendingOffsetLockingPolicy.cs" />
     <Compile Include="Core\Block.cs" />
     <Compile Include="Core\DirectoryBlock.cs" />
+    <Compile Include="Core\DirectoryContinuationBlock.cs" />
     <Compile Include="Core\DirectoryEntry.cs" />
+    <Compile Include="Core\DirectoryEntryListBlock.cs" />
     <Compile Include="Core\FileBlock.cs" />
+    <Compile Include="Core\EmptyListBlock.cs" />
+    <Compile Include="Core\FileContinuationBlock.cs" />
+    <Compile Include="Core\OffsetListBlock.cs" />
     <Compile Include="Core\IBlockFactory.cs" />
     <Compile Include="Core\ILockingPolicy.cs" />
     <Compile Include="Core\PathUtil.cs" />
