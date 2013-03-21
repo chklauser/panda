@@ -26,6 +26,6 @@ namespace Panda.Core
         /// // Locks are removed once you have left this region</code>
         /// </remarks>
         [NotNull]
-        IDisposable Enter([CanBeNull] Block[] readLocked = null, [CanBeNull] Block[] writeLocked = null);
+        IDisposable Enter([CanBeNull] IBlock[] readLocked = null, [CanBeNull] IBlock[] writeLocked = null);
     }
 }

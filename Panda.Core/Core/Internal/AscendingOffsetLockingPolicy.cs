@@ -6,16 +6,16 @@ namespace Panda.Core
 {
     class AscendingOffsetLockingPolicy : ILockingPolicy
     {
-        private static readonly Block[] Empty = new Block[0];
+        private static readonly IBlock[] Empty = new IBlock[0];
 
-        public IDisposable Enter(Block[] readLocked = null, Block[] writeLocked = null)
+        public IDisposable Enter(IBlock[] readLocked = null, IBlock[] writeLocked = null)
         {
             if (readLocked == null)
                 readLocked = Empty;
             if (writeLocked == null)
                 writeLocked = Empty;
 
-            var order = new Tuple<bool, Block>[readLocked.Length + writeLocked.Length];
+            var order = new Tuple<bool, IBlock>[readLocked.Length + writeLocked.Length];
             var i = 0;
             foreach (var block in readLocked)
                 order[i++] = Tuple.Create(false, block);
@@ -68,7 +68,7 @@ namespace Panda.Core
         /// </summary>
         /// <param name="i">Index of first (right-most) element to unlock.</param>
         /// <param name="order"></param>
-        private static void _unlockInReverse(int i, Tuple<bool, Block>[] order)
+        private static void _unlockInReverse(int i, Tuple<bool, IBlock>[] order)
         {
             for (; i >= 0; i--)
             {
@@ -93,9 +93,9 @@ namespace Panda.Core
         class UnlockHandle : IDisposable
         {
             [NotNull]
-            private readonly Tuple<bool, Block>[] _order;
+            private readonly Tuple<bool, IBlock>[] _order;
 
-            public UnlockHandle([NotNull] Tuple<bool, Block>[] order)
+            public UnlockHandle([NotNull] Tuple<bool, IBlock>[] order)
             {
                 _order = order;
             }
@@ -115,7 +115,7 @@ namespace Panda.Core
         /// 0 if <paramref name="x"/> and <paramref name="y"/> are equal; 
         /// greater than 0 if <paramref name="x"/> is greater than <paramref name="y"/>.</returns>
         /// <remarks>Orders by block offset in ascending order. If a block appears more than once, write lock requests are ordered before read lock requests.</remarks>
-        private int _blockLockingOrder([NotNull] Tuple<bool, Block> x, [NotNull] Tuple<bool, Block> y)
+        private int _blockLockingOrder([NotNull] Tuple<bool, IBlock> x, [NotNull] Tuple<bool, IBlock> y)
         {
             var cmp = x.Item2.Offset - y.Item2.Offset;
             if (cmp == 0)

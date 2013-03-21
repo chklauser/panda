@@ -8,13 +8,13 @@ namespace Panda.Core.Internal
 {
     public class LastAccessCache : IBlockReferenceCache
     {
-        private readonly LinkedList<Block> _accessOrder = new LinkedList<Block>();
+        private readonly LinkedList<IBlock> _accessOrder = new LinkedList<IBlock>();
 
         /// <summary>
         /// Also acts as a synchronization root.
         /// </summary>
-        private readonly Dictionary<int, LinkedListNode<Block>> _pointerTable =
-            new Dictionary<int, LinkedListNode<Block>>();
+        private readonly Dictionary<int, LinkedListNode<IBlock>> _pointerTable =
+            new Dictionary<int, LinkedListNode<IBlock>>();
 
         public LastAccessCache(int capacity)
         {
@@ -26,11 +26,11 @@ namespace Panda.Core.Internal
 
         public int Capacity { get; set; }
 
-        public void RegisterAccess(Block reference)
+        public void RegisterAccess(IBlock reference)
         {
             lock (_pointerTable)
             {
-                LinkedListNode<Block> node;
+                LinkedListNode<IBlock> node;
                 if (_pointerTable.TryGetValue(reference.Offset, out node))
                 {
                     _accessOrder.Remove(node);
@@ -42,12 +42,19 @@ namespace Panda.Core.Internal
             }
         }
 
+        public void EvictEarly(IBlock reference)
+        {
+            LinkedListNode<IBlock> node;
+            if (_pointerTable.TryGetValue(reference.Offset, out node))
+                _accessOrder.Remove(node);
+        }
+
         public int EstimateSize()
         {
             return _accessOrder.Count;
         }
 
-        private void _insert(Block block)
+        private void _insert(IBlock block)
         {
             if (_accessOrder.Count > Capacity * 2)
                 _truncate();
@@ -60,7 +67,7 @@ namespace Panda.Core.Internal
             Debug.Assert(_accessOrder.Count >= Capacity,
                 "Access order linked list of last access cache should be truncated but has less than $Capacity entries.");
 
-            var buf = new Block[Capacity];
+            var buf = new IBlock[Capacity];
             var i = 0;
             foreach (var n in _accessOrder.Take(Capacity))
                 buf[i++] = n;
@@ -72,7 +79,7 @@ namespace Panda.Core.Internal
                 _pointerTable.Add(node.Value.Offset, node);
         }
 
-        protected IEnumerable<Block> Contents()
+        protected IEnumerable<IBlock> Contents()
         {
             lock (_pointerTable)
                 foreach (var item in _accessOrder.InReverse())
