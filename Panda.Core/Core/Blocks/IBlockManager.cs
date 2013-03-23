@@ -4,12 +4,65 @@
     {
         #region Block allocation
 
+        /// <summary>
+        /// Allocates a block and initializes it as an empty directory block.
+        /// </summary>
+        /// <returns>A fresh empty directory block.</returns>
+        /// <exception cref="OutofDiskSpaceException">The virtual disk has no empty blocks left.</exception>
+        /// <remarks>
+        ///     <para>The returned block is not registered anywhere. If you don't add it to the file system and forget its block offset, the block can never be reclaimed.</para>
+        /// </remarks>
         IDirectoryBlock AllocateDirectoryBlock();
+
+        /// <summary>
+        /// Allocates a block and initializes it as an empty directory continuation block.
+        /// </summary>
+        /// <returns>A fresh empty directory block.</returns>
+        /// <exception cref="OutofDiskSpaceException">The virtual disk has no empty blocks left.</exception>
+        /// <remarks>
+        ///     <para>The returned block is not registered anywhere. If you don't add it to the file system and forget its block offset, the block can never be reclaimed.</para>
+        /// </remarks>
         IDirectoryContinuationBlock AllocateDirectoryContinuationBlock();
+
+        /// <summary>
+        /// Allocates a block and initializes it as an empty file block.
+        /// </summary>
+        /// <returns>A fresh empty file block.</returns>
+        /// <exception cref="OutofDiskSpaceException">The virtual disk has no empty blocks left.</exception>
+        /// <remarks>
+        ///     <para>The returned block is not registered anywhere. If you don't add it to the file system and forget its block offset, the block can never be reclaimed.</para>
+        /// </remarks>
         IFileBlock AllocateFileBlock();
+
+        /// <summary>
+        /// Allocates a block and initializes it as an empty file continuation block.
+        /// </summary>
+        /// <returns> A fresh empty file continuation block.</returns>
+        /// <exception cref="OutofDiskSpaceException">The virtual disk has no empty blocks left.</exception>
+        /// <remarks>
+        ///     <para>The returned block is not registered anywhere. If you don't add it to the file system and forget its block offset, the block can never be reclaimed.</para>
+        /// </remarks>
         IFileContinuationBlock AllocateFileContinuationBlock();
 
-        void FreeBlock(int blockOffset);
+        /// <summary>
+        /// Allocates a raw block to be used as a data block. Initial contents are not defined.
+        /// </summary>
+        /// <returns>A fresh, uninitialized data block.</returns>
+        /// <exception cref="OutofDiskSpaceException">The virtual disk has no empty blocks left.</exception>
+        /// <remarks>
+        ///     <para>The returned block is not registered anywhere. If you don't add it to the file system and forget its block offset, the block can never be reclaimed.</para>
+        /// </remarks>
+        BlockOffset AllocateDataBlock();
+
+        /// <summary>
+        /// Marks the specified block as free, making it available for allocation. Will not break up existing references.
+        /// </summary>
+        /// <param name="blockOffset">The block to be freed.</param>
+        /// <remarks>
+        ///     <para>The file system is responsible for making sure that all references to the block in question have been removed before that block is freed.</para>
+        ///     <para>Freed blocks may throw <see cref="BlockDeallocatedException"/>s when interacted with, but there is no guarantee that such behaviour will be detected.</para>
+        /// </remarks>
+        void FreeBlock(BlockOffset blockOffset);
 
         #endregion
 
@@ -23,7 +76,7 @@
         /// <remarks>Implementations of <see cref="IBlockManager"/> may or may not check whether the block located at the specified 
         /// <paramref name="blockOffset"/> actually is a <see cref="IDirectoryBlock"/>. When the block isn't of the correct type, 
         /// the behaviour of this method and the returned <see cref="IDirectoryBlock"/> is unspecified.</remarks>
-        IDirectoryBlock GetDirectoryBlock(int blockOffset);
+        IDirectoryBlock GetDirectoryBlock(BlockOffset blockOffset);
 
         /// <summary>
         /// Returns a representation of the block at the specified offset, interpreted as an <see cref="IDirectoryContinuationBlock"/>.
@@ -33,7 +86,7 @@
         /// <remarks>Implementations of <see cref="IBlockManager"/> may or may not check whether the block located at the specified 
         /// <paramref name="blockOffset"/> actually is a <see cref="IDirectoryContinuationBlock"/>. When the block isn't of the correct type, 
         /// the behaviour of this method and the returned <see cref="IDirectoryContinuationBlock"/> is unspecified.</remarks>
-        IDirectoryContinuationBlock GetDirectoryContinuationBlock(int blockOffset);
+        IDirectoryContinuationBlock GetDirectoryContinuationBlock(BlockOffset blockOffset);
 
         /// <summary>
         /// Returns a representation of the block at the specified offset, interpreted as an <see cref="IFileBlock"/>.
@@ -43,7 +96,7 @@
         /// <remarks>Implementations of <see cref="IBlockManager"/> may or may not check whether the block located at the specified 
         /// <paramref name="blockOffset"/> actually is a <see cref="IFileBlock"/>. When the block isn't of the correct type, 
         /// the behaviour of this method and the returned <see cref="IFileBlock"/> is unspecified.</remarks>
-        IFileBlock GetFileBlock(int blockOffset);
+        IFileBlock GetFileBlock(BlockOffset blockOffset);
 
         /// <summary>
         /// Returns a representation of the block at the specified offset, interpreted as an <see cref="IFileContinuationBlock"/>.
@@ -53,7 +106,15 @@
         /// <remarks>Implementations of <see cref="IBlockManager"/> may or may not check whether the block located at the specified 
         /// <paramref name="blockOffset"/> actually is a <see cref="IFileContinuationBlock"/>. When the block isn't of the correct type, 
         /// the behaviour of this method and the returned <see cref="IFileContinuationBlock"/> is unspecified.</remarks>
-        IFileContinuationBlock GetFileContinuationBlock(int blockOffset);
+        IFileContinuationBlock GetFileContinuationBlock(BlockOffset blockOffset);
+
+        /// <summary>
+        /// Overwrites the specified data block. 
+        /// </summary>
+        /// <param name="blockOffset">The offset of the data block to write to.</param>
+        /// <param name="data">The data to overwrite the data block with. If shorter than <see cref="DataBlockSize"/> will be padded with zeroes.</param>
+        /// <remarks><para>Implementations may or may not guard against writing to non-allocated or non-data blocks.</para></remarks>
+        void WriteDataBlock(BlockOffset blockOffset, byte[] data);
 
         #endregion
 
@@ -71,7 +132,12 @@
         /// <summary>
         /// Offset of the <see cref="IDirectoryBlock"/> of the root directory.
         /// </summary>
-        int RootDirectoryBlockOffset { get; }
+        BlockOffset RootDirectoryBlockOffset { get; }
+
+        /// <summary>
+        /// Number of bytes that fit into a data block.
+        /// </summary>
+        int DataBlockSize { get; }
 
         #endregion
 

@@ -6,9 +6,9 @@ namespace Panda.Test.InMemory.Blocks
 {
     public abstract class MemBlock : IBlock
     {
-        private long? _continuationBlock;
-        private readonly int _offset;
-        public int Offset
+        private BlockOffset? _continuationBlock;
+        private readonly BlockOffset _offset;
+        public BlockOffset Offset
         {
             get { return _offset; }
         }
@@ -16,7 +16,7 @@ namespace Panda.Test.InMemory.Blocks
         public ReaderWriterLockSlim Lock { get; private set; }
         public bool IsAllocated { get; set; }
 
-        public MemBlock(int offset)
+        public MemBlock(BlockOffset offset)
         {
             _offset = offset;
             IsAllocated = true;
@@ -33,7 +33,7 @@ namespace Panda.Test.InMemory.Blocks
         }
 
         // This is not used by all sub blocks, but for a mock class, it won't hurt
-        public long? ContinuationBlock
+        public BlockOffset? ContinuationBlock
         {
             get
             {

@@ -13,29 +13,35 @@ namespace Panda.Test.InMemory.Blocks
         /// </summary>
         private readonly int _blockCapacity;
 
-        private readonly Dictionary<int, IBlock> _blocks = new Dictionary<int, IBlock>();
-        private readonly Stack<int> _freeBlockOffsets = new Stack<int>();
+        class MemStored
+        {
+            public IBlock Block;
+            public  byte[] Data;
+        }
+
+        private readonly Dictionary<BlockOffset, MemStored> _blocks = new Dictionary<BlockOffset, MemStored>();
+        private readonly Stack<BlockOffset> _freeBlockOffsets = new Stack<BlockOffset>();
 
         // points to the next free block
-        private int _spaceBreak;
+        private uint _spaceBreak;
 
-        public MemBlockManager(int totalBlockCount, int rootDirectoryBlockOffset, int blockCapacity)
+        public MemBlockManager(int totalBlockCount, BlockOffset rootDirectoryBlockOffset, int blockCapacity)
         {
             _blockCapacity = blockCapacity;
             TotalBlockCount = totalBlockCount;
             RootDirectoryBlockOffset = rootDirectoryBlockOffset;
-            _spaceBreak = RootDirectoryBlockOffset + 1;
-            for (var i = 1; i < RootDirectoryBlockOffset; i++)
-                _freeBlockOffsets.Push(i);
+            _spaceBreak = RootDirectoryBlockOffset.Offset + 1;
+            for (var i = 1u; i < RootDirectoryBlockOffset.Offset; i++)
+                _freeBlockOffsets.Push((BlockOffset) i);
         }
 
         protected virtual T Track<T>(T block) where T : IBlock
         {
-            _blocks.Add(block.Offset,block);
+            _blocks.Add(block.Offset,new MemStored{Block = block});
             return block;
         }
 
-        protected virtual int AllocateBlockOffset()
+        protected virtual BlockOffset AllocateBlockOffset()
         {
             lock (_freeBlockOffsets)
             {
@@ -45,7 +51,7 @@ namespace Panda.Test.InMemory.Blocks
                 }
 
                 if (_spaceBreak < TotalBlockCount)
-                    return _spaceBreak++;
+                    return (BlockOffset) _spaceBreak++;
                 else
                     throw new OutofDiskSpaceException();
             }
@@ -71,14 +77,22 @@ namespace Panda.Test.InMemory.Blocks
             return Track(new MemOffsetList(AllocateBlockOffset(),BlockCapacity));
         }
 
-        public void FreeBlock(int blockOffset)
+        public int AllocateDataBlock()
         {
-            IBlock block;
-            if (_blocks.TryGetValue(blockOffset,out block))
+            throw new NotImplementedException();
+        }
+
+        public void FreeBlock(BlockOffset blockOffset)
+        {
+            MemStored mem;
+            if (_blocks.TryGetValue(blockOffset,out mem))
             {
-                ((MemBlock) block).IsAllocated = false;
+                if (mem.Block != null)
+                {
+                    ((MemBlock) mem.Block).IsAllocated = false;
+                }
                 _blocks.Remove(blockOffset);
-                if (blockOffset == _spaceBreak - 1)
+                if (blockOffset.Offset == _spaceBreak - 1)
                 {
                     _spaceBreak--;
                 }
@@ -93,13 +107,19 @@ namespace Panda.Test.InMemory.Blocks
             }
         }
 
-        public T GetBlock<T>(int blockOffset) where T : class, IBlock
+        public T GetBlock<T>(BlockOffset blockOffset) where T : class, IBlock
         {
             IBlock block;
-            if (_blocks.TryGetValue(blockOffset, out block))
+            MemStored mem;
+            if (_blocks.TryGetValue(blockOffset, out mem) && (block = mem.Block) != null)
             {
                 Assert.IsAssignableFrom<T>(block,"The block at offset {0} does not have the expected type. If this were a real file system, you'd be dead now.",blockOffset);
                 return (T) block;
+            }
+            else if (mem != null)
+            {
+                // found data block when we expected file system block. We cannot detect this on the real disk.
+                throw new KeyNotFoundException("The block offset " + blockOffset + " refers to a data block. If this were a real file system, you'd be very dead now.");
             }
             else
             {
@@ -107,28 +127,38 @@ namespace Panda.Test.InMemory.Blocks
             }
         }
 
-        public IDirectoryBlock GetDirectoryBlock(int blockOffset)
+        public IDirectoryBlock GetDirectoryBlock(BlockOffset blockOffset)
         {
             return GetBlock<IDirectoryBlock>(blockOffset);
         }
 
-        public IDirectoryContinuationBlock GetDirectoryContinuationBlock(int blockOffset)
+        public IDirectoryContinuationBlock GetDirectoryContinuationBlock(BlockOffset blockOffset)
         {
             return GetBlock<IDirectoryContinuationBlock>(blockOffset);
         }
 
-        public IFileBlock GetFileBlock(int blockOffset)
+        public IFileBlock GetFileBlock(BlockOffset blockOffset)
         {
             return GetBlock<IFileBlock>(blockOffset);
         }
 
-        public IFileContinuationBlock GetFileContinuationBlock(int blockOffset)
+        public IFileContinuationBlock GetFileContinuationBlock(BlockOffset blockOffset)
         {
             return GetBlock<IFileContinuationBlock>(blockOffset);
         }
 
+        public void WriteDataBlock(BlockOffset blockOffset, byte[] data)
+        {
+            throw new NotImplementedException();
+        }
+
         public int TotalBlockCount { get; private set; }
-        public int RootDirectoryBlockOffset { get; private set; }
+        public BlockOffset RootDirectoryBlockOffset { get; private set; }
+
+        public int DataBlockSize
+        {
+            get { throw new NotImplementedException(); }
+        }
 
         public int BlockCapacity
         {

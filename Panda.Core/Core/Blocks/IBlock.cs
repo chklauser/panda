@@ -4,7 +4,7 @@ namespace Panda.Core.Blocks
 {
     public interface IBlock
     {
-        int Offset { get; }
+        BlockOffset Offset { get; }
         ReaderWriterLockSlim Lock { get; }
     }
 }

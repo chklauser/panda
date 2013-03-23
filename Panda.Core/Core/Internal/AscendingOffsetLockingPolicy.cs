@@ -24,7 +24,7 @@ namespace Panda.Core
 
             Array.Sort(order, _blockLockingOrder);
 
-            var lastOffset = 0;
+            BlockOffset lastOffset = default(BlockOffset);
 
             try
             {
@@ -117,7 +117,13 @@ namespace Panda.Core
         /// <remarks>Orders by block offset in ascending order. If a block appears more than once, write lock requests are ordered before read lock requests.</remarks>
         private int _blockLockingOrder([NotNull] Tuple<bool, IBlock> x, [NotNull] Tuple<bool, IBlock> y)
         {
-            var cmp = x.Item2.Offset - y.Item2.Offset;
+            // It is safe to extract the offset here, as we are just using it to order blocks.
+            // Note that we have to cast to long instead of uint, to capture negative numbers
+            long cmp;
+            checked
+            {
+                cmp = (long)x.Item2.Offset - (long)y.Item2.Offset;
+            }
             if (cmp == 0)
             {
                 if (x.Item1 && !x.Item1)
@@ -126,7 +132,7 @@ namespace Panda.Core
                     return -1;
             }
 
-            return cmp;
+            return Math.Sign(cmp);
         }
     }
 }

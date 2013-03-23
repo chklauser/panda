@@ -10,6 +10,7 @@ namespace Panda.Core.Internal
     {
         [NotNull]
         protected abstract IBlockManager BackingManager { get; }
+
         [NotNull]
         protected abstract IBlockReferenceCache ReferenceCache { get; }
 
@@ -21,10 +22,9 @@ namespace Panda.Core.Internal
             return new Default(backingManager);
         }
 
-        class Default : SingleInstanceFactory
+        private class Default : SingleInstanceFactory
         {
-            [NotNull]
-            private readonly IBlockManager _backingManager;
+            [NotNull] private readonly IBlockManager _backingManager;
 
             [NotNull] private readonly IBlockReferenceCache _referenceCache = new LastAccessCache(512);
 
@@ -46,17 +46,23 @@ namespace Panda.Core.Internal
 
         #endregion
 
-        private readonly Dictionary<int, WeakReference<IBlock>> _existingBlocks = new Dictionary<int, WeakReference<IBlock>>();
+        private readonly Dictionary<BlockOffset, WeakReference<IBlock>> _existingBlocks =
+            new Dictionary<BlockOffset, WeakReference<IBlock>>();
 
-        private readonly SemaphoreSlim _lock = new SemaphoreSlim(1,1);
-        protected SemaphoreSlim Lock { get { return _lock; } }
+        private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+
+        protected SemaphoreSlim Lock
+        {
+            get { return _lock; }
+        }
+
         private const int GcInterval = 2048;
 
         private void _trackNewBlock(IBlock block)
         {
             // assume exclusive access
             ReferenceCache.RegisterAccess(block);
-            _existingBlocks.Add(block.Offset,new WeakReference<IBlock>(block));
+            _existingBlocks.Add(block.Offset, new WeakReference<IBlock>(block));
         }
 
         protected void TrackNewBlock(IBlock block)
@@ -73,6 +79,7 @@ namespace Panda.Core.Internal
         }
 
         private uint _gcCounter;
+
         private void _handleGc()
         {
             // Assume exclusive access
@@ -86,7 +93,7 @@ namespace Panda.Core.Internal
         private void _collectGarbage()
         {
             // assume exclusive access
-            var gced = new List<int>();
+            var gced = new List<BlockOffset>();
             foreach (var weakRefEntry in _existingBlocks)
             {
                 IBlock dummy;
@@ -103,12 +110,12 @@ namespace Panda.Core.Internal
         }
 
         [ContractAnnotation("=>true,block:notnull; =>false,block:null")]
-        private bool _tryGetExisting<T>(int offset, out T block) where T : class, IBlock
+        private bool _tryGetExisting<T>(BlockOffset offset, out T block) where T : class, IBlock
         {
             // assume exclusive access
             WeakReference<IBlock> weakBlock;
             IBlock anyBlock;
-            if (_existingBlocks.TryGetValue(offset, out weakBlock) 
+            if (_existingBlocks.TryGetValue(offset, out weakBlock)
                 && weakBlock.TryGetTarget(out anyBlock))
             {
                 block = (T) anyBlock;
@@ -122,7 +129,7 @@ namespace Panda.Core.Internal
         }
 
         [ContractAnnotation("=>true,block:notnull; =>false,block:null")]
-        protected bool TryGetExisting<T>(int offset, out T block) where T : class, IBlock
+        protected bool TryGetExisting<T>(BlockOffset offset, out T block) where T : class, IBlock
         {
             _lock.Wait();
             try
@@ -167,7 +174,12 @@ namespace Panda.Core.Internal
             return block;
         }
 
-        public void FreeBlock(int blockOffset)
+        public int AllocateDataBlock()
+        {
+            return BackingManager.AllocateDataBlock();
+        }
+
+        public void FreeBlock(BlockOffset blockOffset)
         {
             BackingManager.FreeBlock(blockOffset);
 
@@ -188,7 +200,7 @@ namespace Panda.Core.Internal
             }
         }
 
-        public IDirectoryBlock GetDirectoryBlock(int blockOffset)
+        public IDirectoryBlock GetDirectoryBlock(BlockOffset blockOffset)
         {
             _handleGc();
             IDirectoryBlock block;
@@ -197,7 +209,7 @@ namespace Panda.Core.Internal
             return block;
         }
 
-        public IDirectoryContinuationBlock GetDirectoryContinuationBlock(int blockOffset)
+        public IDirectoryContinuationBlock GetDirectoryContinuationBlock(BlockOffset blockOffset)
         {
             _handleGc();
             IDirectoryContinuationBlock block;
@@ -206,7 +218,7 @@ namespace Panda.Core.Internal
             return block;
         }
 
-        public IFileBlock GetFileBlock(int blockOffset)
+        public IFileBlock GetFileBlock(BlockOffset blockOffset)
         {
             _handleGc();
             IFileBlock block;
@@ -215,7 +227,7 @@ namespace Panda.Core.Internal
             return block;
         }
 
-        public IFileContinuationBlock GetFileContinuationBlock(int blockOffset)
+        public IFileContinuationBlock GetFileContinuationBlock(BlockOffset blockOffset)
         {
             _handleGc();
             IFileContinuationBlock block;
@@ -224,14 +236,24 @@ namespace Panda.Core.Internal
             return block;
         }
 
+        public void WriteDataBlock(BlockOffset blockOffset, byte[] data)
+        {
+            throw new NotImplementedException();
+        }
+
         public int TotalBlockCount
         {
             get { return BackingManager.TotalBlockCount; }
         }
 
-        public int RootDirectoryBlockOffset
+        public BlockOffset RootDirectoryBlockOffset
         {
             get { return BackingManager.RootDirectoryBlockOffset; }
+        }
+
+        public int DataBlockSize
+        {
+            get { return BackingManager.DataBlockSize; }
         }
     }
 }

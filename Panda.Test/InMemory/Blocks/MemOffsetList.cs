@@ -9,16 +9,16 @@ namespace Panda.Test.InMemory.Blocks
     public class MemOffsetList : MemBlock, IEmptyListBlock, IFileContinuationBlock
     {
         [NotNull]
-        private readonly List<int> _offsets = new List<int>();
+        private readonly List<BlockOffset> _offsets = new List<BlockOffset>();
         private readonly int _listCapacity;
         private int _totalFreeBlockCount;
 
-        public MemOffsetList(int offset, int listCapacity) : base(offset)
+        public MemOffsetList(BlockOffset offset, int listCapacity) : base(offset)
         {
             _listCapacity = listCapacity;
         }
 
-        public IEnumerator<int> GetEnumerator()
+        public IEnumerator<BlockOffset> GetEnumerator()
         {
             return GuardedEnumerator(_offsets);
         }
@@ -37,7 +37,7 @@ namespace Panda.Test.InMemory.Blocks
             }
         }
 
-        public List<int> Offsets
+        public List<BlockOffset> Offsets
         {
             get
             {
@@ -60,16 +60,16 @@ namespace Panda.Test.InMemory.Blocks
             }
         }
 
-        public int[] Remove(int count)
+        public BlockOffset[] Remove(int count)
         {
             ThrowIfDeallocated();
-            var rs = new int[count];
+            var rs = new BlockOffset[count];
             _offsets.CopyTo(_offsets.Count - count, rs, 0, count);
             _offsets.RemoveRange(_offsets.Count - count, count);
             return rs;
         }
 
-        public void Append(int[] freeBlockOffsets)
+        public void Append(BlockOffset[] freeBlockOffsets)
         {
             ThrowIfDeallocated();
             if (_offsets.Count + freeBlockOffsets.Length > ListCapacity)
@@ -88,7 +88,7 @@ namespace Panda.Test.InMemory.Blocks
             }
         }
 
-        public void ReplaceOffsets(int[] offsets)
+        public void ReplaceOffsets(BlockOffset[] offsets)
         {
             ThrowIfDeallocated();
             _offsets.Clear();

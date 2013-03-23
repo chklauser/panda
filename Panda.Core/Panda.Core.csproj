@@ -36,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\Blocks\BlockDeallocatedException.cs" />
+    <Compile Include="Core\Blocks\BlockOffset.cs" />
     <Compile Include="Core\Blocks\IContinuationBlock.cs" />
     <Compile Include="Core\Blocks\IFileContinuationBlock.cs" />
     <Compile Include="Core\Internal\AscendingOffsetLockingPolicy.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="VirtualDirectory.cs" />
     <Compile Include="VirtualDisk.cs" />
     <Compile Include="VirtualFileSystem.cs" />
+    <Compile Include="VirtualNode.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="JetBrains.Annotations.cs" />

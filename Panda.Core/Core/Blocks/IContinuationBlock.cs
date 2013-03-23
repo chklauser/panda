@@ -2,6 +2,6 @@
 {
     public interface IContinuationBlock
     {
-        long? ContinuationBlock { get; set; } 
+        BlockOffset? ContinuationBlock { get; set; } 
     }
 }

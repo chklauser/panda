@@ -1,14 +1,17 @@
-﻿using Panda.Core.Blocks;
+﻿using JetBrains.Annotations;
+using Panda.Core.Blocks;
 
 namespace Panda.Core.Internal
 {
     internal class VirtualDiskImpl : VirtualDisk
     {
-        private readonly IBlockManager _blockManager;
+        [NotNull] private readonly IBlockManager _blockManager;
+        [NotNull] private readonly ILockingPolicy _lockingPolicy;
 
-        public VirtualDiskImpl(IBlockManager blockManager)
+        public VirtualDiskImpl([NotNull] IBlockManager blockManager, [NotNull] ILockingPolicy lockingPolicy)
         {
             _blockManager = blockManager;
+            _lockingPolicy = lockingPolicy;
         }
 
         public override long Capacity
@@ -31,9 +34,16 @@ namespace Panda.Core.Internal
             get { throw new System.NotImplementedException(); }
         }
 
+        [NotNull]
         protected IBlockManager BlockManager
         {
             get { return _blockManager; }
+        }
+
+        [NotNull]
+        public ILockingPolicy LockingPolicy
+        {
+            get { return _lockingPolicy; }
         }
     }
 }

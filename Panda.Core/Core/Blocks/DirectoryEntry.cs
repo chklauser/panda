@@ -8,9 +8,9 @@ namespace Panda.Core.Blocks
         [NotNull]
         private readonly string _name;
 
-        private readonly long _blockOffset;
+        private readonly BlockOffset _blockOffset;
 
-        public DirectoryEntry([NotNull] string name, long blockOffset)
+        public DirectoryEntry([NotNull] string name, BlockOffset blockOffset)
         {
             if (name == null) throw new ArgumentNullException("name");
             _name = name;
@@ -23,7 +23,7 @@ namespace Panda.Core.Blocks
             get { return _name; }
         }
 
-        public long BlockOffset
+        public BlockOffset BlockOffset
         {
             get { return _blockOffset; }
         }

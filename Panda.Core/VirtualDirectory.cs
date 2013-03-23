@@ -1,53 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 
 namespace Panda
 {
-    [PublicAPI]
-    public abstract class VirtualNode
-    {
-        #region Meta information
-
-        [PublicAPI]
-        [NotNull]
-        public abstract string Name { get; }
-
-        [PublicAPI]
-        [NotNull]
-        public abstract string FullName { get; }
-
-        [PublicAPI]
-        public abstract long Size { get; }
-
-        [PublicAPI]
-        public abstract bool IsRoot { get; }
-
-        [PublicAPI]
-        [CanBeNull]
-        public abstract VirtualDirectory ParentDirectory { get; }
-
-        #endregion
-
-        [PublicAPI]
-        public void Move([NotNull] VirtualDirectory destination)
-        {
-            Move(destination, Name);
-        }
-
-        [PublicAPI]
-        public abstract void Rename([NotNull] string newName);
-
-        [PublicAPI]
-        public abstract void Delete();
-
-        [PublicAPI]
-        public abstract void Move([NotNull] VirtualDirectory destination, [NotNull] string newName);
-
-    }
-
     [PublicAPI]
     public abstract class VirtualDirectory : VirtualNode, IReadOnlyCollection<VirtualNode>, IReadOnlyDictionary<string,VirtualNode>
     {
@@ -70,6 +30,7 @@ namespace Panda
         [NotNull]
         public virtual VirtualNode Import(string path)
         {
+            // Optional: provide a more efficient synchronous implementation
             var importTask = ImportAsync(path);
             importTask.RunSynchronously();
             return importTask.Result;
@@ -81,11 +42,52 @@ namespace Panda
         [PublicAPI]
         public virtual void Export(string path)
         {
+            // Optional: provide a more efficient synchronous implementation
             ExportAsync(path).RunSynchronously();
         }
 
+        #region File creation
+
         [NotNull]
         public abstract VirtualDirectory CreateDirectory([NotNull] string name);
+
+        [NotNull]
+        public abstract Task<VirtualFile> CreateFileAsync([NotNull] string name, [NotNull] Stream dataSource);
+
+        [PublicAPI]
+        public virtual VirtualFile CreateFile([NotNull] string name, [NotNull] Stream dataSource)
+        {
+            var task = CreateFileAsync(name, dataSource);
+            task.RunSynchronously();
+            return task.Result;
+        }
+
+        [PublicAPI]
+        public virtual async Task<VirtualFile> CreateFileAsync([NotNull] string name, [NotNull] byte[] data,
+                                                               int index = 0, int? count = null)
+        {
+            using (var stream = new MemoryStream(data, 0, count ?? data.Length, writable: false))
+                return await CreateFileAsync(name, stream);
+        }
+
+        [PublicAPI]
+        public virtual VirtualFile CreateFile([NotNull] string name, [NotNull] byte[] data, int index = 0,
+                                              int? count = null)
+        {
+            var task = CreateFileAsync(name, data, index, count);
+            task.RunSynchronously();
+            return task.Result;
+        }
+
+        // This method is intended for quick-and-dirty creations of small files. No asynchronous version is provided.
+        // Note the absence of the PublicAPI annotation. Use this method for unit testing and small configuration files.
+        public virtual VirtualFile CreateFile([NotNull] string name, string content)
+        {
+            return CreateFile(name, Encoding.UTF8.GetBytes(content));
+        }
+
+        #endregion
+
 
         /// <summary>
         /// Retrieve a file system node based on a relative path. Returns null if any part of the path does not exist.

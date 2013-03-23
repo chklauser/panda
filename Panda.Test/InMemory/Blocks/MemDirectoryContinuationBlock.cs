@@ -4,7 +4,7 @@ namespace Panda.Test.InMemory.Blocks
 {
     public class MemDirectoryContinuationBlock : MemDirectoryBase, IDirectoryContinuationBlock
     {
-        public MemDirectoryContinuationBlock(int offset, int capacity) : base(offset, capacity)
+        public MemDirectoryContinuationBlock(BlockOffset offset, int capacity) : base(offset, capacity)
         {
         }
     }

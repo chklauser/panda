@@ -6,7 +6,7 @@ namespace Panda.Test.InMemory.Blocks
     {
         private long _totalSize;
 
-        public MemDirectoryBlock(int offset, int capacity) : base(offset,capacity)
+        public MemDirectoryBlock(BlockOffset offset, int capacity) : base(offset,capacity)
         {
         }
 

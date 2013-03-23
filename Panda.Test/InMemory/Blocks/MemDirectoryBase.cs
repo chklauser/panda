@@ -10,7 +10,7 @@ namespace Panda.Test.InMemory.Blocks
         private readonly HashSet<DirectoryEntry> _entries = new HashSet<DirectoryEntry>();
         private readonly int _capacity;
 
-        public MemDirectoryBase(int offset, int capacity) : base(offset)
+        public MemDirectoryBase(BlockOffset offset, int capacity) : base(offset)
         {
             _capacity = capacity;
         }

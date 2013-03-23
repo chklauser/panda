@@ -13,8 +13,8 @@ namespace Panda.Core.Internal
         /// <summary>
         /// Also acts as a synchronization root.
         /// </summary>
-        private readonly Dictionary<int, LinkedListNode<IBlock>> _pointerTable =
-            new Dictionary<int, LinkedListNode<IBlock>>();
+        private readonly Dictionary<BlockOffset, LinkedListNode<IBlock>> _pointerTable =
+            new Dictionary<BlockOffset, LinkedListNode<IBlock>>();
 
         public LastAccessCache(int capacity)
         {
