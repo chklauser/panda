@@ -174,7 +174,7 @@ namespace Panda.Core.Internal
             return block;
         }
 
-        public int AllocateDataBlock()
+        public BlockOffset AllocateDataBlock()
         {
             return BackingManager.AllocateDataBlock();
         }
@@ -238,7 +238,13 @@ namespace Panda.Core.Internal
 
         public void WriteDataBlock(BlockOffset blockOffset, byte[] data)
         {
-            throw new NotImplementedException();
+            BackingManager.WriteDataBlock(blockOffset, data);
+        }
+
+        public void ReadDataBlock(BlockOffset blockOffset, byte[] destination, int destinationIndex = 0, int blockIndex = 0,
+                                  int? count = null)
+        {
+            BackingManager.ReadDataBlock(blockOffset,destination,destinationIndex,blockIndex);
         }
 
         public int TotalBlockCount

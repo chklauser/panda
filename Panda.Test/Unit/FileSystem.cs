@@ -32,14 +32,14 @@ namespace Panda.Test.Unit
 
         }
 
-        public void CreateMemDisk(int totalBlockCount = 256, BlockOffset rootDirectoryBlockOffset = default(BlockOffset), int blockCapacity = 16)
+        public void CreateMemDisk(int totalBlockCount = 256, BlockOffset rootDirectoryBlockOffset = default(BlockOffset), int blockCapacity = 16, int dataBlockCapcity = 128)
         {
             // Cannot set default value for a struct other than default(BlockOffset), which is 0, so we'll have to handle this separately.
             if (rootDirectoryBlockOffset == default(BlockOffset))
                 rootDirectoryBlockOffset = (BlockOffset) 1;
 
             Disk = new VirtualDiskImpl(
-                BlockManager = new MemBlockManager(totalBlockCount, rootDirectoryBlockOffset, blockCapacity), 
+                BlockManager = new MemBlockManager(totalBlockCount, rootDirectoryBlockOffset, blockCapacity, dataBlockCapcity), 
                 new AscendingOffsetLockingPolicy());
         }
 

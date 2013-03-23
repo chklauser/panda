@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using Panda.Core;
 using Panda.Core.Blocks;
@@ -11,12 +12,18 @@ namespace Panda.Test.InMemory.Blocks
         /// <summary>
         /// The capacity of individual blocks (how many entries fit into one block etc.)
         /// </summary>
-        private readonly int _blockCapacity;
+        private readonly int _metaBlockCapacity;
+
+        /// <summary>
+        /// The capacity of individual data blocks in number of bytes.
+        /// </summary>
+        /// <remarks>In reality, the file system block capacity is closely linked to the data block capacity, but for this mock, it doesn't matter.</remarks>
+        private readonly int _dataBlockCapacity;
 
         class MemStored
         {
             public IBlock Block;
-            public  byte[] Data;
+            public byte[] Data;
         }
 
         private readonly Dictionary<BlockOffset, MemStored> _blocks = new Dictionary<BlockOffset, MemStored>();
@@ -25,9 +32,10 @@ namespace Panda.Test.InMemory.Blocks
         // points to the next free block
         private uint _spaceBreak;
 
-        public MemBlockManager(int totalBlockCount, BlockOffset rootDirectoryBlockOffset, int blockCapacity)
+        public MemBlockManager(int totalBlockCount, BlockOffset rootDirectoryBlockOffset, int metaBlockCapacity, int dataBlockCapacity)
         {
-            _blockCapacity = blockCapacity;
+            _metaBlockCapacity = metaBlockCapacity;
+            _dataBlockCapacity = dataBlockCapacity;
             TotalBlockCount = totalBlockCount;
             RootDirectoryBlockOffset = rootDirectoryBlockOffset;
             _spaceBreak = RootDirectoryBlockOffset.Offset + 1;
@@ -59,27 +67,30 @@ namespace Panda.Test.InMemory.Blocks
 
         public IDirectoryBlock AllocateDirectoryBlock()
         {
-            return Track(new MemDirectoryBlock(AllocateBlockOffset(),BlockCapacity));
+            return Track(new MemDirectoryBlock(AllocateBlockOffset(),MetaBlockCapacity));
         }
 
         public IDirectoryContinuationBlock AllocateDirectoryContinuationBlock()
         {
-            return Track(new MemDirectoryContinuationBlock(AllocateBlockOffset(),BlockCapacity));
+            return Track(new MemDirectoryContinuationBlock(AllocateBlockOffset(),MetaBlockCapacity));
         }
 
         public IFileBlock AllocateFileBlock()
         {
-            return Track(new MemFileBlock(AllocateBlockOffset(),BlockCapacity));
+            return Track(new MemFileBlock(AllocateBlockOffset(),MetaBlockCapacity));
         }
 
         public IFileContinuationBlock AllocateFileContinuationBlock()
         {
-            return Track(new MemOffsetList(AllocateBlockOffset(),BlockCapacity));
+            return Track(new MemOffsetList(AllocateBlockOffset(),MetaBlockCapacity));
         }
 
-        public int AllocateDataBlock()
+        public BlockOffset AllocateDataBlock()
         {
-            throw new NotImplementedException();
+            var offset = AllocateBlockOffset();
+            var dataBlock = new byte[DataBlockSize];
+            _blocks.Add(offset,new MemStored {Data = dataBlock});
+            return offset;
         }
 
         public void FreeBlock(BlockOffset blockOffset)
@@ -149,7 +160,34 @@ namespace Panda.Test.InMemory.Blocks
 
         public void WriteDataBlock(BlockOffset blockOffset, byte[] data)
         {
-            throw new NotImplementedException();
+            MemStored store;
+            byte[] block;
+            if (_blocks.TryGetValue(blockOffset, out store) && (block = store.Data) != null)
+            {
+                Array.Copy(data,0,block,0,data.Length);
+                for (var i = data.Length; i < block.Length; i++)
+                    data[i] = 0;
+            }
+            else
+            {
+                throw new InvalidOperationException("There is no data block at offset " + blockOffset + " to write to. If this were a real file system, you'd be dead now.");
+            }
+        }
+
+        public void ReadDataBlock(BlockOffset blockOffset, byte[] destination, int destinationIndex = 0, int blockIndex = 0,
+                                  int? count = null)
+        {
+            MemStored store;
+            byte[] block;
+            if (_blocks.TryGetValue(blockOffset, out store) && (block = store.Data) != null)
+            {
+                Array.Copy(block, blockIndex, destination, destinationIndex,
+                    count ?? Math.Min(block.Length - blockIndex, destination.Length - destinationIndex));
+            }
+            else
+            {
+                throw new InvalidOperationException("There is no data block at offset " + blockOffset + " to read from. If this were a real file system, you'd be dead now.");
+            }
         }
 
         public int TotalBlockCount { get; private set; }
@@ -157,12 +195,17 @@ namespace Panda.Test.InMemory.Blocks
 
         public int DataBlockSize
         {
-            get { throw new NotImplementedException(); }
+            get { return _dataBlockCapacity; }
         }
 
-        public int BlockCapacity
+        public int MetaBlockCapacity
         {
-            get { return _blockCapacity; }
+            get { return _metaBlockCapacity; }
+        }
+
+        public int DataBlockCapacity
+        {
+            get { return _dataBlockCapacity; }
         }
     }
 }

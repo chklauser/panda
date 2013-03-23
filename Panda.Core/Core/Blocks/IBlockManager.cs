@@ -1,4 +1,6 @@
-﻿namespace Panda.Core.Blocks
+﻿using System;
+
+namespace Panda.Core.Blocks
 {
     public interface IBlockManager
     {
@@ -115,6 +117,17 @@
         /// <param name="data">The data to overwrite the data block with. If shorter than <see cref="DataBlockSize"/> will be padded with zeroes.</param>
         /// <remarks><para>Implementations may or may not guard against writing to non-allocated or non-data blocks.</para></remarks>
         void WriteDataBlock(BlockOffset blockOffset, byte[] data);
+
+        /// <summary>
+        /// Reads the specified block into the supplied array.
+        /// </summary>
+        /// <param name="blockOffset">The offset of the data block to read from.</param>
+        /// <param name="destination">The array to copy the data into.</param>
+        /// /// <param name="destinationIndex">The index in the destination array at which to start writing. (inclusive)</param>
+        /// <param name="blockIndex">The offset in the data block at which to start reading.</param>
+        /// <param name="count">The number of bytes to read at most.</param>
+        /// <exception cref="ArgumentOutOfRangeException">Negative array index or count; attempt to read past end of block;</exception>
+        void ReadDataBlock(BlockOffset blockOffset, byte[] destination, int destinationIndex = 0, int blockIndex = 0, int? count = null);
 
         #endregion
 
