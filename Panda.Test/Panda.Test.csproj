@@ -49,6 +49,7 @@
     <Compile Include="InMemory\Blocks\MemOffsetList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unit\FileSystem.cs" />
+    <Compile Include="Unit\FileSystemBlackBox.cs" />
     <Compile Include="VirtualDiskManagement.cs" />
   </ItemGroup>
   <ItemGroup>

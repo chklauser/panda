@@ -1,46 +1,21 @@
 ﻿using System.IO;
 using System.Linq;
 using NUnit.Framework;
-using Panda.Core;
-using Panda.Core.Blocks;
-using Panda.Core.Internal;
-using Panda.Test.InMemory.Blocks;
 
 namespace Panda.Test.Unit
 {
-
     /// <summary>
     /// Here, we test the file system implementation against a mocked block API.
     /// If we have failures in this suite, we know that the file system implementation
     /// is to be blamed, and not the block API or the IO layer implementations.
     /// </summary>
     [TestFixture]
-    public class FileSystem
+    public class FileSystem : FileSystemBlackBox
     {
-
-        public VirtualDisk Disk;
-
-        /// <summary>
-        /// You shouldn't need this to interact with the file system. Normally it's hidden, but 
-        /// it can be useful to verify that the file system behaved in a certain way.
-        /// </summary>
-        public MemBlockManager BlockManager;
-
         [SetUp]
         public void SetUp()
         {
 
-        }
-
-        public void CreateMemDisk(int totalBlockCount = 256, BlockOffset rootDirectoryBlockOffset = default(BlockOffset), int blockCapacity = 16, int dataBlockCapcity = 128)
-        {
-            // Cannot set default value for a struct other than default(BlockOffset), which is 0, so we'll have to handle this separately.
-            if (rootDirectoryBlockOffset == default(BlockOffset))
-                rootDirectoryBlockOffset = (BlockOffset) 1;
-
-            Disk = new VirtualDiskImpl(
-                BlockManager = new MemBlockManager(totalBlockCount, rootDirectoryBlockOffset, blockCapacity, dataBlockCapcity), 
-                new AscendingOffsetLockingPolicy());
         }
 
         [Test]
