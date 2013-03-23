@@ -20,6 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -54,6 +55,11 @@
     <Compile Include="Core\Internal\ILockingPolicy.cs" />
     <Compile Include="Core\Internal\SingleInstanceFactory.cs" />
     <Compile Include="Core\Internal\VirtualDiskImpl.cs" />
+    <Compile Include="Core\IO\InMemory\InMemorySpace.cs" />
+    <Compile Include="Core\IO\IPersistenceSpace.cs" />
+    <Compile Include="Core\IO\IRawPersistenceSpace.cs" />
+    <Compile Include="Core\IO\MemoryMapped\MemoryMappedFileSpace.cs" />
+    <Compile Include="Core\IO\MemoryMapped\MemoryMappedSpace.cs" />
     <Compile Include="Core\OutOfDiskSpaceException.cs" />
     <Compile Include="Core\PathUtil.cs" />
     <Compile Include="PandaException.cs" />
