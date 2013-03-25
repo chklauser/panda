@@ -42,12 +42,5 @@ namespace Panda
 
         [PublicAPI]
         public abstract void Move([NotNull] VirtualDirectory destination, [NotNull] string newName);
-
-    }
-
-    [PublicAPI]
-    public abstract class VirtualFile : VirtualNode
-    {
-        public abstract Stream Open();
     }
 }

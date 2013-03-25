@@ -31,11 +31,11 @@ namespace Panda.Core.Internal
 
         public override VirtualDirectory Root
         {
-            get { throw new System.NotImplementedException(); }
+            get { return new VirtualDirectoryImpl(this, _blockManager.RootDirectoryBlockOffset); }
         }
 
         [NotNull]
-        protected IBlockManager BlockManager
+        public IBlockManager BlockManager
         {
             get { return _blockManager; }
         }

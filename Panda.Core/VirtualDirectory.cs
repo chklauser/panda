@@ -5,23 +5,42 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using System;
 
 namespace Panda
 {
     [PublicAPI]
     public abstract class VirtualDirectory : VirtualNode, IReadOnlyCollection<VirtualNode>, IReadOnlyDictionary<string,VirtualNode>
     {
+        /// <summary>
+        /// To enable iteration over VirtualDirectory.
+        /// </summary>
+        /// <returns></returns>
         public abstract IEnumerator<VirtualNode> GetEnumerator();
 
+        /// <summary>
+        /// Number of nodes in VirtualDirectory.
+        /// </summary>
         [PublicAPI]
         public abstract int Count { get; }
 
+        /// <summary>
+        /// Returns true if node with given name exists, else false.
+        /// </summary>
+        /// <param name="name">Node name</param>
+        /// <returns>True if node exists in this VirtualDirectory.</returns>
         [PublicAPI]
         public abstract bool Contains(string name);
 
+        /// <summary>
+        /// Returns true if node with given name exists and writes reference into VirtualNode value, else returns false and writes null into VirtualNode value.
+        /// </summary>
+        /// <param name="name">Node name</param>
+        /// <param name="value">VirtualNode as reference.</param>
+        /// <returns></returns>
         [PublicAPI]
         public abstract bool TryGetNode(string name, out VirtualNode value);
-
+        
         [PublicAPI]
         [NotNull]
         public abstract Task<VirtualNode> ImportAsync(string path);
@@ -88,7 +107,6 @@ namespace Panda
 
         #endregion
 
-
         /// <summary>
         /// Retrieve a file system node based on a relative path. Returns null if any part of the path does not exist.
         /// </summary>
@@ -97,6 +115,18 @@ namespace Panda
         [CanBeNull]
         public abstract VirtualNode Navigate(string path);
 
+        /// <summary>
+        /// Is called by Navigate(string path) to return file system node.
+        /// </summary>
+        /// <param name="path">String array containing node names.</param>
+        /// <returns>Virtual node pointed to by path, null if any part doesn't exist.</returns>
+        [CanBeNull]
+        public abstract VirtualNode Navigate(string[] path);
+
+        /// <summary>
+        /// For backwards compatibility with IEnumerable without interface.
+        /// </summary>
+        /// <returns></returns>
         #region IEnumerable implementation
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -106,6 +136,10 @@ namespace Panda
 
         #endregion
 
+        /// <summary>
+        /// To access nodes of directory with this["nodeName"].
+        /// </summary>
+        /// <returns></returns>
         #region IReadOnlyDictionary implementation
 
         IEnumerator<KeyValuePair<string, VirtualNode>> IEnumerable<KeyValuePair<string, VirtualNode>>.GetEnumerator()
@@ -137,6 +171,5 @@ namespace Panda
         }
 
         #endregion
-
     }
 }
