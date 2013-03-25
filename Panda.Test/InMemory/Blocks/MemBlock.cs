@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using Panda.Core.Blocks;
+using Panda.Core.Internal;
 
 namespace Panda.Test.InMemory.Blocks
 {
@@ -59,6 +60,11 @@ namespace Panda.Test.InMemory.Blocks
                 ThrowIfDeallocated();
                 yield return item;
             }
+        }
+
+        BlockOffset ICacheKeyed<BlockOffset>.CacheKey
+        {
+            get { return Offset; }
         }
     }
 }

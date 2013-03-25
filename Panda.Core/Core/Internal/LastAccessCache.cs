@@ -2,19 +2,18 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Panda.Core.Blocks;
 
 namespace Panda.Core.Internal
 {
-    public class LastAccessCache : IBlockReferenceCache
+    public class LastAccessCache<TKey,TValue> : IReferenceCache<TValue> where TValue : class, ICacheKeyed<TKey>
     {
-        private readonly LinkedList<IBlock> _accessOrder = new LinkedList<IBlock>();
+        private readonly LinkedList<TValue> _accessOrder = new LinkedList<TValue>();
 
         /// <summary>
         /// Also acts as a synchronization root.
         /// </summary>
-        private readonly Dictionary<BlockOffset, LinkedListNode<IBlock>> _pointerTable =
-            new Dictionary<BlockOffset, LinkedListNode<IBlock>>();
+        private readonly Dictionary<TKey, LinkedListNode<TValue>> _pointerTable =
+            new Dictionary<TKey, LinkedListNode<TValue>>();
 
         public LastAccessCache(int capacity)
         {
@@ -26,12 +25,12 @@ namespace Panda.Core.Internal
 
         public int Capacity { get; set; }
 
-        public void RegisterAccess(IBlock reference)
+        public void RegisterAccess(TValue reference)
         {
             lock (_pointerTable)
             {
-                LinkedListNode<IBlock> node;
-                if (_pointerTable.TryGetValue(reference.Offset, out node))
+                LinkedListNode<TValue> node;
+                if (_pointerTable.TryGetValue(reference.CacheKey, out node))
                 {
                     _accessOrder.Remove(node);
                     _accessOrder.AddFirst(node);
@@ -42,10 +41,10 @@ namespace Panda.Core.Internal
             }
         }
 
-        public void EvictEarly(IBlock reference)
+        public void EvictEarly(TValue reference)
         {
-            LinkedListNode<IBlock> node;
-            if (_pointerTable.TryGetValue(reference.Offset, out node))
+            LinkedListNode<TValue> node;
+            if (_pointerTable.TryGetValue(reference.CacheKey, out node))
                 _accessOrder.Remove(node);
         }
 
@@ -54,12 +53,12 @@ namespace Panda.Core.Internal
             return _accessOrder.Count;
         }
 
-        private void _insert(IBlock block)
+        private void _insert(TValue item)
         {
             if (_accessOrder.Count > Capacity * 2)
                 _truncate();
-            var node = _accessOrder.AddFirst(block);
-            _pointerTable.Add(block.Offset, node);
+            var node = _accessOrder.AddFirst(item);
+            _pointerTable.Add(item.CacheKey, node);
         }
 
         private void _truncate()
@@ -67,7 +66,7 @@ namespace Panda.Core.Internal
             Debug.Assert(_accessOrder.Count >= Capacity,
                 "Access order linked list of last access cache should be truncated but has less than $Capacity entries.");
 
-            var buf = new IBlock[Capacity];
+            var buf = new TValue[Capacity];
             var i = 0;
             foreach (var n in _accessOrder.Take(Capacity))
                 buf[i++] = n;
@@ -76,10 +75,10 @@ namespace Panda.Core.Internal
             _accessOrder.AddRange(buf);
             _pointerTable.Clear();
             foreach (var node in _accessOrder.ToNodeSequence())
-                _pointerTable.Add(node.Value.Offset, node);
+                _pointerTable.Add(node.Value.CacheKey, node);
         }
 
-        protected IEnumerable<IBlock> Contents()
+        protected IEnumerable<TValue> Contents()
         {
             lock (_pointerTable)
                 foreach (var item in _accessOrder.InReverse())

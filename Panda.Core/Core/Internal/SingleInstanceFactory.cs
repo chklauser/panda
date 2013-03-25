@@ -12,7 +12,7 @@ namespace Panda.Core.Internal
         protected abstract IBlockManager BackingManager { get; }
 
         [NotNull]
-        protected abstract IBlockReferenceCache ReferenceCache { get; }
+        protected abstract IReferenceCache<IBlock> ReferenceCache { get; }
 
         #region Default implementation
 
@@ -26,7 +26,8 @@ namespace Panda.Core.Internal
         {
             [NotNull] private readonly IBlockManager _backingManager;
 
-            [NotNull] private readonly IBlockReferenceCache _referenceCache = new LastAccessCache(512);
+            [NotNull]
+            private readonly IReferenceCache<IBlock> _referenceCache = new LastAccessCache<BlockOffset, IBlock>(512);
 
             public Default([NotNull] IBlockManager backingManager)
             {
@@ -38,7 +39,7 @@ namespace Panda.Core.Internal
                 get { return _backingManager; }
             }
 
-            protected override IBlockReferenceCache ReferenceCache
+            protected override IReferenceCache<IBlock> ReferenceCache
             {
                 get { return _referenceCache; }
             }
