@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Panda.VirtualDirectory" Collapsed="true">
+    <Position X="0.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAQAAAEAAAEABAAKAYEBAQgAAgAAAAEAAAQAAAQISA=</HashCode>
+      <FileName>VirtualDirectory.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Panda.VirtualDisk" Collapsed="true">
+    <Position X="5.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAABCAAAAIAAgACgAAAAgAAAAAQAAAABAg=</HashCode>
+      <FileName>VirtualDisk.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Panda.VirtualFileSystem" Collapsed="true">
+    <Position X="7" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>VirtualFileSystem.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Panda.VirtualNode" Collapsed="true">
+    <Position X="1.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAQAAAIAAgIAAAAAAAAQAAAEAAAAAAQAAAAAAgAA=</HashCode>
+      <FileName>VirtualNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Panda.VirtualFile" Collapsed="true">
+    <Position X="2.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>VirtualNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Panda.Core.Blocks.BlockDeallocatedException" Collapsed="true">
+    <Position X="13" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Core\Blocks\BlockDeallocatedException.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Panda.Core.Blocks.DirectoryEntry" BaseTypeListCollapsed="true">
+    <Position X="15" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAJAAAAAAAAAAAgAAAAAQCAAAAAJAAAAAAAAAAAAA=</HashCode>
+      <FileName>Core\Blocks\DirectoryEntry.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Struct Name="Panda.Core.Blocks.BlockOffset" BaseTypeListCollapsed="true">
+    <Position X="16.75" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAgAAAAQAAAAAAAIAAAAAAAAAAgiA=</HashCode>
+      <FileName>Core\Blocks\BlockOffset.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Struct>
+  <Interface Name="Panda.Core.Blocks.IBlock" Collapsed="true">
+    <Position X="7.5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAA=</HashCode>
+      <FileName>Core\Blocks\IBlock.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Panda.Core.Blocks.IBlockManager">
+    <Position X="12.25" Y="5.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAIQAAAAAAQAgIAABgAAAAoAIAACAAAAQAgAAIAAE=</HashCode>
+      <FileName>Core\Blocks\IBlockManager.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Panda.Core.Blocks.IContinuationBlock">
+    <Position X="10.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAA=</HashCode>
+      <FileName>Core\Blocks\IContinuationBlock.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Panda.Core.Blocks.IDirectoryBlock">
+    <Position X="9.75" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Core\Blocks\IDirectoryBlock.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Panda.Core.Blocks.IDirectoryContinuationBlock">
+    <Position X="9.75" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAA=</HashCode>
+      <FileName>Core\Blocks\IDirectoryContinuationBlock.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Panda.Core.Blocks.IEmptyListBlock" Collapsed="true">
+    <Position X="6.5" Y="8" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAABAAAAAAAIQAEAAAAAAAAAAA=</HashCode>
+      <FileName>Core\Blocks\IEmptyListBlock.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Panda.Core.Blocks.IFileBlock">
+    <Position X="8.75" Y="9.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Core\Blocks\IFileBlock.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Panda.Core.Blocks.IFileContinuationBlock">
+    <Position X="8.75" Y="8" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAA=</HashCode>
+      <FileName>Core\Blocks\IFileContinuationBlock.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Panda.Core.Blocks.IOffsetListBlock" Collapsed="true">
+    <Position X="7.5" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAA=</HashCode>
+      <FileName>Core\Blocks\IOffsetListBlock.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="Panda.Core.Blocks.DirectoryEntryFlags">
+    <Position X="16.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Core\Blocks\DirectoryEntry.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

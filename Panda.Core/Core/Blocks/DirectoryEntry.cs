@@ -28,6 +28,17 @@ namespace Panda.Core.Blocks
             get { return _blockOffset; }
         }
 
+        public int Flags
+        {
+            get
+            {
+                throw new System.NotImplementedException();
+            }
+            set
+            {
+            }
+        }
+
         public bool Equals(DirectoryEntry other)
         {
             if (ReferenceEquals(null, other)) return false;
@@ -49,5 +60,11 @@ namespace Panda.Core.Blocks
                 return (_name.GetHashCode()*397) ^ _blockOffset.GetHashCode();
             }
         }
+    }
+
+    [Flags]
+    public enum DirectoryEntryFlags
+    {
+        Directory = 1
     }
 }

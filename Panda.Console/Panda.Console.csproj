@@ -4,15 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{C8D5E487-20B7-48DA-A811-DC0BADD492B3}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{598B1D37-AC3E-40D1-A1C1-3319C4FECB3A}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Panda</RootNamespace>
-    <AssemblyName>Panda.Core</AssemblyName>
+    <RootNamespace>Panda.Console</RootNamespace>
+    <AssemblyName>Panda.Console</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -22,6 +23,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -35,39 +37,17 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Core\Blocks\BlockDeallocatedException.cs" />
-    <Compile Include="Core\Blocks\BlockOffset.cs" />
-    <Compile Include="Core\Blocks\IContinuationBlock.cs" />
-    <Compile Include="Core\Blocks\IFileContinuationBlock.cs" />
-    <Compile Include="Core\Internal\AscendingOffsetLockingPolicy.cs" />
-    <Compile Include="Core\Blocks\IBlock.cs" />
-    <Compile Include="Core\Internal\IBlockReferenceCache.cs" />
-    <Compile Include="Core\Blocks\IDirectoryBlock.cs" />
-    <Compile Include="Core\Blocks\DirectoryEntry.cs" />
-    <Compile Include="Core\Blocks\IDirectoryContinuationBlock.cs" />
-    <Compile Include="Core\Blocks\IFileBlock.cs" />
-    <Compile Include="Core\Blocks\IEmptyListBlock.cs" />
-    <Compile Include="Core\Blocks\IBlockManager.cs" />
-    <Compile Include="Core\Internal\Extensions.cs" />
-    <Compile Include="Core\Internal\LastAccessCache.cs" />
-    <Compile Include="Core\Blocks\IOffsetListBlock.cs" />
-    <Compile Include="Core\Internal\ILockingPolicy.cs" />
-    <Compile Include="Core\Internal\SingleInstanceFactory.cs" />
-    <Compile Include="Core\Internal\VirtualDiskImpl.cs" />
-    <Compile Include="Core\OutOfDiskSpaceException.cs" />
-    <Compile Include="Core\PathUtil.cs" />
-    <Compile Include="PandaException.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="VirtualDirectory.cs" />
-    <Compile Include="VirtualDisk.cs" />
-    <Compile Include="VirtualFileSystem.cs" />
-    <Compile Include="VirtualNode.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="JetBrains.Annotations.cs" />
+    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="API.cd" />
+    <ProjectReference Include="..\Panda.Core\Panda.Core.csproj">
+      <Project>{C8D5E487-20B7-48DA-A811-DC0BADD492B3}</Project>
+      <Name>Panda.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
