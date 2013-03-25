@@ -27,12 +27,5 @@ namespace Panda.Core.Blocks
         ///  Add the specified set of free block offsets to this empty block list.
         ///  </summary><param name="freeBlockOffsets">Set of free block offsets to be added.</param><exception cref="T:System.ArgumentNullException"><paramref name="freeBlockOffsets" /> is null</exception><exception cref="T:System.ArgumentOutOfRangeException"><paramref name="freeBlockOffsets" /> does not fit entirely into this block.</exception>
         void Append(BlockOffset[] freeBlockOffsets);
-
-        /// <summary>
-        ///  Indicates how many empty block offsets this empty block list can contain.
-        ///  </summary><remarks><see cref="P:Panda.Core.Blocks.IEmptyListBlock.ListCapacity" /> minus <see cref="P:System.Collections.Generic.IReadOnlyCollection`1.Count" /> 
-        ///  equals number of empty block offsets you can add to this block until 
-        ///  a continuation block needs to be created.</remarks>
-        int ListCapacity { get; }
     }
 }
