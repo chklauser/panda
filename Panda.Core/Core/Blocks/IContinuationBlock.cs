@@ -1,6 +1,6 @@
 ﻿namespace Panda.Core.Blocks
 {
-    public interface IContinuationBlock
+    public interface IContinuationBlock : IBlock
     {
         BlockOffset? ContinuationBlock { get; set; } 
     }
