@@ -13,19 +13,18 @@ namespace Panda.Test.Unit
     [TestFixture]
     public class RawBlockManagerTests : IDisposable
     {
-        public const uint DefaultBlockSize = 16;
+        public const uint DefaultBlockSize = 32;
 
         public IRawPersistenceSpace Space;
         public IBlockManager BlockManager;
         public uint BlockCount;
         public uint BlockSize;
 
-        public unsafe void CreateSpace(uint blockCount = 16, uint blockSize = DefaultBlockSize)
+        public unsafe void CreateSpace(uint blockCount = 24, uint blockSize = DefaultBlockSize)
         {
             Space = new InMemorySpace(blockCount*blockSize);
-            var ptr = (uint*) Space.Pointer;
-            ptr[RawBlockManager.BlockCountFieldOffset] = BlockCount = blockCount;
-            ptr[RawBlockManager.BlockSizeFieldOffset] = BlockSize = blockSize;
+            RawBlockManager.DebugBackdrop((byte*) Space.Pointer,(uint) Space.Capacity);
+            RawBlockManager.Initialize(Space, BlockCount = blockCount,BlockSize = blockSize);
             BlockManager = new RawBlockManager(Space);
         }
 
@@ -86,6 +85,30 @@ namespace Panda.Test.Unit
         }
 
         [Test]
+        public void EmptyListInitialized()
+        {
+            CreateSpace();
+
+            var emptyOffset = GetUInt32At(0, RawBlockManager.EmptyListFieldOffset);
+            Assert.That(0 < emptyOffset && emptyOffset < BlockCount);
+
+            for (var i = 0; i < BlockSize; i++)
+                Assert.That(GetByteAt(emptyOffset, i), Is.EqualTo(0), "Empty block list byte #" + i);
+        }
+
+        [Test]
+        public void RootDirectoryInitialized()
+        {
+            CreateSpace();
+
+            var rootOffset = GetUInt32At(0, RawBlockManager.RootDirectoryFieldOffset);
+            Assert.That(0 < rootOffset && rootOffset < BlockCount);
+
+            for (var i = 0; i < BlockSize; i++)
+                Assert.That(GetByteAt(rootOffset, i), Is.EqualTo(0), "Root directory block byte #" + i);
+        }
+
+        [Test]
         public void ReadSingleByteAtAnyPosIntoLarge(
             // Use a number of parameter combinations
             // Yes, the expressions have to be that complicated, because NUnit is very, very
@@ -127,7 +150,7 @@ namespace Panda.Test.Unit
         }
 
         [Test, ExpectedException(typeof (ArgumentException))]
-        public void WriteDataTooLarge([Values(16u,513u)] uint blockSize)
+        public void WriteDataTooLarge([Values(RawBlockManager.MinimumBlockSize,513u)] uint blockSize)
         {
             CreateSpace(blockSize:blockSize);
 

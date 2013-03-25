@@ -13,8 +13,36 @@ namespace Panda.Core.IO
         protected internal const int RootDirectoryFieldOffset = 2;
         protected internal  const int BlockSizeFieldOffset = 1;
         protected internal  const int BlockCountFieldOffset = 0;
-
+        
         protected internal const uint DefaultBlockSize = 4096;
+
+        /// <summary>
+        /// Currently, the meta information block at the beginning takes 20 bytes. In order to have some room to grow, we
+        /// are going to go with a slightly larger minimum block size.
+        /// </summary>
+        public const uint MinimumBlockSize = 32;
+
+        /// <summary>
+        /// Initializes an area of memory with a recognizable pattern to help with debugging.
+        /// </summary>
+        /// <param name="ptr">The pointer to the start of the memory region to paint.</param>
+        /// <param name="length">The length of the memory region to pain.</param>
+        public static unsafe void DebugBackdrop(byte* ptr, uint length)
+        {
+            var end = ptr + length;
+
+            byte counter = 15;
+
+            // Fall back to byte-by-byte, slower but works regardless of alignment and processor word size
+            for (; ptr < end; ptr++)
+            {
+                *ptr = (byte) (0xe0 | counter);
+                unchecked
+                {
+                    counter++;
+                }
+            }
+        }
 
         public static unsafe void Initialize(
             [NotNull]
@@ -24,6 +52,11 @@ namespace Panda.Core.IO
             BlockOffset? rootDirectoryOffset = null,
             BlockOffset? emptyListOffset = null)
         {
+            if (blockSize < MinimumBlockSize)
+            {
+                throw new ArgumentOutOfRangeException("blockSize",blockSize,"Block size must be at least " + MinimumBlockSize + ".");
+            }
+
             var actualRootDirectoryOffset = rootDirectoryOffset ?? (BlockOffset)1;
             var actualEmptyListOffset = emptyListOffset ?? (BlockOffset) 2;
 

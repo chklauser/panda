@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace Panda.Core.Blocks
 {
+    [StructLayout(LayoutKind.Sequential)]
     public struct BlockOffset : IEquatable<BlockOffset>
     {
         public readonly uint Offset;
