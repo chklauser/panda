@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -50,6 +51,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unit\FileSystem.cs" />
     <Compile Include="Unit\FileSystemBlackBox.cs" />
+    <Compile Include="Unit\RawBlockManagerTests.cs" />
     <Compile Include="VirtualDiskManagement.cs" />
   </ItemGroup>
   <ItemGroup>
