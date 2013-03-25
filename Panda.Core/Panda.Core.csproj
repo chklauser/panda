@@ -49,7 +49,6 @@
     <Compile Include="Core\Internal\ICacheKeyed.cs" />
     <Compile Include="Core\Internal\IReferenceCache.cs" />
     <Compile Include="Core\Internal\VirtualDirectoryImpl.cs" />
-    <Compile Include="Core\Internal\IBlockReferenceCache.cs" />
     <Compile Include="Core\Blocks\IDirectoryBlock.cs" />
     <Compile Include="Core\Blocks\DirectoryEntry.cs" />
     <Compile Include="Core\Blocks\IDirectoryContinuationBlock.cs" />

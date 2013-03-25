@@ -10,8 +10,8 @@ namespace Panda.Core.Internal
 {
     class VirtualDirectoryImpl : VirtualDirectory
     {
-        private VirtualDiskImpl _disk;
-        private BlockOffset _blockOffset;
+        private readonly VirtualDiskImpl _disk;
+        private readonly BlockOffset _blockOffset;
 
         public VirtualDirectoryImpl(VirtualDiskImpl disk, BlockOffset blockOffset)
         {
@@ -21,14 +21,13 @@ namespace Panda.Core.Internal
             //_disk.BlockManager.GetDirectoryBlock().
         }
 
-        [CanBeNull]
         public override VirtualNode Navigate(string path)
         {
             // check if absolute or relative path given
-            if (Panda.Core.PathUtil.isAbsolutePath(path))
+            if (PathUtil.isAbsolutePath(path))
             {
                 // absolute path given, call Navigate on root DirectoryNode with the same path, but without /
-                _disk.Root.Navigate(path.Substring(1, path.Length));
+                return _disk.Root.Navigate(path.Substring(1, path.Length));
             }
             else
             {
@@ -37,14 +36,13 @@ namespace Panda.Core.Internal
             }
         }
 
-        [CanBeNull]
         public override VirtualNode Navigate(string[] path)
         {
             return Navigate(new Queue<string>(path));
         }
 
         /// <summary>
-        /// Overloads Navigate with Queue<string>, which is a cooler data structure for this use.
+        /// Overloads Navigate with <see cref="Queue{String}"/>, which is a cooler data structure for this use.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
