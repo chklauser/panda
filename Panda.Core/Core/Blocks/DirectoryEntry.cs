@@ -10,11 +10,14 @@ namespace Panda.Core.Blocks
 
         private readonly BlockOffset _blockOffset;
 
-        public DirectoryEntry([NotNull] string name, BlockOffset blockOffset)
+        private readonly DirectoryEntryFlags _flags;
+
+        public DirectoryEntry([NotNull] string name, BlockOffset blockOffset, DirectoryEntryFlags flags)
         {
             if (name == null) throw new ArgumentNullException("name");
             _name = name;
             _blockOffset = blockOffset;
+            _flags = flags;
         }
 
         [NotNull]
@@ -28,15 +31,17 @@ namespace Panda.Core.Blocks
             get { return _blockOffset; }
         }
 
-        public int Flags
+        public DirectoryEntryFlags Flags
         {
             get
             {
-                throw new System.NotImplementedException();
+                return _flags;
             }
-            set
-            {
-            }
+        }
+
+        public bool IsDirectory
+        {
+            get { return (Flags & DirectoryEntryFlags.Directory) == DirectoryEntryFlags.Directory; }
         }
 
         public bool Equals(DirectoryEntry other)

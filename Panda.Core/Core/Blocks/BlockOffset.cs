@@ -46,5 +46,10 @@ namespace Panda.Core.Blocks
         {
             return new BlockOffset(offset);
         }
+
+        public override string ToString()
+        {
+            return String.Format("B+{0}", Offset);
+        }
     }
 }

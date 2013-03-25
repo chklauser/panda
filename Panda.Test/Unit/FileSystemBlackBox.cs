@@ -9,7 +9,7 @@ namespace Panda.Test.Unit
     {
         public VirtualDisk Disk;
 
-        public void CreateMemDisk(int totalBlockCount = 256, int blockCapacity = 16, int dataBlockCapcity = 128)
+        public void CreateMemDisk(uint totalBlockCount = 256, int blockCapacity = 16, int dataBlockCapcity = 128)
         {
             Disk = new VirtualDiskImpl(
                 new MemBlockManager(totalBlockCount, (BlockOffset) 1, blockCapacity, dataBlockCapcity), 

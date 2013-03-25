@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace Panda.Core.Blocks
 {
@@ -116,7 +117,7 @@ namespace Panda.Core.Blocks
         /// <param name="blockOffset">The offset of the data block to write to.</param>
         /// <param name="data">The data to overwrite the data block with. If shorter than <see cref="DataBlockSize"/> will be padded with zeroes.</param>
         /// <remarks><para>Implementations may or may not guard against writing to non-allocated or non-data blocks.</para></remarks>
-        void WriteDataBlock(BlockOffset blockOffset, byte[] data);
+        void WriteDataBlock(BlockOffset blockOffset, [NotNull] byte[] data);
 
         /// <summary>
         /// Reads the specified block into the supplied array.
@@ -140,7 +141,7 @@ namespace Panda.Core.Blocks
         /// <summary>
         /// Number of blocks on the virtual disk. Also counts the "meta" block, even though it is not represented as an IBlock in the system.
         /// </summary>
-        int TotalBlockCount { get; }
+        uint TotalBlockCount { get; }
 
         /// <summary>
         /// Offset of the <see cref="IDirectoryBlock"/> of the root directory.

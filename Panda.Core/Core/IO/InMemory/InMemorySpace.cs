@@ -9,10 +9,10 @@ namespace Panda.Core.IO.InMemory
         private IntPtr _space;
         private int _disposedFlag;
 
-        public InMemorySpace(int capacity)
+        public InMemorySpace(uint capacity)
         {
             Capacity = capacity;
-            _space = Marshal.AllocHGlobal(capacity);
+            _space = Marshal.AllocHGlobal((IntPtr) capacity);
         }
 
         #region Resource disposal

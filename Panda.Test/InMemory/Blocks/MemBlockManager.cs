@@ -32,7 +32,7 @@ namespace Panda.Test.InMemory.Blocks
         // points to the next free block
         private uint _spaceBreak;
 
-        public MemBlockManager(int totalBlockCount, BlockOffset rootDirectoryBlockOffset, int metaBlockCapacity, int dataBlockCapacity)
+        public MemBlockManager(uint totalBlockCount, BlockOffset rootDirectoryBlockOffset, int metaBlockCapacity, int dataBlockCapacity)
         {
             _metaBlockCapacity = metaBlockCapacity;
             _dataBlockCapacity = dataBlockCapacity;
@@ -190,7 +190,7 @@ namespace Panda.Test.InMemory.Blocks
             }
         }
 
-        public int TotalBlockCount { get; private set; }
+        public uint TotalBlockCount { get; private set; }
         public BlockOffset RootDirectoryBlockOffset { get; private set; }
 
         public int DataBlockSize

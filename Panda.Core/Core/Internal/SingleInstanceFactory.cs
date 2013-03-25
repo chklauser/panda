@@ -248,7 +248,7 @@ namespace Panda.Core.Internal
             BackingManager.ReadDataBlock(blockOffset,destination,destinationIndex,blockIndex);
         }
 
-        public int TotalBlockCount
+        public uint TotalBlockCount
         {
             get { return BackingManager.TotalBlockCount; }
         }
