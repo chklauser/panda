@@ -7,9 +7,77 @@ namespace Panda.Core.IO
 {
     public class RawBlockManager : IBlockManager
     {
+        // change the Initialize method when you add more meta fields!
+        protected internal const int BreakFieldOffset = 4;
+        protected internal const int EmptyListFieldOffset = 3;
         protected internal const int RootDirectoryFieldOffset = 2;
         protected internal  const int BlockSizeFieldOffset = 1;
         protected internal  const int BlockCountFieldOffset = 0;
+
+        protected internal const uint DefaultBlockSize = 4096;
+
+        public static unsafe void Initialize(
+            [NotNull]
+            IRawPersistenceSpace space,
+            uint blockCount,
+            uint blockSize = DefaultBlockSize,
+            BlockOffset? rootDirectoryOffset = null,
+            BlockOffset? emptyListOffset = null)
+        {
+            var actualRootDirectoryOffset = rootDirectoryOffset ?? (BlockOffset)1;
+            var actualEmptyListOffset = emptyListOffset ?? (BlockOffset) 2;
+
+            if(actualRootDirectoryOffset.Offset >= blockCount)
+                throw new ArgumentOutOfRangeException("rootDirectoryOffset",rootDirectoryOffset,"Root directory offset is beyond the end of the disk.");
+
+            if(actualEmptyListOffset.Offset >= blockCount)
+                throw new ArgumentOutOfRangeException("emptyListOffset",emptyListOffset,"Empty list offset is beyond the end of the disk.");
+
+            var uintPtr = (uint*) space.Pointer;
+
+            uintPtr[BlockCountFieldOffset] = blockCount;
+            uintPtr[BlockSizeFieldOffset] = blockSize;
+            uintPtr[RootDirectoryFieldOffset] = actualRootDirectoryOffset.Offset;
+            uintPtr[EmptyListFieldOffset] = actualEmptyListOffset.Offset;
+            uintPtr[BreakFieldOffset] = Math.Max(actualRootDirectoryOffset.Offset, actualEmptyListOffset.Offset) + 1;
+
+            var end = ((byte*) space.Pointer) + blockSize;
+            for (var bytePtr = (byte*)&uintPtr[BreakFieldOffset + 1]; bytePtr < end; bytePtr++)
+                *bytePtr = 0;
+
+            _initZero(space, blockSize,actualRootDirectoryOffset);
+            _initZero(space, blockSize, actualEmptyListOffset);
+        }
+
+        private static unsafe void _initZero([NotNull] IRawPersistenceSpace space, uint blockSize, BlockOffset blockOffset)
+        {
+            var ptr = (byte*) space.Pointer;
+            ptr = ptr + blockSize*blockOffset.Offset;
+            var end = ptr + blockSize;
+
+            // Use platform-specific pointer size when possible
+            if (_isAligned(ptr) &&  blockSize%sizeof(void*) == 0)
+            {
+                var ptrEnd = (void*) end;
+                for (var ptrAligned = (void**) ptr; ptrAligned < ptrEnd; ptrAligned++)
+                {
+                    *ptrAligned = null;
+                }
+            }
+            else
+            {
+                // Fall back to byte-by-byte, slower but works regardless of alignment and processor word size
+                for (; ptr < end; ptr++)
+                {
+                    *ptr = 0;
+                }
+            }
+        }
+
+        private static unsafe bool _isAligned(byte* ptr)
+        {
+            return ((ulong)ptr)%(ulong)sizeof(void*) == 0;
+        }
 
         [NotNull]
         private readonly IRawPersistenceSpace _space;
