@@ -172,10 +172,10 @@ namespace JetBrains.Annotations
   /// </code>
   /// Examples of generated notifications:
   /// <list>
-  /// <item><c>NotifyChanged("Property")</c></item>
-  /// <item><c>NotifyChanged(() => Property)</c></item>
-  /// <item><c>NotifyChanged((VM x) => x.Property)</c></item>
-  /// <item><c>SetProperty(ref myField, value, "Property")</c></item>
+  /// <item><c>NotifyChanged("Flags")</c></item>
+  /// <item><c>NotifyChanged(() => Flags)</c></item>
+  /// <item><c>NotifyChanged((VM x) => x.Flags)</c></item>
+  /// <item><c>SetProperty(ref myField, value, "Flags")</c></item>
   /// </list>
   /// </example>
   [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
