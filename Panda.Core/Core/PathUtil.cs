@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 namespace Panda.Core
 {
     public class PathUtil
@@ -18,6 +19,9 @@ namespace Panda.Core
         /// <returns></returns>
         public static bool isAbsolutePath(string path)
         {
+            if (path == null)
+                throw new ArgumentNullException("path");
+            
             return path.Substring(0, 1) == VirtualFileSystem.SeparatorChar.ToString();
         }
 
@@ -28,6 +32,9 @@ namespace Panda.Core
         /// <returns></returns>
         public static string[] parsePath(string path)
         {
+            if (path == null)
+                throw new ArgumentNullException("path");
+            
             // split the path on SeparatorChar
             string[] pathArray = path.Split(VirtualFileSystem.SeparatorChar);
 

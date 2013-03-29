@@ -9,13 +9,17 @@ namespace Panda.Test.Unit
     /// If we have failures in this suite, we know that the file system implementation
     /// is to be blamed, and not the block API or the IO layer implementations.
     /// </summary>
-    [TestFixture]
+    [TestFixture]  
     public class FileSystem : FileSystemBlackBox
     {
         /// <summary>
         /// Runs before every test-routine (e.g. CreateDirectory).
         /// </summary>
         [SetUp]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic",Justification = 
+            "Setup routine must be an instance method\n" +
+        "In this file, serves mainly as an example/reference for my team mates.\n" +
+        "Also performance is not critical in unit tests (nice to have, but not ciritical, certainly not on the level of virtual vs static methods)")]
         public void SetUp()
         {
         }
@@ -24,6 +28,9 @@ namespace Panda.Test.Unit
         /// Runs after every test-routine.
         /// </summary>
         [TearDown]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Setup routine must be an instance method\n" +
+        "In this file, serves mainly as an example/reference for my team mates.\n" +
+        "Also performance is not critical in unit tests (nice to have, but not ciritical, certainly not on the level of virtual vs static methods)")]
         public void Teardown()
         {
         }

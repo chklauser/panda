@@ -8,7 +8,7 @@ namespace Panda.Core
     /// <summary>
     /// A locking policy for situations where multiple blocks must be locked at once.
     /// </summary>
-    public interface ILockingPolicy
+    internal interface ILockingPolicy
     {
         /// <summary>
         /// Blocks until locks on all supplied blocks have been acquired.

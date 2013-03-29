@@ -5,12 +5,14 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace Panda.Core.Internal
 {
     [DebuggerNonUserCode]
     public static class Extensions
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "ignored",Justification = "The very purpose of this method, is to fake usage of a value in the eyes of static analysis tools like microsoft code analysis and resharper.It looks much less disrupting than a suppression annotation or comment and is much more granular.")]
         public static void Ignore<T>(this T ignored)
         {
         }
@@ -48,11 +50,13 @@ namespace Panda.Core.Internal
             // ReSharper restore LoopCanBeConvertedToQuery
         }
 
-        public static void AddRange<T>(this ICollection<T> collection, IEnumerable<T> items)
+        public static void AddRange<T>([NotNull] this ICollection<T> collection, [NotNull] IEnumerable<T> items)
         {
             if (items == null)
                 throw new ArgumentNullException("items");
-            Contract.Requires(collection != null, "collection must not be null.");
+            if (collection == null)
+                throw new ArgumentNullException("collection");
+            Contract.EndContractBlock();
 
             foreach (var item in items)
                 collection.Add(item);
@@ -66,7 +70,9 @@ namespace Panda.Core.Internal
         /// <returns>A human-readbale string.</returns>
         public static string ToEnumerationString<T>(this IEnumerable<T> source)
         {
-            Contract.Requires(source != null, "source must not be null.");
+            if (source == null)
+                throw new ArgumentNullException("source");
+            Contract.EndContractBlock();
 
             var s = new StringBuilder();
             var hasStarted = false;
@@ -107,6 +113,10 @@ namespace Panda.Core.Internal
         /// <returns>A human-readbale string. The empty string iff <paramref name="source"/> was empty.</returns>
         public static string ToListString<T>(this IEnumerable<T> source)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            Contract.EndContractBlock();
+
             var s = new StringBuilder();
             var hasStarted = false;
             foreach (var x in source)
@@ -124,8 +134,11 @@ namespace Panda.Core.Internal
             return s.ToString();
         }
 
-        public static void MapInPlace<T>(this List<T> source, Func<T, T> func)
+        public static void MapInPlace<T>(this IList<T> source, Func<T, T> func)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            
             if (func == null)
                 throw new ArgumentNullException("func");
             Contract.Requires(source != null, "source must not be null.");
@@ -174,8 +187,11 @@ namespace Panda.Core.Internal
 
         public static LinkedList<T> ToLinkedList<T>(this IEnumerable<T> source)
         {
-            Contract.Requires(source != null);
+            if (source == null)
+                throw new ArgumentNullException("source");
+            
             Contract.Ensures(Contract.Result<LinkedList<T>>() != null);
+            Contract.EndContractBlock();
 
             var list = new LinkedList<T>();
             foreach (var item in source)
@@ -211,7 +227,7 @@ namespace Panda.Core.Internal
             }
         }
 
-        [DebuggerNonUserCode]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Justification = "This is a utility method, it is targeted at internal code, which is allowed to deal with complicated types."), DebuggerNonUserCode]
         public static IEnumerable<TResult> MapMaybe<TSource, TResult>(
             this IEnumerable<TSource> source, Func<TSource, TResult?> func) where TResult : struct
         {
@@ -265,12 +281,15 @@ namespace Panda.Core.Internal
 
         public static T TransformSome<T>(this IDictionary<T, T> mapping, T value)
         {
-            Contract.Requires(mapping != null);
+            if (mapping == null)
+                throw new ArgumentNullException("mapping");
+            Contract.EndContractBlock();
 
             T newValue;
             return mapping.TryGetValue(value, out newValue) ? newValue : value;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Justification = " Zip cannot be written without nested generic types.")]
         [DebuggerNonUserCode]
         public static IEnumerable<KeyValuePair<TLeft, TRight>> Zip<TLeft, TRight>(
             this IEnumerable<TLeft> ls,
@@ -303,11 +322,12 @@ namespace Panda.Core.Internal
             IEnumerable<TRight> rightHandSide,
             Action<TLeft, TRight> f)
         {
+            if (leftHandSide == null)
+                throw new ArgumentNullException("leftHandSide");
             if (rightHandSide == null)
                 throw new ArgumentNullException("rightHandSide");
             if (f == null)
                 throw new ArgumentNullException("f");
-            Contract.Requires(leftHandSide != null);
             Contract.EndContractBlock();
 
             using (var le = leftHandSide.GetEnumerator())
@@ -351,13 +371,14 @@ namespace Panda.Core.Internal
         public static TResult[] MapArray<TSource, TResult>(this TSource[] xs,
             Func<TSource, TResult> func)
         {
+            if (xs == null)
+                throw new ArgumentNullException("xs");
+            
             if (func == null)
                 throw new ArgumentNullException("func");
-            Contract.Requires(xs != null);
             Contract.Ensures(Contract.Result<TResult[]>() != null);
 
             Contract.EndContractBlock();
-
 
             var result = new TResult[xs.Length];
             for (var i = 0; i < xs.Length; i++)
@@ -371,10 +392,14 @@ namespace Panda.Core.Internal
                 yield return arraySegment.Array[i];
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures",Justification = "Method cannot be written without nested generic types. It is a utility function and intended to deal with messy internally used types.")]
         public static IEnumerable<LinkedListNode<T>> ToNodeSequence<T>(this LinkedList<T> list)
         {
-            Contract.Requires(list != null);
+            if (list == null)
+                throw new ArgumentNullException("list");
+            
             Contract.Ensures(Contract.Result<IEnumerable<LinkedListNode<T>>>() != null);
+            Contract.EndContractBlock();
 
             if (list.Count == 0)
                 yield break;

@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace Panda.Core.Blocks
 {
-    public interface IBlockManager
+    internal interface IBlockManager
     {
         #region Block allocation
 

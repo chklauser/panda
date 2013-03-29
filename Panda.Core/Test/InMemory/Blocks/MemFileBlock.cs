@@ -17,7 +17,7 @@ namespace Panda.Test.InMemory.Blocks
                 ThrowIfDeallocated();
                 return _size;
             }
-            private set
+            set
             {
                 ThrowIfDeallocated();
                 _size = value;

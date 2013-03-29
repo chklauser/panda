@@ -25,6 +25,9 @@ namespace Panda.Core.Internal
 
         public override VirtualNode Navigate(string path)
         {
+            if (path == null)
+                throw new ArgumentNullException("path");
+            
             // check if absolute or relative path given
             if (PathUtil.isAbsolutePath(path))
             {

@@ -37,7 +37,7 @@ namespace Panda.Test.InMemory.Blocks
             }
         }
 
-        public List<BlockOffset> Offsets
+        public IList<BlockOffset> Offsets
         {
             get
             {
@@ -71,6 +71,9 @@ namespace Panda.Test.InMemory.Blocks
 
         public void Append(BlockOffset[] freeBlockOffsets)
         {
+            if (freeBlockOffsets == null)
+                throw new ArgumentNullException("freeBlockOffsets");
+            
             ThrowIfDeallocated();
             if (_offsets.Count + freeBlockOffsets.Length > ListCapacity)
             {

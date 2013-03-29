@@ -123,7 +123,7 @@ namespace Panda.Test.InMemory.Blocks
             }
         }
 
-        public T GetBlock<T>(BlockOffset blockOffset) where T : class, IBlock
+        internal T GetBlock<T>(BlockOffset blockOffset) where T : class, IBlock
         {
             IBlock block;
             MemStored mem;
@@ -164,6 +164,9 @@ namespace Panda.Test.InMemory.Blocks
 
         public virtual void WriteDataBlock(BlockOffset blockOffset, byte[] data)
         {
+            if (data == null)
+                throw new ArgumentNullException("data");
+            
             MemStored store;
             byte[] block;
             if (_blocks.TryGetValue(blockOffset, out store) && (block = store.Data) != null)
@@ -178,9 +181,13 @@ namespace Panda.Test.InMemory.Blocks
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed", Justification = "This is an internal API that we do not expect non-C#, non-VB.NET, non-F#, non-C++/CLI code to call. Therefore, using default values is unproblematic.")]
         public void ReadDataBlock(BlockOffset blockOffset, byte[] destination, int destinationIndex = 0, int blockIndex = 0,
                                   int? count = null)
         {
+            if (destination == null)
+                throw new ArgumentNullException("destination");
+            
             MemStored store;
             byte[] block;
             if (_blocks.TryGetValue(blockOffset, out store) && (block = store.Data) != null)

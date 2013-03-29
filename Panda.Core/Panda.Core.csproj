@@ -46,6 +46,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>SingleInstanceManagers.tt</DependentUpon>
     </Compile>
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Test\InMemory\Blocks\MemBlock.cs" />
     <Compile Include="Test\InMemory\Blocks\MemBlockManager.cs" />
     <Compile Include="Test\InMemory\Blocks\MemDirectoryBase.cs" />
