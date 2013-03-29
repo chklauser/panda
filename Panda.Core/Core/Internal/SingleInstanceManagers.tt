@@ -14,7 +14,7 @@ using Panda.Core.Internal;
 
 <# 
 	Impl[] implementationClasses = new Impl[] {
-		//new Impl { T = "Panda.Core.IO.RawBlockManager", CtorParams = "IRawPersistenceSpace persistenceSpace", CtorArgs = "persistenceSpace" },
+		new Impl { T = "Panda.Core.IO.RawBlockManager", CtorParams = "IRawPersistenceSpace persistenceSpace", CtorArgs = "persistenceSpace" },
 		new Impl { T = "Panda.Test.InMemory.Blocks.MemBlockManager", CtorParams = "uint totalBlockCount, BlockOffset rootDirectoryBlockOffset, int metaBlockCapacity, int dataBlockCapacity", CtorArgs = "totalBlockCount, rootDirectoryBlockOffset, metaBlockCapacity, dataBlockCapacity"}
 	};
 	foreach(var impl in implementationClasses) {

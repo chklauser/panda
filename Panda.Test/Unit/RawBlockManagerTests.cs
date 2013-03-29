@@ -25,7 +25,7 @@ namespace Panda.Test.Unit
             Space = new InMemorySpace(blockCount*blockSize);
             RawBlockManager.DebugBackdrop((byte*) Space.Pointer,(uint) Space.Capacity);
             RawBlockManager.Initialize(Space, BlockCount = blockCount,BlockSize = blockSize);
-            BlockManager = new RawBlockManager(Space);
+            BlockManager = SingleInstanceRawBlockManager.Create(Space);
         }
 
         public unsafe byte GetByteAt(uint blockOffset, int blockIndex)

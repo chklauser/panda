@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using Panda.Core.Blocks;
+using Panda.Core.Internal;
 
 namespace Panda.Core.IO
 {
@@ -13,7 +14,6 @@ namespace Panda.Core.IO
         protected internal const int RootDirectoryFieldOffset = 2;
         protected internal  const int BlockSizeFieldOffset = 1;
         protected internal  const int BlockCountFieldOffset = 0;
-        
         protected internal const uint DefaultBlockSize = 4096;
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace Panda.Core.IO
         }
 
         [NotNull]
-        private readonly IRawPersistenceSpace _space;
+        private readonly IRawPersistenceSpace _space; 
 
         public RawBlockManager(IRawPersistenceSpace space)
         {
@@ -133,57 +133,62 @@ namespace Panda.Core.IO
 
         #region BlockManager API
 
-        public IDirectoryBlock AllocateDirectoryBlock()
+        protected BlockOffset AllocateBlock()
         {
             throw new NotImplementedException();
         }
 
-        public IDirectoryContinuationBlock AllocateDirectoryContinuationBlock()
+        public virtual IDirectoryBlock AllocateDirectoryBlock()
         {
             throw new NotImplementedException();
         }
 
-        public IFileBlock AllocateFileBlock()
+        public virtual IDirectoryContinuationBlock AllocateDirectoryContinuationBlock()
         {
             throw new NotImplementedException();
         }
 
-        public IFileContinuationBlock AllocateFileContinuationBlock()
+        public virtual IFileBlock AllocateFileBlock()
         {
             throw new NotImplementedException();
         }
 
-        public BlockOffset AllocateDataBlock()
+        public virtual IFileContinuationBlock AllocateFileContinuationBlock()
         {
             throw new NotImplementedException();
         }
 
-        public void FreeBlock(BlockOffset blockOffset)
+        public virtual BlockOffset AllocateDataBlock()
         {
             throw new NotImplementedException();
         }
 
-        public IDirectoryBlock GetDirectoryBlock(BlockOffset blockOffset)
+        public virtual void FreeBlock(BlockOffset blockOffset)
         {
             throw new NotImplementedException();
         }
 
-        public IDirectoryContinuationBlock GetDirectoryContinuationBlock(BlockOffset blockOffset)
+        public virtual IDirectoryBlock GetDirectoryBlock(BlockOffset blockOffset)
         {
             throw new NotImplementedException();
         }
 
-        public IFileBlock GetFileBlock(BlockOffset blockOffset)
+        public virtual IDirectoryContinuationBlock GetDirectoryContinuationBlock(BlockOffset blockOffset)
         {
             throw new NotImplementedException();
         }
 
-        public IFileContinuationBlock GetFileContinuationBlock(BlockOffset blockOffset)
+        public virtual IFileBlock GetFileBlock(BlockOffset blockOffset)
         {
             throw new NotImplementedException();
         }
 
-        public unsafe void WriteDataBlock(BlockOffset blockOffset, byte[] data)
+        public virtual IFileContinuationBlock GetFileContinuationBlock(BlockOffset blockOffset)
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual unsafe void WriteDataBlock(BlockOffset blockOffset, byte[] data)
         {
             if (data == null)
                 throw new ArgumentNullException("data");
@@ -207,7 +212,7 @@ namespace Panda.Core.IO
                 *ptr = 0;
         }
 
-        public unsafe void ReadDataBlock(BlockOffset blockOffset, byte[] destination, int destinationIndex = 0,
+        public virtual unsafe void ReadDataBlock(BlockOffset blockOffset, byte[] destination, int destinationIndex = 0,
                                   int blockIndex = 0,
                                   int? count = null)
         {
@@ -278,6 +283,34 @@ namespace Panda.Core.IO
         protected IRawPersistenceSpace Space
         {
             get { return _space; }
+        }
+
+        protected unsafe BlockOffset EmptyList
+        {
+            get
+            {
+                var uintPtr = (uint*)Space.Pointer;
+                return (BlockOffset)uintPtr[EmptyListFieldOffset];
+            }
+            set
+            {
+                var uintPtr = (uint*)Space.Pointer;
+                uintPtr[EmptyListFieldOffset] = value.Offset;
+            }
+        }
+
+        protected unsafe BlockOffset Break
+        {
+            get
+            {
+                var uintPtr = (uint*)Space.Pointer;
+                return (BlockOffset) uintPtr[BreakFieldOffset];
+            }
+            set
+            {
+                var uintPtr = (uint*)Space.Pointer;
+                uintPtr[BreakFieldOffset] = value.Offset;
+            }
         }
 
     }

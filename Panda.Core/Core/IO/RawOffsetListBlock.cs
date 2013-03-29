@@ -3,97 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Panda.Core.Blocks;
-using Panda.Core.Internal;
 
 namespace Panda.Core.IO
 {
-    public class RawBlock : IBlock
-    {
-        private readonly IRawPersistenceSpace _space;
-        private readonly BlockOffset _offset;
-        private readonly uint _blockSize;
-        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
-
-        public RawBlock([NotNull] IRawPersistenceSpace space, BlockOffset offset, uint blockSize)
-        {
-            _space = space;
-            _offset = offset;
-            _blockSize = blockSize;
-        }
-
-        public IRawPersistenceSpace Space
-        {
-            get { return _space; }
-        }
-
-        public BlockOffset Offset
-        {
-            get { return _offset; }
-        }
-
-        public unsafe void* ThisPointer
-        {
-            get { return ((byte*) Space.Pointer) + BlockSize*Offset.Offset; }
-        }
-
-        public ReaderWriterLockSlim Lock
-        {
-            get { return _lock; }
-        }
-
-        BlockOffset ICacheKeyed<BlockOffset>.CacheKey
-        {
-            get { return Offset; }
-        }
-
-        public uint BlockSize
-        {
-            get { return _blockSize; }
-        }
-    }
-
-    public class RawContinuedBlock : RawBlock, IContinuationBlock
-    {
-        public RawContinuedBlock(IRawPersistenceSpace space, BlockOffset offset, uint blockSize) : base(space, offset, blockSize)
-        {
-        }
-
-        protected unsafe BlockOffset* ContinuationBlockSlot
-        {
-            get
-            {
-                return (BlockOffset*)(((byte*)ThisPointer) + BlockSize - sizeof(BlockOffset));
-            }
-        }
-
-        public unsafe BlockOffset? ContinuationBlock
-        {
-            get
-            {
-                var bo = *ContinuationBlockSlot;
-                if (bo.Offset == 0)
-                    return null;
-                else
-                    return bo;
-            }
-            set
-            {
-                if (value == null)
-                {
-                    *ContinuationBlockSlot = (BlockOffset)0;
-                }
-                else
-                {
-                    *ContinuationBlockSlot = value.Value;
-                }
-            }
-        }
-    }
-
     public class RawOffsetListBlock : RawContinuedBlock, IEmptyListBlock, IFileContinuationBlock
     {
         public RawOffsetListBlock([NotNull] IRawPersistenceSpace space, BlockOffset offset, uint size)
@@ -101,9 +16,33 @@ namespace Panda.Core.IO
         {
         }
 
+        unsafe uint _getUIntAt(int index)
+        {
+            var ptr = (uint*) ThisPointer;
+            return ptr[index];
+        }
+
         public IEnumerator<BlockOffset> GetEnumerator()
         {
-            throw new NotImplementedException();
+            // Iterate over offsets until we reach a null entry or the end of the block.
+            for (var i = 0; i < ListCapacity; i++)
+            {
+                // The first uint is meta information (total offset count/file size)
+                var value = _getUIntAt(i + MetaDataPrefixUInt32Count);
+                if(value == 0)
+                    yield break;
+                else
+                    yield return (BlockOffset) value;
+            }
+        }
+
+        /// <summary>
+        /// The number of UInt32 fields at the beginning of the offset block.
+        /// Contains information about the block (total offset count, file size, etc.)
+        /// </summary>
+        protected virtual int MetaDataPrefixUInt32Count
+        {
+            get { return 1; }
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -130,24 +69,83 @@ namespace Panda.Core.IO
             }
         }
 
-        public void ReplaceOffsets(BlockOffset[] offsets)
+        public unsafe void ReplaceOffsets(BlockOffset[] offsets)
         {
-            throw new NotImplementedException();
+            if (offsets.Length > ListCapacity)
+            {
+                throw new ArgumentOutOfRangeException("offsets",offsets.Length,"Not all block offsets fit into this block.");
+            }
+
+            // Replace all offsets in the block with the supplied offsets, 
+            // padding with 0 if the array is too short.
+            // 
+
+            var ptr = ((uint*) ThisPointer)+MetaDataPrefixUInt32Count;
+            
+            for (var i = 0; i < ListCapacity; i++)
+            {
+                if (i < offsets.Length)
+                {
+                    ptr[i] = offsets[i].Offset;
+                }
+                else
+                {
+                    ptr[i] = 0u;
+                }
+            }
         }
 
         public unsafe int TotalFreeBlockCount
         {
             get { return (int) (*((uint*) ThisPointer)); }
+            set
+            {
+                if(value < 0)
+                    throw new ArgumentOutOfRangeException("value",value,"TotalFreeBlockCount cannot be negative.");
+                *((uint*) ThisPointer) = (uint) value;
+            }
         }
 
         public BlockOffset[] Remove(int count)
         {
-            throw new NotImplementedException();
+            var offsets = this.ToArray();
+            if (offsets.Length < count)
+            {
+                throw new ArgumentOutOfRangeException("count",count,"Not enough offsets in the block to satisfy the remove request.");
+            }
+
+            // Move offsets to result, setting them to 0 in the offset-arry
+            var result = new BlockOffset[count];
+            for (var i = 0; i < result.Length; i++)
+            {
+                var revIdx = offsets.Length - 1 - i;
+                result[i] = offsets[revIdx];
+                offsets[revIdx] = (BlockOffset) 0;
+            }
+
+            // Write back the modified offsets
+            ReplaceOffsets(offsets);
+
+            // Also update the free block count
+            TotalFreeBlockCount -= count;
+
+            return result;
         }
 
         public void Append(BlockOffset[] freeBlockOffsets)
         {
-            throw new NotImplementedException();
+            // This is a very simplistic implementation of append:
+            //  reading the entire blocklist, appending the new offsets in memory and
+            //  then writing the entire list back.
+
+            // A more sophisticated implementation would just write the modified entries.
+            var offsets = this.ToList();
+            offsets.AddRange(freeBlockOffsets);
+            if(offsets.Count > ListCapacity)
+                throw new ArgumentOutOfRangeException("freeBlockOffsets",freeBlockOffsets.Length,"Not all offsets fit into this block.");
+
+            ReplaceOffsets(offsets.ToArray());
+            TotalFreeBlockCount += freeBlockOffsets.Length;
         }
     }
 }
