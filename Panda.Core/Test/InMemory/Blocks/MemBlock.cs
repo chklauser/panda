@@ -5,7 +5,7 @@ using Panda.Core.Internal;
 
 namespace Panda.Test.InMemory.Blocks
 {
-    public abstract class MemBlock : IBlock
+    public abstract class MemBlock : IContinuationBlock
     {
         private BlockOffset? _continuationBlock;
         private readonly BlockOffset _offset;
@@ -34,7 +34,7 @@ namespace Panda.Test.InMemory.Blocks
         }
 
         // This is not used by all sub blocks, but for a mock class, it won't hurt
-        public BlockOffset? ContinuationBlock
+        public BlockOffset? ContinuationBlockOffset
         {
             get
             {

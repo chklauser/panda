@@ -72,7 +72,6 @@
     <Compile Include="Core\Internal\LastAccessCache.cs" />
     <Compile Include="Core\Blocks\IOffsetListBlock.cs" />
     <Compile Include="Core\Internal\ILockingPolicy.cs" />
-    <Compile Include="Core\Internal\SingleInstanceFactory.cs" />
     <Compile Include="Core\Internal\VirtualDiskImpl.cs" />
     <Compile Include="Core\IO\InMemory\InMemorySpace.cs" />
     <Compile Include="Core\IO\IPersistenceSpace.cs" />

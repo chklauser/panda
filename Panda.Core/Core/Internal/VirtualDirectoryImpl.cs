@@ -121,10 +121,10 @@ namespace Panda.Core.Internal
             }
 
             // do while we have continuation blocks iterate over DirectoryContinuationBlock(s) => DirectoryEntries
-            while (currentDirectoryBlock.ContinuationBlock != null)
+            while (currentDirectoryBlock.ContinuationBlockOffset != null)
             {
-                // .Value is needed because ContinuationBlock is nullable
-                currentDirectoryBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentDirectoryBlock.ContinuationBlock.Value);
+                // .Value is needed because ContinuationBlockOffset is nullable
+                currentDirectoryBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentDirectoryBlock.ContinuationBlockOffset.Value);
                 foreach (DirectoryEntry de in currentDirectoryBlock)
                 {
                     // DirectoryEntry tells me if file or directory
@@ -201,9 +201,9 @@ namespace Panda.Core.Internal
             // if node wasn't added, try to add the DirectoryEntry to any DirectoryContinuationBlock of this DirectoryBlock
             if (!nodeAdded)
             {
-                while (currentBlock.ContinuationBlock.HasValue)
+                while (currentBlock.ContinuationBlockOffset.HasValue)
                 {
-                    currentBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentBlock.ContinuationBlock.Value);
+                    currentBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentBlock.ContinuationBlockOffset.Value);
                     if (currentBlock.TryAddEntry(de))
                     {
                         nodeAdded = true;
@@ -219,7 +219,7 @@ namespace Panda.Core.Internal
                 // create a new DirectoryContinuationBlock
                 IDirectoryContinuationBlock newBlock = _disk.BlockManager.AllocateDirectoryContinuationBlock();
                 // link it to the last ContinuationBlock seen
-                currentBlock.ContinuationBlock = newBlock.Offset;
+                currentBlock.ContinuationBlockOffset = newBlock.Offset;
                 // add DirectoryEntry to it
                 if (!newBlock.TryAddEntry(de))
                 {
