@@ -235,11 +235,6 @@ namespace Panda.Core.Internal
             throw new NotImplementedException();
         }
 
-        public override VirtualNode this[string name]
-        {
-            get { throw new NotImplementedException(); }
-        }
-
         public override string Name
         {
             get { return _name; }

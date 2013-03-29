@@ -40,6 +40,7 @@
     <Compile Include="Core\Blocks\BlockOffset.cs" />
     <Compile Include="Core\Blocks\IContinuationBlock.cs" />
     <Compile Include="Core\Blocks\IFileContinuationBlock.cs" />
+    <Compile Include="Core\Internal\VirtualRootDirectoryImpl.cs" />
     <Compile Include="VirtualFile.cs" />
     <Compile Include="Core\Internal\VirtualFileImpl.cs" />
     <Compile Include="Core\PathNotFoundException.cs" />

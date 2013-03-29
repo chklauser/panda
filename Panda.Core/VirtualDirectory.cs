@@ -158,7 +158,17 @@ namespace Panda
             return TryGetNode(name, out value);
         }
 
-        public abstract VirtualNode this[string name] { get; }
+        public VirtualNode this[string name]
+        {
+            get
+            {
+                VirtualNode node;
+                if (!TryGetNode(name, out node))
+                {
+                    throw new PandaException("Node not found");
+                }
+            }
+        }
 
         IEnumerable<string> IReadOnlyDictionary<string, VirtualNode>.Keys
         {
