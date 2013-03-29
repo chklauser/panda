@@ -39,6 +39,10 @@ namespace Panda.Test.InMemory.Blocks
             _spaceBreak = RootDirectoryBlockOffset.Offset + 1;
             for (var i = 1u; i < RootDirectoryBlockOffset.Offset; i++)
                 _freeBlockOffsets.Push((BlockOffset) i);
+
+// ReSharper disable DoNotCallOverridableMethodsInConstructor
+            Track(new MemDirectoryBlock(RootDirectoryBlockOffset, MetaBlockCapacity));
+// ReSharper restore DoNotCallOverridableMethodsInConstructor
         }
 
         protected virtual T Track<T>(T block) where T : IBlock
