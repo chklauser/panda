@@ -144,7 +144,8 @@ namespace Panda.Core.Internal
 
         public override bool Contains(string name)
         {
-            throw new NotImplementedException();
+            VirtualNode vn;
+            return TryGetNode(name, out vn);
         }
 
         public override bool TryGetNode(string name, out VirtualNode value)
