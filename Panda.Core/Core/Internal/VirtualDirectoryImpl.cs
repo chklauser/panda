@@ -112,11 +112,11 @@ namespace Panda.Core.Internal
                 // return this node
                 if (de.IsDirectory)
                 {
-                    yield return new VirtualDirectoryImpl(_disk, de.BlockOffset);
+                    yield return new VirtualDirectoryImpl(_disk, de.BlockOffset, this, de.Name);
                 }
                 else
                 {
-                    yield return new VirtualFileImpl(_disk, de.BlockOffset);
+                    yield return new VirtualFileImpl(_disk, de.BlockOffset, this, de.Name);
                 }
             }
 
@@ -131,11 +131,11 @@ namespace Panda.Core.Internal
                     // return the corresponding VirtualNode
                     if (de.IsDirectory)
                     {
-                        yield return new VirtualDirectoryImpl(_disk, de.BlockOffset);
+                        yield return new VirtualDirectoryImpl(_disk, de.BlockOffset, this, de.Name);
                     }
                     else
                     {
-                        yield return new VirtualFileImpl(_disk, de.BlockOffset);
+                        yield return new VirtualFileImpl(_disk, de.BlockOffset, this, de.Name);
                     }
                 }
             } 
@@ -227,7 +227,7 @@ namespace Panda.Core.Internal
                 }
             }
 
-            return new VirtualDirectoryImpl(_disk, db.Offset, name);
+            return new VirtualDirectoryImpl(_disk, db.Offset, this, name);
         }
 
         public override Task<VirtualFile> CreateFileAsync(string name, System.IO.Stream dataSource)

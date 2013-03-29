@@ -167,6 +167,7 @@ namespace Panda
                 {
                     throw new PandaException("Node not found");
                 }
+                return node;
             }
         }
 
