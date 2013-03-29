@@ -12,10 +12,20 @@ namespace Panda.Test.Unit
     [TestFixture]
     public class FileSystem : FileSystemBlackBox
     {
+        /// <summary>
+        /// Runs before every test-routine (e.g. CreateDirectory).
+        /// </summary>
         [SetUp]
         public void SetUp()
         {
+        }
 
+        /// <summary>
+        /// Runs after every test-routine.
+        /// </summary>
+        [TearDown]
+        public void Teardown()
+        {
         }
 
         [Test]
