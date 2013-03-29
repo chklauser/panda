@@ -14,6 +14,7 @@ namespace Panda.Core.Internal
         private readonly VirtualDirectoryImpl _parentDirectory;
         private readonly string _name;
 
+
         public VirtualFileImpl(VirtualDiskImpl disk, BlockOffset blockOffset, VirtualDirectoryImpl parentDirectory, string name)
         {
             _disk = disk;
@@ -59,7 +60,34 @@ namespace Panda.Core.Internal
 
         public override void Delete()
         {
-            throw new NotImplementedException();
+            // delete directoryEntry of current Block
+            var tupel = _parentDirectory.FindDirectoryEntry(_blockOffset);
+            tupel.Item2.DeleteEntry(tupel.Item1);
+
+            // gather all ContinuationBlocks:
+            var toDeleteBlocks = new List<BlockOffset> {_blockOffset};
+            var fileBlock = _disk.BlockManager.GetFileBlock(_blockOffset);
+            var continuationBlock = fileBlock.ContinuationBlock;
+            while (continuationBlock.HasValue)
+            {
+                toDeleteBlocks.Add(continuationBlock.Value);
+                var fileContinuationBlock = _disk.BlockManager.GetFileContinuationBlock(continuationBlock.Value);
+                continuationBlock = fileContinuationBlock.ContinuationBlock;
+                foreach (var offset in fileContinuationBlock)
+                {
+                    _disk.BlockManager.FreeBlock(offset);
+                }
+            }
+            foreach (var offset in fileBlock)
+            {
+                _disk.BlockManager.FreeBlock(offset);
+            }
+
+            // delete block and all ContinuationBlocks:
+            foreach (var de in toDeleteBlocks)
+            {
+                _disk.BlockManager.FreeBlock(de);
+            }
         }
 
         public override void Move(VirtualDirectory destination, string newName)

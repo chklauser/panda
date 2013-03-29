@@ -141,6 +141,36 @@ namespace Panda.Core.Internal
             } 
         }
 
+        public Tuple<DirectoryEntry, IDirectoryContinuationBlock> FindDirectoryEntry(BlockOffset blockOffset)
+        {
+            // first currentDirectoryBlock
+            IDirectoryContinuationBlock currentDirectoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
+            foreach (var de in currentDirectoryBlock)
+            {
+                if (blockOffset == _blockOffset)
+                {
+                    return Tuple.Create(de, currentDirectoryBlock);
+                }
+            }
+
+            // search in ContinuationBlocks
+            while (currentDirectoryBlock.ContinuationBlock != null)
+            {
+                // .Value is needed because ContinuationBlock is nullable
+                currentDirectoryBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentDirectoryBlock.ContinuationBlock.Value);
+                foreach (DirectoryEntry de in currentDirectoryBlock)
+                {
+                    if (blockOffset == _blockOffset)
+                    {
+                        return Tuple.Create(de, currentDirectoryBlock);
+                    }
+                }
+            }
+
+            // DirectoryEntry not found!
+            throw new PandaException("DirectoryEntry not found!");
+        }
+
         public override int Count
         {
             get
