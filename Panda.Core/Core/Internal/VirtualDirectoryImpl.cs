@@ -149,15 +149,16 @@ namespace Panda.Core.Internal
 
         public override bool TryGetNode(string name, out VirtualNode value)
         {
-            throw new NotImplementedException();
-            //foreach (DirectoryEntry de in _disk.BlockManager.GetDirectoryBlock(_blockOffset))
-            //{
-            //    if (de.Name == name)
-            //    {
-            //        //if (de.)
-            //        //return _disk.BlockManager.get de.BlockOffset
-            //    }
-            //}
+            foreach (VirtualNode vn in this)
+            {
+                if (vn.Name == name)
+                {
+                    value = vn;
+                    return true;
+                }
+            }
+            value = null;
+            return false;
         }
 
         public override Task<VirtualNode> ImportAsync(string path)

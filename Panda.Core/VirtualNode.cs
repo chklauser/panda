@@ -8,10 +8,16 @@ namespace Panda
     {
         #region Meta information
 
+        /// <summary>
+        /// Name of current Directory/File.
+        /// </summary>
         [PublicAPI]
         [NotNull]
         public abstract string Name { get; }
 
+        /// <summary>
+        /// Full path of current Directory/File.
+        /// </summary>
         [PublicAPI]
         [NotNull]
         public abstract string FullName { get; }
