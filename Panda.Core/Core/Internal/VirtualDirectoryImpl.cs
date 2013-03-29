@@ -17,8 +17,6 @@ namespace Panda.Core.Internal
         {
             _disk = disk;
             _blockOffset = blockOffset;
-            // read infos from directory block
-            //_disk.BlockManager.GetDirectoryBlock().
         }
 
         public override VirtualNode Navigate(string path)
@@ -99,7 +97,44 @@ namespace Panda.Core.Internal
 
         public override IEnumerator<VirtualNode> GetEnumerator()
         {
-            throw new NotImplementedException();
+            // get first offset (of current DirectoryBlock)
+            IDirectoryContinuationBlock currentDirectoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
+
+            // iterate over current DirectoryBlock and return VirtualNodes => DirectoryEntries
+            foreach (DirectoryEntry de in currentDirectoryBlock)
+            {
+                // DirectoryEntry => tells me if file or directory
+                // => call getdirectoryblock / getfileblock
+                // return this node
+                if (de.IsDirectory)
+                {
+                    yield return new VirtualDirectoryImpl(_disk, de.BlockOffset);
+                }
+                else
+                {
+                    yield return new VirtualFileImpl(_disk, de.BlockOffset);
+                }
+            }
+
+            // do while we have continuation blocks iterate over DirectoryContinuationBlock(s) => DirectoryEntries
+            while (currentDirectoryBlock.ContinuationBlock != null)
+            {
+                // .Value is needed because ContinuationBlock is nullable
+                currentDirectoryBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentDirectoryBlock.ContinuationBlock.Value);
+                foreach (DirectoryEntry de in currentDirectoryBlock)
+                {
+                    // DirectoryEntry tells me if file or directory
+                    // return the corresponding VirtualNode
+                    if (de.IsDirectory)
+                    {
+                        yield return new VirtualDirectoryImpl(_disk, de.BlockOffset);
+                    }
+                    else
+                    {
+                        yield return new VirtualFileImpl(_disk, de.BlockOffset);
+                    }
+                }
+            } 
         }
 
         public override int Count
