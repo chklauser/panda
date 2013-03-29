@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
-using NUnit.Framework;
 using Panda.Core;
 using Panda.Core.Blocks;
 
@@ -65,27 +63,27 @@ namespace Panda.Test.InMemory.Blocks
             }
         }
 
-        public IDirectoryBlock AllocateDirectoryBlock()
+        public virtual IDirectoryBlock AllocateDirectoryBlock()
         {
             return Track(new MemDirectoryBlock(AllocateBlockOffset(),MetaBlockCapacity));
         }
 
-        public IDirectoryContinuationBlock AllocateDirectoryContinuationBlock()
+        public virtual IDirectoryContinuationBlock AllocateDirectoryContinuationBlock()
         {
             return Track(new MemDirectoryContinuationBlock(AllocateBlockOffset(),MetaBlockCapacity));
         }
 
-        public IFileBlock AllocateFileBlock()
+        public virtual IFileBlock AllocateFileBlock()
         {
             return Track(new MemFileBlock(AllocateBlockOffset(),MetaBlockCapacity));
         }
 
-        public IFileContinuationBlock AllocateFileContinuationBlock()
+        public virtual IFileContinuationBlock AllocateFileContinuationBlock()
         {
             return Track(new MemOffsetList(AllocateBlockOffset(),MetaBlockCapacity));
         }
 
-        public BlockOffset AllocateDataBlock()
+        public virtual BlockOffset AllocateDataBlock()
         {
             var offset = AllocateBlockOffset();
             var dataBlock = new byte[DataBlockSize];
@@ -93,7 +91,7 @@ namespace Panda.Test.InMemory.Blocks
             return offset;
         }
 
-        public void FreeBlock(BlockOffset blockOffset)
+        public virtual void FreeBlock(BlockOffset blockOffset)
         {
             MemStored mem;
             if (_blocks.TryGetValue(blockOffset,out mem))
@@ -124,7 +122,6 @@ namespace Panda.Test.InMemory.Blocks
             MemStored mem;
             if (_blocks.TryGetValue(blockOffset, out mem) && (block = mem.Block) != null)
             {
-                Assert.IsAssignableFrom<T>(block,"The block at offset {0} does not have the expected type. If this were a real file system, you'd be dead now.",blockOffset);
                 return (T) block;
             }
             else if (mem != null)
@@ -138,27 +135,27 @@ namespace Panda.Test.InMemory.Blocks
             }
         }
 
-        public IDirectoryBlock GetDirectoryBlock(BlockOffset blockOffset)
+        public virtual IDirectoryBlock GetDirectoryBlock(BlockOffset blockOffset)
         {
             return GetBlock<IDirectoryBlock>(blockOffset);
         }
 
-        public IDirectoryContinuationBlock GetDirectoryContinuationBlock(BlockOffset blockOffset)
+        public virtual IDirectoryContinuationBlock GetDirectoryContinuationBlock(BlockOffset blockOffset)
         {
             return GetBlock<IDirectoryContinuationBlock>(blockOffset);
         }
 
-        public IFileBlock GetFileBlock(BlockOffset blockOffset)
+        public virtual IFileBlock GetFileBlock(BlockOffset blockOffset)
         {
             return GetBlock<IFileBlock>(blockOffset);
         }
 
-        public IFileContinuationBlock GetFileContinuationBlock(BlockOffset blockOffset)
+        public virtual IFileContinuationBlock GetFileContinuationBlock(BlockOffset blockOffset)
         {
             return GetBlock<IFileContinuationBlock>(blockOffset);
         }
 
-        public void WriteDataBlock(BlockOffset blockOffset, byte[] data)
+        public virtual void WriteDataBlock(BlockOffset blockOffset, byte[] data)
         {
             MemStored store;
             byte[] block;

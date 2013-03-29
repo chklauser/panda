@@ -1,0 +1,295 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using JetBrains.Annotations;
+using Panda.Core.Blocks;
+using Panda.Core.Internal;
+
+<# 
+	Impl[] implementationClasses = new Impl[] {
+		//new Impl { T = "Panda.Core.IO.RawBlockManager", CtorParams = "IRawPersistenceSpace persistenceSpace", CtorArgs = "persistenceSpace" },
+		new Impl { T = "Panda.Test.InMemory.Blocks.MemBlockManager", CtorParams = "uint totalBlockCount, BlockOffset rootDirectoryBlockOffset, int metaBlockCapacity, int dataBlockCapacity", CtorArgs = "totalBlockCount, rootDirectoryBlockOffset, metaBlockCapacity, dataBlockCapacity"}
+	};
+	foreach(var impl in implementationClasses) {
+		var T = impl.T;
+		var nsIdx = T.LastIndexOf('.');
+		var TName = T.Substring(nsIdx+1,T.Length-nsIdx-1);
+		var TNs = T.Substring(0,nsIdx);
+		var ctorArgsExt = String.IsNullOrEmpty(impl.CtorArgs) ? "" : ", " + impl.CtorArgs;
+		var ctorParamsExt = String.IsNullOrEmpty(impl.CtorParams) ? "" : ", " + impl.CtorParams;
+		var ctorArgs = String.IsNullOrEmpty(impl.CtorArgs) ? "" : impl.CtorArgs;
+		var ctorParams = String.IsNullOrEmpty(impl.CtorParams) ? "" : impl.CtorParams;
+		var siName = "SingleInstance" + TName;
+#>
+//<#=nsIdx#>
+namespace <#=TNs#>
+{
+    public abstract class <#=siName#> : <#=T#>
+    {
+        [NotNull]
+        protected abstract IReferenceCache<IBlock> ReferenceCache { get; }
+
+        #region Default implementation
+
+        [NotNull]
+        public static <#=siName#> Create(<#=ctorParams#>)
+        {
+            return new Default(<#=ctorArgs#>);
+        }
+
+		public <#=siName#>(<#=ctorParams#>) : base(<#=ctorArgs#>)
+		{
+		}
+
+        private class Default : <#=siName#>
+        {
+            [NotNull]
+            private readonly IReferenceCache<IBlock> _referenceCache = new LastAccessCache<BlockOffset, IBlock>(512);
+
+            public Default(<#=ctorParams#>) : base(<#=ctorArgs#>)
+            {
+            }
+
+            protected override IReferenceCache<IBlock> ReferenceCache
+            {
+                get { return _referenceCache; }
+            }
+        }
+
+        #endregion
+
+        private readonly Dictionary<BlockOffset, WeakReference<IBlock>> _existingBlocks =
+            new Dictionary<BlockOffset, WeakReference<IBlock>>();
+
+        private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+
+        protected SemaphoreSlim Lock
+        {
+            get { return _lock; }
+        }
+
+        private const int GcInterval = 2048;
+
+        private void _trackNewBlock(IBlock block)
+        {
+            // assume exclusive access
+            ReferenceCache.RegisterAccess(block);
+            _existingBlocks.Add(block.Offset, new WeakReference<IBlock>(block));
+        }
+
+        protected void TrackNewBlock(IBlock block)
+        {
+            _lock.Wait();
+            try
+            {
+                _trackNewBlock(block);
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        private uint _gcCounter;
+
+        private void _handleGc()
+        {
+            // Assume exclusive access
+            if (_gcCounter++ > GcInterval)
+            {
+                _gcCounter = 0;
+                _collectGarbage();
+            }
+        }
+
+        private void _collectGarbage()
+        {
+            // assume exclusive access
+            var gced = new List<BlockOffset>();
+            foreach (var weakRefEntry in _existingBlocks)
+            {
+                IBlock dummy;
+                if (!weakRefEntry.Value.TryGetTarget(out dummy))
+                {
+                    gced.Add(weakRefEntry.Key);
+                }
+            }
+
+            foreach (var offset in gced)
+            {
+                _existingBlocks.Remove(offset);
+            }
+        }
+
+        [ContractAnnotation("=>true,block:notnull; =>false,block:null")]
+        private bool _tryGetExisting<T>(BlockOffset offset, out T block) where T : class, IBlock
+        {
+            // assume exclusive access
+            WeakReference<IBlock> weakBlock;
+            IBlock anyBlock;
+            if (_existingBlocks.TryGetValue(offset, out weakBlock)
+                && weakBlock.TryGetTarget(out anyBlock))
+            {
+                block = (T) anyBlock;
+                return true;
+            }
+            else
+            {
+                block = null;
+                return false;
+            }
+        }
+
+        public override IDirectoryBlock AllocateDirectoryBlock()
+        {
+            _handleGc();
+            var block = base.AllocateDirectoryBlock();
+            TrackNewBlock(block);
+            return block;
+        }
+
+        public override IDirectoryContinuationBlock AllocateDirectoryContinuationBlock()
+        {
+            _handleGc();
+            var block = base.AllocateDirectoryBlock();
+            TrackNewBlock(block);
+            return block;
+        }
+
+        public override IFileBlock AllocateFileBlock()
+        {
+            _handleGc();
+            var block = base.AllocateFileBlock();
+            TrackNewBlock(block);
+            return block;
+        }
+
+        public override IFileContinuationBlock AllocateFileContinuationBlock()
+        {
+            _handleGc();
+            var block = base.AllocateFileContinuationBlock();
+            TrackNewBlock(block);
+            return block;
+        }
+
+        public override void FreeBlock(BlockOffset blockOffset)
+        {
+            base.FreeBlock(blockOffset);
+
+            _lock.Wait();
+            try
+            {
+                WeakReference<IBlock> weakBlock;
+                IBlock block;
+                if (_existingBlocks.TryGetValue(blockOffset, out weakBlock) && weakBlock.TryGetTarget(out block))
+                {
+                    ReferenceCache.EvictEarly(block);
+                }
+                _handleGc();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        public override IDirectoryBlock GetDirectoryBlock(BlockOffset blockOffset)
+        {
+            _handleGc();
+			_lock.Wait();
+			try
+			{
+				IDirectoryBlock block;
+				if (!_tryGetExisting(blockOffset, out block))
+				{
+					block = base.GetDirectoryBlock(blockOffset);
+					_trackNewBlock(block);
+				}
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}
+        }
+
+        public override IDirectoryContinuationBlock GetDirectoryContinuationBlock(BlockOffset blockOffset)
+        {
+            _handleGc();
+            _lock.Wait();
+			try
+			{
+				IDirectoryContinuationBlock block;
+				if (!_tryGetExisting(blockOffset, out block))
+				{
+					block = base.GetDirectoryContinuationBlock(blockOffset);
+					_trackNewBlock(block);
+				}
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}
+        }
+
+        public override IFileBlock GetFileBlock(BlockOffset blockOffset)
+        {
+            _handleGc();
+            
+            _lock.Wait();
+			try
+			{
+				IFileBlock block;
+				if (!_tryGetExisting(blockOffset, out block))
+				{
+					block = base.GetFileBlock(blockOffset);
+					_trackNewBlock(block);
+				}
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}
+        }
+
+        public override IFileContinuationBlock GetFileContinuationBlock(BlockOffset blockOffset)
+        {
+            _handleGc();
+            _lock.Wait();
+			try
+			{
+				IFileContinuationBlock block;
+				if (!_tryGetExisting(blockOffset, out block))
+				{
+					block = base.GetFileContinuationBlock(blockOffset);
+					_trackNewBlock(block);
+				}
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}
+        }
+    }
+}
+
+<# } /* end foreach */ #>
+
+<#+ 
+	public class Impl 
+	{
+		public string T { get; set; }
+		public string CtorArgs { get; set; }
+		public string CtorParams { get; set; }
+	}
+#>

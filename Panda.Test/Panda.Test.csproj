@@ -41,13 +41,6 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InMemory\Blocks\MemBlock.cs" />
-    <Compile Include="InMemory\Blocks\MemBlockManager.cs" />
-    <Compile Include="InMemory\Blocks\MemDirectoryBase.cs" />
-    <Compile Include="InMemory\Blocks\MemDirectoryBlock.cs" />
-    <Compile Include="InMemory\Blocks\MemDirectoryContinuationBlock.cs" />
-    <Compile Include="InMemory\Blocks\MemFileBlock.cs" />
-    <Compile Include="InMemory\Blocks\MemOffsetList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unit\FileSystem.cs" />
     <Compile Include="Unit\FileSystemBlackBox.cs" />
