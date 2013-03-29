@@ -10,15 +10,17 @@ namespace Panda.Core.Internal
 {
     class VirtualDirectoryImpl : VirtualDirectory
     {
-        private readonly VirtualDiskImpl _disk;
-        private readonly BlockOffset _blockOffset;
+        protected readonly VirtualDiskImpl _disk;
+        protected readonly BlockOffset _blockOffset;
+        private readonly string _name;
+        private readonly VirtualDirectoryImpl _parentDirectory;
 
-        public VirtualDirectoryImpl(VirtualDiskImpl disk, BlockOffset blockOffset)
+        public VirtualDirectoryImpl(VirtualDiskImpl disk, BlockOffset blockOffset, VirtualDirectoryImpl parentDirectory, string name)
         {
             _disk = disk;
             _blockOffset = blockOffset;
-            // read infos from directory block
-            //_disk.BlockManager.GetDirectoryBlock().
+            _parentDirectory = parentDirectory;
+            _name = name;
         }
 
         public override VirtualNode Navigate(string path)
@@ -99,30 +101,72 @@ namespace Panda.Core.Internal
 
         public override IEnumerator<VirtualNode> GetEnumerator()
         {
-            throw new NotImplementedException();
+            // get first offset (of current DirectoryBlock)
+            IDirectoryContinuationBlock currentDirectoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
+
+            // iterate over current DirectoryBlock and return VirtualNodes => DirectoryEntries
+            foreach (DirectoryEntry de in currentDirectoryBlock)
+            {
+                // DirectoryEntry => tells me if file or directory
+                // => call getdirectoryblock / getfileblock
+                // return this node
+                if (de.IsDirectory)
+                {
+                    yield return new VirtualDirectoryImpl(_disk, de.BlockOffset, this, de.Name);
+                }
+                else
+                {
+                    yield return new VirtualFileImpl(_disk, de.BlockOffset, this, de.Name);
+                }
+            }
+
+            // do while we have continuation blocks iterate over DirectoryContinuationBlock(s) => DirectoryEntries
+            while (currentDirectoryBlock.ContinuationBlock != null)
+            {
+                // .Value is needed because ContinuationBlock is nullable
+                currentDirectoryBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentDirectoryBlock.ContinuationBlock.Value);
+                foreach (DirectoryEntry de in currentDirectoryBlock)
+                {
+                    // DirectoryEntry tells me if file or directory
+                    // return the corresponding VirtualNode
+                    if (de.IsDirectory)
+                    {
+                        yield return new VirtualDirectoryImpl(_disk, de.BlockOffset, this, de.Name);
+                    }
+                    else
+                    {
+                        yield return new VirtualFileImpl(_disk, de.BlockOffset, this, de.Name);
+                    }
+                }
+            } 
         }
 
         public override int Count
         {
-            get { throw new NotImplementedException(); }
+            get
+            {
+                return this.Count<VirtualNode>();
+            }
         }
 
         public override bool Contains(string name)
         {
-            throw new NotImplementedException();
+            VirtualNode vn;
+            return TryGetNode(name, out vn);
         }
 
         public override bool TryGetNode(string name, out VirtualNode value)
         {
-            throw new NotImplementedException();
-            //foreach (DirectoryEntry de in _disk.BlockManager.GetDirectoryBlock(_blockOffset))
-            //{
-            //    if (de.Name == name)
-            //    {
-            //        //if (de.)
-            //        //return _disk.BlockManager.get de.BlockOffset
-            //    }
-            //}
+            foreach (VirtualNode vn in this)
+            {
+                if (vn.Name == name)
+                {
+                    value = vn;
+                    return true;
+                }
+            }
+            value = null;
+            return false;
         }
 
         public override Task<VirtualNode> ImportAsync(string path)
@@ -137,7 +181,53 @@ namespace Panda.Core.Internal
 
         public override VirtualDirectory CreateDirectory(string name)
         {
-            throw new NotImplementedException();
+            bool nodeAdded = false;
+
+            // create new DirectoryBlock
+            IDirectoryBlock db = _disk.BlockManager.AllocateDirectoryBlock();
+
+            // add DirectoryEntry referencing this new Block to this DirectoryBlock or a DirectoryContinuationBlock of it
+            DirectoryEntry de = new DirectoryEntry(name, db.Offset, DirectoryEntryFlags.Directory);
+
+            // try to add the new DirectoryEntry to this DirectoryBlock or find a ContinuationBlock until its added
+            IDirectoryContinuationBlock currentBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
+
+            // try to add the DirectoryEntry to this DirectoryBlock
+            if (currentBlock.TryAddEntry(de))
+            {
+                nodeAdded = true;
+            }
+
+            // if node wasn't added, try to add the DirectoryEntry to any DirectoryContinuationBlock of this DirectoryBlock
+            if (!nodeAdded)
+            {
+                while (currentBlock.ContinuationBlock.HasValue)
+                {
+                    currentBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentBlock.ContinuationBlock.Value);
+                    if (currentBlock.TryAddEntry(de))
+                    {
+                        nodeAdded = true;
+                        break;
+                    }
+                }
+            }
+
+            // check if node was added, if not, create a new ContinuationBlock and add it there
+            if (!nodeAdded)
+            {
+                // node was not added
+                // create a new DirectoryContinuationBlock
+                IDirectoryContinuationBlock newBlock = _disk.BlockManager.AllocateDirectoryContinuationBlock();
+                // link it to the last ContinuationBlock seen
+                currentBlock.ContinuationBlock = newBlock.Offset;
+                // add DirectoryEntry to it
+                if (!newBlock.TryAddEntry(de))
+                {
+                    throw new PandaException("DirectoryEntry could not be added to a fresh, new DirectoryContinuationBlock.");
+                }
+            }
+
+            return new VirtualDirectoryImpl(_disk, db.Offset, this, name);
         }
 
         public override Task<VirtualFile> CreateFileAsync(string name, System.IO.Stream dataSource)
@@ -145,19 +235,14 @@ namespace Panda.Core.Internal
             throw new NotImplementedException();
         }
 
-        public override VirtualNode this[string name]
-        {
-            get { throw new NotImplementedException(); }
-        }
-
         public override string Name
         {
-            get { throw new NotImplementedException(); }
+            get { return _name; }
         }
 
         public override string FullName
         {
-            get { throw new NotImplementedException(); }
+            get { return _parentDirectory.FullName + VirtualFileSystem.SeparatorChar + Name; }
         }
 
         public override long Size
@@ -167,12 +252,12 @@ namespace Panda.Core.Internal
 
         public override bool IsRoot
         {
-            get { throw new NotImplementedException(); }
+            get { return false; }
         }
 
         public override VirtualDirectory ParentDirectory
         {
-            get { throw new NotImplementedException(); }
+            get { return _parentDirectory; }
         }
 
         public override void Rename(string newName)

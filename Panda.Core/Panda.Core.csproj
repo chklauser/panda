@@ -52,6 +52,7 @@
     <Compile Include="Test\InMemory\Blocks\MemDirectoryContinuationBlock.cs" />
     <Compile Include="Test\InMemory\Blocks\MemFileBlock.cs" />
     <Compile Include="Test\InMemory\Blocks\MemOffsetList.cs" />
+    <Compile Include="Core\Internal\VirtualRootDirectoryImpl.cs" />
     <Compile Include="VirtualFile.cs" />
     <Compile Include="Core\Internal\VirtualFileImpl.cs" />
     <Compile Include="Core\PathNotFoundException.cs" />

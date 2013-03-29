@@ -3,11 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Panda.Core.Blocks;
 
 namespace Panda.Core.Internal
 {
     class VirtualFileImpl : VirtualFile
     {
+        private readonly VirtualDiskImpl _disk;
+        private readonly BlockOffset _blockOffset;
+
+        public VirtualFileImpl(VirtualDiskImpl disk, BlockOffset blockOffset)
+        {
+            _disk = disk;
+            _blockOffset = blockOffset;
+        }
+
         public override System.IO.Stream Open()
         {
             throw new NotImplementedException();
