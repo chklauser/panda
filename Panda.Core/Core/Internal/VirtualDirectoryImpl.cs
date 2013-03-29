@@ -10,8 +10,8 @@ namespace Panda.Core.Internal
 {
     class VirtualDirectoryImpl : VirtualDirectory
     {
-        private readonly VirtualDiskImpl _disk;
-        private readonly BlockOffset _blockOffset;
+        protected readonly VirtualDiskImpl _disk;
+        protected readonly BlockOffset _blockOffset;
         private readonly string _name;
         private readonly VirtualDirectoryImpl _parentDirectory;
 
@@ -247,7 +247,7 @@ namespace Panda.Core.Internal
 
         public override string FullName
         {
-            get { throw new NotImplementedException(); }
+            get { return _parentDirectory.FullName + VirtualFileSystem.SeparatorChar + Name; }
         }
 
         public override long Size
@@ -257,7 +257,7 @@ namespace Panda.Core.Internal
 
         public override bool IsRoot
         {
-            get { throw new NotImplementedException(); }
+            get { return false; }
         }
 
         public override VirtualDirectory ParentDirectory
