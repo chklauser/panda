@@ -15,10 +15,10 @@ namespace Panda.Test.Unit
     {
         public const uint DefaultBlockSize = 32;
 
-        public IRawPersistenceSpace Space;
-        public IBlockManager BlockManager;
-        public uint BlockCount;
-        public uint BlockSize;
+        public IRawPersistenceSpace Space { get; set; }
+        internal IBlockManager BlockManager;
+        public uint BlockCount { get; set; }
+        public uint BlockSize { get; set; }
 
         public unsafe void CreateSpace(uint blockCount = 24, uint blockSize = DefaultBlockSize)
         {
@@ -40,6 +40,7 @@ namespace Panda.Test.Unit
             ptr[blockOffset * BlockSize + blockIndex] = value;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage ("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId="uint",Justification = "This is very low-level code, where we actually do nothing more than 'setting an integer in memory'. Overloads are too dangerous in this case. We need to be sure that the caller explicitly wanted to read/write a 32bit unsigned integer.")]
         public unsafe void SetUInt32At(uint blockOffset, int uintIndex, uint value)
         {
             var ptr = (byte*)Space.Pointer;
@@ -47,6 +48,7 @@ namespace Panda.Test.Unit
             *uintPtr = value;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage ("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId="uint",Justification = "This is very low-level code, where we actually do nothing more than 'read an integer from memory'. Overloads are too dangerous in this case. We need to be sure that the caller explicitly wanted to read/write a 32bit unsigned integer.")]
         public unsafe uint GetUInt32At(uint blockOffset, int uintIndex)
         {
             var ptr = (byte*)Space.Pointer;
@@ -284,23 +286,37 @@ namespace Panda.Test.Unit
 
         public void Dispose()
         {
-            if (Space != null)
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                Space.Dispose();
-                Space = null;
+                if (Space != null)
+                {
+                    Space.Dispose();
+                    Space = null;
+                }
+
+
+                // ReSharper disable SuspiciousTypeConversion.Global
+                var disposable = BlockManager as IDisposable;
+                // ReSharper restore SuspiciousTypeConversion.Global
+
+                if (disposable != null)
+                {
+                    disposable.Dispose();
+                }
+
+                BlockManager = null;
             }
+        }
 
-
-// ReSharper disable SuspiciousTypeConversion.Global
-            var disposable = BlockManager as IDisposable;
-// ReSharper restore SuspiciousTypeConversion.Global
-
-            if (disposable != null)
-            {
-                disposable.Dispose();
-            }
-
-            BlockManager = null;
+        ~RawBlockManagerTests()
+        {
+            Dispose(false);
         }
 
         #endregion

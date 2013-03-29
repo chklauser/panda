@@ -82,16 +82,41 @@ namespace Panda
         }
 
         [PublicAPI]
+        public async Task<VirtualFile> CreateFileAsync([NotNull] string name, [NotNull] byte[] data)
+        {
+            return await CreateFileAsync(name, data, 0);
+        }
+
+        [PublicAPI]
+        public async Task<VirtualFile> CreateFileAsync([NotNull] string name, [NotNull] byte[] data,
+                                                               int index)
+        {
+            return await CreateFileAsync(name, data, index, null);
+        }
+
+        [PublicAPI]
         public virtual async Task<VirtualFile> CreateFileAsync([NotNull] string name, [NotNull] byte[] data,
-                                                               int index = 0, int? count = null)
+                                                               int index, int? count)
         {
             using (var stream = new MemoryStream(data, 0, count ?? data.Length, writable: false))
                 return await CreateFileAsync(name, stream);
         }
 
         [PublicAPI]
-        public virtual VirtualFile CreateFile([NotNull] string name, [NotNull] byte[] data, int index = 0,
-                                              int? count = null)
+        public virtual VirtualFile CreateFile([NotNull] string name, [NotNull] byte[] data)
+        {
+            return CreateFile(name, data, 0);
+        }
+
+        [PublicAPI]
+        public virtual VirtualFile CreateFile([NotNull] string name, [NotNull] byte[] data, int index)
+        {
+            return CreateFile(name, data, index, null);
+        }
+
+        [PublicAPI]
+        public virtual VirtualFile CreateFile([NotNull] string name, [NotNull] byte[] data, int index,
+                                              int? count)
         {
             var task = CreateFileAsync(name, data, index, count);
             task.RunSynchronously();
@@ -148,6 +173,7 @@ namespace Panda
                 yield return new KeyValuePair<string, VirtualNode>(node.Name, node);
         }
 
+
         bool IReadOnlyDictionary<string, VirtualNode>.ContainsKey(string name)
         {
             return Contains(name);
@@ -158,20 +184,28 @@ namespace Panda
             return TryGetNode(name, out value);
         }
 
-        public VirtualNode this[string name]
+        // Use the same name as the interface that defines this member, even though 'key' is less appropriate here
+        public VirtualNode this[string key]
         {
             get
             {
                 VirtualNode node;
-                if (!TryGetNode(name, out node))
+                if (!TryGetNode(key, out node))
                 {
-                    throw new PandaException("Node not found");
+                    // Code analysis suggest that we use KeyNotFound exception here, and not any of our own exceptions.
+                    // Given the context (this being the implementation of a dictionary member) that actually makes sense.
+                    throw new KeyNotFoundException("Node not found");
                 }
                 return node;
             }
         }
 
         IEnumerable<string> IReadOnlyDictionary<string, VirtualNode>.Keys
+        {
+            get { return ContentNames; }
+        }
+
+        protected virtual IEnumerable<string> ContentNames
         {
             get { return this.Select<VirtualNode, string>(x => x.Name); }
         }

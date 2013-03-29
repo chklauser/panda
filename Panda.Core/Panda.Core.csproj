@@ -21,6 +21,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CodeAnalysisRuleSet>..\jcd-csharp.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -48,6 +49,7 @@
     <Compile Include="Core\IO\RawBlock.cs" />
     <Compile Include="Core\IO\RawContinuedBlock.cs" />
     <Compile Include="Core\IO\RawOffsetListBlock.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Test\InMemory\Blocks\MemBlock.cs" />
     <Compile Include="Test\InMemory\Blocks\MemBlockManager.cs" />
     <Compile Include="Test\InMemory\Blocks\MemDirectoryBase.cs" />
@@ -75,7 +77,6 @@
     <Compile Include="Core\Internal\LastAccessCache.cs" />
     <Compile Include="Core\Blocks\IOffsetListBlock.cs" />
     <Compile Include="Core\Internal\ILockingPolicy.cs" />
-    <Compile Include="Core\Internal\SingleInstanceFactory.cs" />
     <Compile Include="Core\Internal\VirtualDiskImpl.cs" />
     <Compile Include="Core\IO\RawBlockManager.cs" />
     <Compile Include="Core\IO\InMemory\InMemorySpace.cs" />

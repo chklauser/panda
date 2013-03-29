@@ -43,6 +43,9 @@ namespace Panda
         [PublicAPI]
         public abstract void Rename([NotNull] string newName);
 
+        /// <summary>
+        /// Delete File/Directory (recursivly)
+        /// </summary>
         [PublicAPI]
         public abstract void Delete();
 

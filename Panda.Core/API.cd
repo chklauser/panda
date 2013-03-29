@@ -3,7 +3,7 @@
   <Class Name="Panda.VirtualDirectory" Collapsed="true">
     <Position X="0.5" Y="1.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAQAAAEAAAEABAAKAYEBAQgAAgAAAAEAAAQAAAQISA=</HashCode>
+      <HashCode>AAAQAAAEAAAEABAAKAYEBAQgAAgAAAAEAAAQAAIQISA=</HashCode>
       <FileName>VirtualDirectory.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -33,7 +33,7 @@
     <Position X="2.75" Y="1.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
-      <FileName>VirtualNode.cs</FileName>
+      <FileName>VirtualFile.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Panda.Core.Blocks.BlockDeallocatedException" Collapsed="true">
@@ -46,7 +46,7 @@
   <Class Name="Panda.Core.Blocks.DirectoryEntry" BaseTypeListCollapsed="true">
     <Position X="15" Y="3" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAJAAAAAAAAAAAgAAAAAQCAAAAAJAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAJACAAAAAAAAAgAAAAAQCAIAAAJAAAAAAAAAAAAA=</HashCode>
       <FileName>Core\Blocks\DirectoryEntry.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" Collapsed="true" />
@@ -54,7 +54,7 @@
   <Struct Name="Panda.Core.Blocks.BlockOffset" BaseTypeListCollapsed="true">
     <Position X="16.75" Y="3" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAgAAAAQAAAAAAAIAAAAAAAAAAgiA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAEgAAAAQAAAAAAAIAAAAAAAAAAgiA=</HashCode>
       <FileName>Core\Blocks\BlockOffset.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" Collapsed="true" />
@@ -76,7 +76,7 @@
   <Interface Name="Panda.Core.Blocks.IContinuationBlock">
     <Position X="10.75" Y="2" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAA=</HashCode>
       <FileName>Core\Blocks\IContinuationBlock.cs</FileName>
     </TypeIdentifier>
   </Interface>
@@ -97,7 +97,7 @@
   <Interface Name="Panda.Core.Blocks.IEmptyListBlock" Collapsed="true">
     <Position X="6.5" Y="8" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAABAAAAAAAIQAEAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAAAAABAAAAAAAIQAAAAAAAAAAAAA=</HashCode>
       <FileName>Core\Blocks\IEmptyListBlock.cs</FileName>
     </TypeIdentifier>
   </Interface>

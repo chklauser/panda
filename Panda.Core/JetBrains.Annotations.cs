@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+// /////////////////////////////////////////////////////////////////////////
+//  This file is provided by JetBrains for use with their code analysis.
+//  It contains numerous static code analysis violatoins that we cannot fix, because
+//  it would break the annotation interface that ReSharper uses.
+// /////////////////////////////////////////////////////////////////////////
+
 using System;
 using System.ComponentModel;
 
@@ -331,6 +337,7 @@ namespace JetBrains.Annotations
   /// {}
   /// </code>
   /// </example>
+  [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019:DefineAccessorsForAttributeArguments", Justification = "Attribute argument is accessible via BaseTypes property as an array.")]
   [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
   [BaseTypeRequired(typeof(Attribute))]
   public sealed class BaseTypeRequiredAttribute : Attribute
@@ -347,6 +354,7 @@ namespace JetBrains.Annotations
     /// <summary>
     /// Gets enumerations of specified base types
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays", Justification = "We cannot change the interface of ReSharper-specific annotations.")]
     public Type[] BaseTypes { get; private set; }
   }
 
@@ -465,10 +473,19 @@ namespace JetBrains.Annotations
   /// <summary>
   /// This attribute is intended to mark publicly available API which should not be removed and so is treated as used.
   /// </summary>
+  [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019:DefineAccessorsForAttributeArguments", Justification = "We cannot change the interface of ReSharper-specific annotations.")]
   [MeansImplicitUse]
+  [AttributeUsage(AttributeTargets.All ^
+      ( AttributeTargets.GenericParameter 
+      | AttributeTargets.Parameter 
+      | AttributeTargets.ReturnValue 
+      | AttributeTargets.Module 
+      | AttributeTargets.Assembly))]
   public sealed class PublicAPIAttribute : Attribute
   {
     public PublicAPIAttribute() { }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "comment", Justification = "We cannot change the interface of ReSharper-specific annotations.")]
     public PublicAPIAttribute(string comment) { }
   }
 
@@ -507,6 +524,8 @@ namespace JetBrains.Annotations
   /// Indicates that a parameter is a path to a file or a folder within a web project.
   /// Path can be relative or absolute, starting from web root (~).
   /// </summary>
+  // We cannot change the interface of ReSharper-specific annotations
+  [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1813:AvoidUnsealedAttributes", Justification = "We cannot change the interface of ReSharper-specific annotations.")]
   [AttributeUsage(AttributeTargets.Parameter)]
   public class PathReferenceAttribute : Attribute
   {

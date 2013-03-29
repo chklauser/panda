@@ -71,6 +71,9 @@ namespace Panda.Core.IO
 
         public unsafe void ReplaceOffsets(BlockOffset[] offsets)
         {
+            if (offsets == null)
+                throw new ArgumentNullException("offsets");
+            
             if (offsets.Length > ListCapacity)
             {
                 throw new ArgumentOutOfRangeException("offsets",offsets.Length,"Not all block offsets fit into this block.");
@@ -134,6 +137,9 @@ namespace Panda.Core.IO
 
         public void Append(BlockOffset[] freeBlockOffsets)
         {
+            if (freeBlockOffsets == null)
+                throw new ArgumentNullException("freeBlockOffsets");
+            
             // This is a very simplistic implementation of append:
             //  reading the entire blocklist, appending the new offsets in memory and
             //  then writing the entire list back.

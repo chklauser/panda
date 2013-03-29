@@ -35,7 +35,7 @@ namespace Panda.Core.IO.MemoryMapped
             MappedFile = mappedFile;
         }
 
-        protected virtual void ResetAccessor()
+        protected void ResetAccessor()
         {
             if (_accessor != null)
             {
@@ -95,7 +95,7 @@ namespace Panda.Core.IO.MemoryMapped
 
         #region Resizing (not implemented)
 
-        public bool CanResize
+        public virtual bool CanResize
         {
             get
             {
@@ -104,7 +104,7 @@ namespace Panda.Core.IO.MemoryMapped
             }
         }
 
-        public void Resize(long newSize)
+        public virtual void Resize(long newSize)
         {
             ThrowIfDisposed();
             throw new NotSupportedException("Memory mapped space does not support resizing.");
@@ -129,8 +129,8 @@ namespace Panda.Core.IO.MemoryMapped
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)

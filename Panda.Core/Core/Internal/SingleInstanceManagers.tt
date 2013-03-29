@@ -31,7 +31,7 @@ using Panda.Core.Internal;
 //<#=nsIdx#>
 namespace <#=TNs#>
 {
-    public abstract class <#=siName#> : <#=T#>
+    public abstract class <#=siName#> : <#=T#>, IDisposable
     {
         [NotNull]
         protected abstract IReferenceCache<IBlock> ReferenceCache { get; }
@@ -68,7 +68,7 @@ namespace <#=TNs#>
         private readonly Dictionary<BlockOffset, WeakReference<IBlock>> _existingBlocks =
             new Dictionary<BlockOffset, WeakReference<IBlock>>();
 
-        private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
         protected SemaphoreSlim Lock
         {
@@ -280,6 +280,47 @@ namespace <#=TNs#>
 				_lock.Release();
 			}
         }
+
+		#region IDisposable
+
+<# if(!impl.IsDisposable) { #>
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if(disposing)
+			{
+				var old = _lock;
+				if(old != null && Interlocked.CompareExchange(ref _lock,old,null) == old)
+				{
+					old.Dispose();
+				}
+			}
+		}
+
+		~<#=siName#>()
+		{
+			Dispose(false);
+		}
+<# } else { #>
+		protected override void Dispose(bool disposing)
+		{
+			if(disposing)
+			{
+				var old = _lock;
+				if(old != null && Interlocked.CompareExchange(ref _lock,old,null) == old)
+				{
+					old.Dispose();
+				}
+			}
+		}
+<# } /* end if */ #>
+
+		#endregion
     }
 }
 
@@ -291,5 +332,6 @@ namespace <#=TNs#>
 		public string T { get; set; }
 		public string CtorArgs { get; set; }
 		public string CtorParams { get; set; }
+		public bool IsDisposable { get; set; }
 	}
 #>

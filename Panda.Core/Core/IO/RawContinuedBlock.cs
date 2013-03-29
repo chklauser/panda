@@ -16,7 +16,7 @@ namespace Panda.Core.IO
             }
         }
 
-        public unsafe BlockOffset? ContinuationBlock
+        public unsafe BlockOffset? ContinuationBlockOffset
         {
             get
             {

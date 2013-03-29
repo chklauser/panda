@@ -53,10 +53,11 @@ namespace Panda.Core.IO
             BlockOffset? emptyListOffset = null)
         {
             if (blockSize < MinimumBlockSize)
-            {
-                throw new ArgumentOutOfRangeException("blockSize",blockSize,"Block size must be at least " + MinimumBlockSize + ".");
-            }
-
+                throw new ArgumentOutOfRangeException("blockSize", blockSize,
+                                                      "Block size must be at least " + MinimumBlockSize + ".");
+            if (space == null)
+                throw new ArgumentNullException("space");
+            
             var actualRootDirectoryOffset = rootDirectoryOffset ?? (BlockOffset)1;
             var actualEmptyListOffset = emptyListOffset ?? (BlockOffset) 2;
 

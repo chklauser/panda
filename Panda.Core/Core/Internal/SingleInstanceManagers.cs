@@ -9,7 +9,7 @@ using Panda.Core.Internal;
 //13
 namespace Panda.Core.IO
 {
-    public abstract class SingleInstanceRawBlockManager : Panda.Core.IO.RawBlockManager
+    public abstract class SingleInstanceRawBlockManager : Panda.Core.IO.RawBlockManager, IDisposable
     {
         [NotNull]
         protected abstract IReferenceCache<IBlock> ReferenceCache { get; }
@@ -46,7 +46,7 @@ namespace Panda.Core.IO
         private readonly Dictionary<BlockOffset, WeakReference<IBlock>> _existingBlocks =
             new Dictionary<BlockOffset, WeakReference<IBlock>>();
 
-        private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
         protected SemaphoreSlim Lock
         {
@@ -258,13 +258,40 @@ namespace Panda.Core.IO
 				_lock.Release();
 			}
         }
+
+		#region IDisposable
+
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if(disposing)
+			{
+				var old = _lock;
+				if(old != null && Interlocked.CompareExchange(ref _lock,old,null) == old)
+				{
+					old.Dispose();
+				}
+			}
+		}
+
+		~SingleInstanceRawBlockManager()
+		{
+			Dispose(false);
+		}
+
+		#endregion
     }
 }
 
 //26
 namespace Panda.Test.InMemory.Blocks
 {
-    public abstract class SingleInstanceMemBlockManager : Panda.Test.InMemory.Blocks.MemBlockManager
+    public abstract class SingleInstanceMemBlockManager : Panda.Test.InMemory.Blocks.MemBlockManager, IDisposable
     {
         [NotNull]
         protected abstract IReferenceCache<IBlock> ReferenceCache { get; }
@@ -301,7 +328,7 @@ namespace Panda.Test.InMemory.Blocks
         private readonly Dictionary<BlockOffset, WeakReference<IBlock>> _existingBlocks =
             new Dictionary<BlockOffset, WeakReference<IBlock>>();
 
-        private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
         protected SemaphoreSlim Lock
         {
@@ -513,6 +540,33 @@ namespace Panda.Test.InMemory.Blocks
 				_lock.Release();
 			}
         }
+
+		#region IDisposable
+
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if(disposing)
+			{
+				var old = _lock;
+				if(old != null && Interlocked.CompareExchange(ref _lock,old,null) == old)
+				{
+					old.Dispose();
+				}
+			}
+		}
+
+		~SingleInstanceMemBlockManager()
+		{
+			Dispose(false);
+		}
+
+		#endregion
     }
 }
 

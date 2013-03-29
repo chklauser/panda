@@ -2,6 +2,7 @@
 using System.IO;
 using System.Security;
 using JetBrains.Annotations;
+using Panda.Core.Internal;
 
 namespace Panda
 {
@@ -22,6 +23,9 @@ namespace Panda
         [NotNull]
         public static VirtualDisk OpenExisting([NotNull] string path)
         {
+            if (path != null)
+                throw new ArgumentNullException("path");
+            
             throw new NotImplementedException("VirtualDisk::OpenExisting");
         }
 
@@ -39,6 +43,9 @@ namespace Panda
         [NotNull]
         public static VirtualDisk CreateNew([NotNull] string path, long capacity)
         {
+            if (path == null)
+                throw new ArgumentNullException("path");
+            
             if(capacity < 0)
                 throw new ArgumentOutOfRangeException("capacity","Capacity must be positive.");
             throw new NotImplementedException("VirtualDisk::Create");

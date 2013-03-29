@@ -1,11 +1,12 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using JetBrains.Annotations;
 using Panda.Core.Blocks;
 using Panda.Core.Internal;
 
 namespace Panda.Core.IO
 {
-    public class RawBlock : IBlock
+    public class RawBlock : IBlock, IDisposable
     {
         private readonly IRawPersistenceSpace _space;
         private readonly BlockOffset _offset;
@@ -47,6 +48,25 @@ namespace Panda.Core.IO
         public uint BlockSize
         {
             get { return _blockSize; }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _lock.Dispose();
+            }
+        }
+
+        ~RawBlock()
+        {
+            Dispose(false);
         }
     }
 }

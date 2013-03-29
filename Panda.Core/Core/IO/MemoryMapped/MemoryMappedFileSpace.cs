@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Panda.Core.Internal;
 
 namespace Panda.Core.IO.MemoryMapped
 {
@@ -29,8 +30,8 @@ namespace Panda.Core.IO.MemoryMapped
         {
             long capacity;
             using (var file = new FileStream(path,FileMode.Open))
-            using (var reader = new BinaryReader(file,Encoding.UTF8,true))
             {
+                var reader = new BinaryReader(file, Encoding.UTF8, true);
                 long numBlocks = reader.ReadUInt32();
                 long blockSize = reader.ReadUInt32();
                 capacity = numBlocks*blockSize;
@@ -50,13 +51,20 @@ namespace Panda.Core.IO.MemoryMapped
         public static MemoryMappedFileSpace CreateNew(string path, uint blockSize, uint blockCapacity)
         {
             using (var file = new FileStream(path,FileMode.CreateNew,FileAccess.Write))
-            using (var writer = new BinaryWriter(file,Encoding.UTF8,true))
             {
+                var writer = new BinaryWriter(file, Encoding.UTF8, true);
                 writer.Write(blockCapacity);
                 writer.Write(blockSize);
             }
             var capacity =  blockSize * (long) blockCapacity;
             return new MemoryMappedFileSpace(MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, capacity, MemoryMappedFileAccess.ReadWrite),path);
+        }
+
+        public override unsafe void Resize(long newSize)
+        {
+            // This method might use path if it is implemented
+            _path.Ignore();
+            throw new NotImplementedException("MemoryMappedFileSpace.Resize is not implemented.");
         }
     }
 }

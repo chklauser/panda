@@ -25,6 +25,9 @@ namespace Panda.Core.Internal
 
         public override VirtualNode Navigate(string path)
         {
+            if (path == null)
+                throw new ArgumentNullException("path");
+            
             // check if absolute or relative path given
             if (PathUtil.isAbsolutePath(path))
             {
@@ -121,10 +124,10 @@ namespace Panda.Core.Internal
             }
 
             // do while we have continuation blocks iterate over DirectoryContinuationBlock(s) => DirectoryEntries
-            while (currentDirectoryBlock.ContinuationBlock != null)
+            while (currentDirectoryBlock.ContinuationBlockOffset != null)
             {
-                // .Value is needed because ContinuationBlock is nullable
-                currentDirectoryBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentDirectoryBlock.ContinuationBlock.Value);
+                // .Value is needed because ContinuationBlockOffset is nullable
+                currentDirectoryBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentDirectoryBlock.ContinuationBlockOffset.Value);
                 foreach (DirectoryEntry de in currentDirectoryBlock)
                 {
                     // DirectoryEntry tells me if file or directory
@@ -139,6 +142,36 @@ namespace Panda.Core.Internal
                     }
                 }
             } 
+        }
+
+        public Tuple<DirectoryEntry, IDirectoryContinuationBlock> FindDirectoryEntry(BlockOffset blockOffset)
+        {
+            // first currentDirectoryBlock
+            IDirectoryContinuationBlock currentDirectoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
+            foreach (var de in currentDirectoryBlock)
+            {
+                if (blockOffset == _blockOffset)
+                {
+                    return Tuple.Create(de, currentDirectoryBlock);
+                }
+            }
+
+            // search in ContinuationBlocks
+            while (currentDirectoryBlock.ContinuationBlockOffset != null)
+            {
+                // .Value is needed because ContinuationBlockOffset is nullable
+                currentDirectoryBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentDirectoryBlock.ContinuationBlockOffset.Value);
+                foreach (DirectoryEntry de in currentDirectoryBlock)
+                {
+                    if (blockOffset == _blockOffset)
+                    {
+                        return Tuple.Create(de, currentDirectoryBlock);
+                    }
+                }
+            }
+
+            // DirectoryEntry not found!
+            throw new PandaException("DirectoryEntry not found!");
         }
 
         public override int Count
@@ -181,15 +214,27 @@ namespace Panda.Core.Internal
 
         public override VirtualDirectory CreateDirectory(string name)
         {
-            bool nodeAdded = false;
-
             // create new DirectoryBlock
             IDirectoryBlock db = _disk.BlockManager.AllocateDirectoryBlock();
 
-            // add DirectoryEntry referencing this new Block to this DirectoryBlock or a DirectoryContinuationBlock of it
+            // create new DirectoryEntry
             DirectoryEntry de = new DirectoryEntry(name, db.Offset, DirectoryEntryFlags.Directory);
 
-            // try to add the new DirectoryEntry to this DirectoryBlock or find a ContinuationBlock until its added
+            // add DirectoryEntry referencing this new Block to this DirectoryBlock or a DirectoryContinuationBlock of it
+            AddVirtualNodeToCurrentDirectoryNode(de);
+
+            return new VirtualDirectoryImpl(_disk, db.Offset, this, name);
+        }
+
+        /// <summary>
+        /// Adds a DirectoryEntry to this DirectoryBlock or a DirectoryContinuationBlock
+        /// </summary>
+        /// <param name="de">DirectoryEntry to add</param>
+        private void AddVirtualNodeToCurrentDirectoryNode(DirectoryEntry de)
+        {
+            bool nodeAdded = false;
+
+            // try to add the DirectoryEntry to this DirectoryBlock or find a DirectoryContinuationBlock until its added
             IDirectoryContinuationBlock currentBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
 
             // try to add the DirectoryEntry to this DirectoryBlock
@@ -201,9 +246,9 @@ namespace Panda.Core.Internal
             // if node wasn't added, try to add the DirectoryEntry to any DirectoryContinuationBlock of this DirectoryBlock
             if (!nodeAdded)
             {
-                while (currentBlock.ContinuationBlock.HasValue)
+                while (currentBlock.ContinuationBlockOffset.HasValue)
                 {
-                    currentBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentBlock.ContinuationBlock.Value);
+                    currentBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentBlock.ContinuationBlockOffset.Value);
                     if (currentBlock.TryAddEntry(de))
                     {
                         nodeAdded = true;
@@ -212,26 +257,26 @@ namespace Panda.Core.Internal
                 }
             }
 
-            // check if node was added, if not, create a new ContinuationBlock and add it there
+            // check if node was added, if not, create a new ContinuationBlock and add the DirectoryEntry there
             if (!nodeAdded)
             {
-                // node was not added
                 // create a new DirectoryContinuationBlock
                 IDirectoryContinuationBlock newBlock = _disk.BlockManager.AllocateDirectoryContinuationBlock();
                 // link it to the last ContinuationBlock seen
-                currentBlock.ContinuationBlock = newBlock.Offset;
+                currentBlock.ContinuationBlockOffset = newBlock.Offset;
                 // add DirectoryEntry to it
                 if (!newBlock.TryAddEntry(de))
                 {
                     throw new PandaException("DirectoryEntry could not be added to a fresh, new DirectoryContinuationBlock.");
                 }
             }
-
-            return new VirtualDirectoryImpl(_disk, db.Offset, this, name);
         }
 
         public override Task<VirtualFile> CreateFileAsync(string name, System.IO.Stream dataSource)
         {
+            // create new FileBlock and add it to to this DirectoryBlock or a DirectoryContinuationBlock of it
+            // do { if able { add a new DataBlock to the FileBlock } else { create new FileContinuationBlock and add it there } and then
+            // stream data from dataSource into current DataBlock } while (stream still has data)
             throw new NotImplementedException();
         }
 

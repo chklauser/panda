@@ -5,6 +5,6 @@
         /// <summary>
         /// Address of ContinuationBlock.
         /// </summary>
-        BlockOffset? ContinuationBlock { get; set; } 
+        BlockOffset? ContinuationBlockOffset { get; set; } 
     }
 }

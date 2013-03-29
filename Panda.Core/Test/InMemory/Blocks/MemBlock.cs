@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using Panda.Core.Blocks;
 using Panda.Core.Internal;
 
 namespace Panda.Test.InMemory.Blocks
 {
-    public abstract class MemBlock : IBlock
+    public abstract class MemBlock : IContinuationBlock, IDisposable
     {
         private BlockOffset? _continuationBlock;
         private readonly BlockOffset _offset;
@@ -21,6 +22,7 @@ namespace Panda.Test.InMemory.Blocks
         {
             _offset = offset;
             IsAllocated = true;
+            Lock = new ReaderWriterLockSlim();
         }
 
         protected void ThrowIfDeallocated()
@@ -34,7 +36,7 @@ namespace Panda.Test.InMemory.Blocks
         }
 
         // This is not used by all sub blocks, but for a mock class, it won't hurt
-        public BlockOffset? ContinuationBlock
+        public BlockOffset? ContinuationBlockOffset
         {
             get
             {
@@ -66,5 +68,38 @@ namespace Panda.Test.InMemory.Blocks
         {
             get { return Offset; }
         }
+
+        #region Disposal
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                ReaderWriterLockSlim rwlock;
+                lock (this)
+                {
+                    rwlock = Lock;
+                    Lock = null;
+                }
+
+                if (rwlock != null)
+                {
+                    rwlock.Dispose();
+                }
+            }
+        }
+
+        ~MemBlock()
+        {
+            Dispose(false);
+        }
+
+        #endregion
     }
 }

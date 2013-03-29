@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
 using Panda.Core.Blocks;
 
 namespace Panda.Core.Internal
@@ -7,11 +8,13 @@ namespace Panda.Core.Internal
     {
         [NotNull] private readonly IBlockManager _blockManager;
         [NotNull] private readonly ILockingPolicy _lockingPolicy;
+        [NotNull] private readonly VirtualRootDirectoryImpl _rootDirectory;
 
         public VirtualDiskImpl([NotNull] IBlockManager blockManager, [NotNull] ILockingPolicy lockingPolicy)
         {
             _blockManager = blockManager;
             _lockingPolicy = lockingPolicy;
+            _rootDirectory = new VirtualRootDirectoryImpl(this);
         }
 
         public override long Capacity
@@ -31,7 +34,7 @@ namespace Panda.Core.Internal
 
         public override VirtualDirectory Root
         {
-            get { return new VirtualRootDirectoryImpl(this); }
+            get { return _rootDirectory; }
         }
 
         [NotNull]
