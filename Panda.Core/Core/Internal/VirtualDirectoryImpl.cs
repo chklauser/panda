@@ -13,11 +13,13 @@ namespace Panda.Core.Internal
         private readonly VirtualDiskImpl _disk;
         private readonly BlockOffset _blockOffset;
         private readonly string _name;
+        private readonly VirtualDirectoryImpl _parentDirectory;
 
-        public VirtualDirectoryImpl(VirtualDiskImpl disk, BlockOffset blockOffset, string name)
+        public VirtualDirectoryImpl(VirtualDiskImpl disk, BlockOffset blockOffset, VirtualDirectoryImpl parentDirectory, string name)
         {
             _disk = disk;
             _blockOffset = blockOffset;
+            _parentDirectory = parentDirectory;
             _name = name;
         }
 
@@ -260,7 +262,7 @@ namespace Panda.Core.Internal
 
         public override VirtualDirectory ParentDirectory
         {
-            get { throw new NotImplementedException(); }
+            get { return _parentDirectory; }
         }
 
         public override void Rename(string newName)
