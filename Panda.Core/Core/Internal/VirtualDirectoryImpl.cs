@@ -139,7 +139,10 @@ namespace Panda.Core.Internal
 
         public override int Count
         {
-            get { throw new NotImplementedException(); }
+            get
+            {
+                return this.Count<VirtualNode>();
+            }
         }
 
         public override bool Contains(string name)
