@@ -67,12 +67,12 @@ namespace Panda.Core.Internal
             // gather all ContinuationBlocks:
             var toDeleteBlocks = new List<BlockOffset> {_blockOffset};
             var fileBlock = _disk.BlockManager.GetFileBlock(_blockOffset);
-            var continuationBlock = fileBlock.ContinuationBlock;
+            var continuationBlock = fileBlock.ContinuationBlockOffset;
             while (continuationBlock.HasValue)
             {
                 toDeleteBlocks.Add(continuationBlock.Value);
                 var fileContinuationBlock = _disk.BlockManager.GetFileContinuationBlock(continuationBlock.Value);
-                continuationBlock = fileContinuationBlock.ContinuationBlock;
+                continuationBlock = fileContinuationBlock.ContinuationBlockOffset;
                 foreach (var offset in fileContinuationBlock)
                 {
                     _disk.BlockManager.FreeBlock(offset);

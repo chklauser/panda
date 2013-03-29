@@ -154,10 +154,10 @@ namespace Panda.Core.Internal
             }
 
             // search in ContinuationBlocks
-            while (currentDirectoryBlock.ContinuationBlock != null)
+            while (currentDirectoryBlock.ContinuationBlockOffset != null)
             {
                 // .Value is needed because ContinuationBlock is nullable
-                currentDirectoryBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentDirectoryBlock.ContinuationBlock.Value);
+                currentDirectoryBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentDirectoryBlock.ContinuationBlockOffset.Value);
                 foreach (DirectoryEntry de in currentDirectoryBlock)
                 {
                     if (blockOffset == _blockOffset)
