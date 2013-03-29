@@ -31,7 +31,7 @@ namespace Panda.Core.Internal
 
         public override VirtualDirectory Root
         {
-            get { return new VirtualDirectoryImpl(this, _blockManager.RootDirectoryBlockOffset); }
+            get { return new VirtualDirectoryImpl(this, _blockManager.RootDirectoryBlockOffset, ""); }
         }
 
         [NotNull]
