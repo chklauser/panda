@@ -35,7 +35,7 @@ namespace Panda.Core.IO.MemoryMapped
             MappedFile = mappedFile;
         }
 
-        protected virtual void ResetAccessor()
+        protected void ResetAccessor()
         {
             if (_accessor != null)
             {

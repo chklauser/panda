@@ -40,14 +40,17 @@ namespace Panda.Test.InMemory.Blocks
             for (var i = 1u; i < RootDirectoryBlockOffset.Offset; i++)
                 _freeBlockOffsets.Push((BlockOffset) i);
 
-// ReSharper disable DoNotCallOverridableMethodsInConstructor
-            Track(new MemDirectoryBlock(RootDirectoryBlockOffset, MetaBlockCapacity));
-// ReSharper restore DoNotCallOverridableMethodsInConstructor
+            _trackBlock(new MemDirectoryBlock(RootDirectoryBlockOffset, MetaBlockCapacity));
         }
 
         protected virtual T Track<T>(T block) where T : IBlock
         {
-            _blocks.Add(block.Offset,new MemStored{Block = block});
+            return _trackBlock(block);
+        }
+
+        private T _trackBlock<T>(T block) where T : IBlock
+        {
+            _blocks.Add(block.Offset, new MemStored {Block = block});
             return block;
         }
 
