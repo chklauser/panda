@@ -100,3 +100,11 @@ pip-log.txt
 
 # Mac equivalent of Thumbs.db
 .DS_Store
+
+##########
+## LaTeX
+##########
+Meta/*.backup
+Meta/*.aux
+Meta/*.log
+Meta/report.pdf
