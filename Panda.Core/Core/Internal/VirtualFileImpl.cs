@@ -35,7 +35,7 @@ namespace Panda.Core.Internal
 
         public override string FullName
         {
-            get { throw new NotImplementedException(); }
+            get { return _parentDirectory.FullName + VirtualFileSystem.SeparatorChar + Name; }
         }
 
         public override long Size
@@ -45,7 +45,7 @@ namespace Panda.Core.Internal
 
         public override bool IsRoot
         {
-            get { throw new NotImplementedException(); }
+            get { return false; }
         }
 
         public override VirtualDirectory ParentDirectory
