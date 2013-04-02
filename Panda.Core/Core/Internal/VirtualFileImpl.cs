@@ -66,6 +66,11 @@ namespace Panda.Core.Internal
             _parentDirectory.AddDirectoryEntryToCurrentDirectoryNode(newDe);
         }
 
+        /// <summary>
+        /// Delete File: First delete directoryEntry in Parent. Then go trough all ContinuationBlocks
+        /// and free its DataBlocks. Do the same with the FileBlock. After that free the FileBlock and 
+        /// ContinuationBlocks intself.
+        /// </summary>
         public override void Delete()
         {
             // delete directoryEntry of current Block
