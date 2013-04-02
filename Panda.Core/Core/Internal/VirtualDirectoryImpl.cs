@@ -226,7 +226,7 @@ namespace Panda.Core.Internal
             DirectoryEntry de = new DirectoryEntry(name, db.Offset, DirectoryEntryFlags.Directory);
 
             // add DirectoryEntry referencing this new Block to this DirectoryBlock or a DirectoryContinuationBlock of it
-            _AddDirectoryEntryToCurrentDirectoryNode(de);
+            AddDirectoryEntryToCurrentDirectoryNode(de);
 
             return new VirtualDirectoryImpl(_disk, db.Offset, this, name);
         }
@@ -235,7 +235,7 @@ namespace Panda.Core.Internal
         /// Adds a DirectoryEntry to this DirectoryBlock or a DirectoryContinuationBlock
         /// </summary>
         /// <param name="de">DirectoryEntry to add</param>
-        private void _AddDirectoryEntryToCurrentDirectoryNode(DirectoryEntry de)
+        public void AddDirectoryEntryToCurrentDirectoryNode(DirectoryEntry de)
         {
             bool nodeAdded = false;
 
@@ -320,7 +320,7 @@ namespace Panda.Core.Internal
             tuple.Item2.DeleteEntry(tuple.Item1);
 
             // add new DirectoryEntry
-            _parentDirectory._AddDirectoryEntryToCurrentDirectoryNode(newDe);
+            _parentDirectory.AddDirectoryEntryToCurrentDirectoryNode(newDe);
         }
 
         public override void Delete()
@@ -348,7 +348,7 @@ namespace Panda.Core.Internal
             tuple.Item2.DeleteEntry(tuple.Item1);
 
             // add new DirectoryEntry in the new destination directory
-            destination._AddDirectoryEntryToCurrentDirectoryNode(newDe);
+            destination.AddDirectoryEntryToCurrentDirectoryNode(newDe);
         }
     }
 }
