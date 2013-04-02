@@ -144,6 +144,11 @@ namespace Panda.Core.Internal
             } 
         }
 
+        /// <summary>
+        /// Finds DirectoryEntry by BlockOffset on the current VirtualDirectory instance.
+        /// </summary>
+        /// <param name="blockOffset">BlockOffset of VirtualNode to find in the DirectoryEntries.</param>
+        /// <returns>Tuple of DirectoryEntry and DirectoryContinuationBlock.</returns>
         public Tuple<DirectoryEntry, IDirectoryContinuationBlock> FindDirectoryEntry(BlockOffset blockOffset)
         {
             // first currentDirectoryBlock
