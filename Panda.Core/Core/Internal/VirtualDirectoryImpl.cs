@@ -291,8 +291,15 @@ namespace Panda.Core.Internal
                         // create a new DirectoryEntry and add address to FileBlock to it
                         var de = new DirectoryEntry(name, fb.Offset, DirectoryEntryFlags.File);
 
-                        // do { if able { add a new DataBlock to the FileBlock } else { create new FileContinuationBlock and add it there } and then
-                        // stream data from dataSource into current DataBlock } while (stream still has data)
+                        // if (stream has data) {
+                            // do {
+                                // if able { add a new DataBlock to the FileBlock }
+                                // else { create new FileContinuationBlock and add it there }
+                                // stream data from dataSource into current DataBlock
+                            // } while (stream still has data)
+                        // } else {
+                            // exception
+                        // }
 
                         // add DirectoryEntry to this DirectoryBlock or a DirectoryContinuationBlock of it
                         AddDirectoryEntryToCurrentDirectoryNode(de);
