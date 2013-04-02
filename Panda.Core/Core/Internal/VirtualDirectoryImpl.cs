@@ -323,9 +323,50 @@ namespace Panda.Core.Internal
             _parentDirectory.AddDirectoryEntryToCurrentDirectoryNode(newDe);
         }
 
+        /// <summary>
+        /// Delete Directory: Free the DirectoryEntry in it's parent Node. Then go recursivly trough all direcotries. Invoke Delete() for each DirectoryEntry in the actual
+        /// Block and all ContinuationBlocks (Deletes Files or Directories).
+        /// </summary>
         public override void Delete()
         {
-            throw new NotImplementedException();
+            // first delete the directoryEntry in the parent, so it can't be found:
+            var tupel = _parentDirectory.FindDirectoryEntry(_blockOffset);
+            tupel.Item2.DeleteEntry(tupel.Item1);
+
+            // go trough all directoryEntries (also from ContinationBlocks) and invoke Delete():
+            var directoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
+            foreach (var de in directoryBlock)
+            {
+                 if (de.IsDirectory)
+                 {
+                     var vd = new VirtualDirectoryImpl(_disk, de.BlockOffset, this, de.Name);
+                     vd.Delete();
+                 }
+                 else
+                 {
+                     var vf = new VirtualFileImpl(_disk, de.BlockOffset, this, de.Name);
+                     vf.Delete();
+                 }
+            }
+            var continuationBlockOffset = directoryBlock.ContinuationBlockOffset;
+            while (continuationBlockOffset.HasValue)
+            {
+                var continuationBlock = _disk.BlockManager.GetFileContinuationBlock(continuationBlockOffset.Value);
+                continuationBlockOffset = continuationBlock.ContinuationBlockOffset;
+                foreach (var de in directoryBlock)
+                {
+                    if (de.IsDirectory)
+                    {
+                        var vd = new VirtualDirectoryImpl(_disk, de.BlockOffset, this, de.Name);
+                        vd.Delete();
+                    }
+                    else
+                    {
+                        var vf = new VirtualFileImpl(_disk, de.BlockOffset, this, de.Name);
+                        vf.Delete();
+                    }
+                }
+            }
         }
 
         public override void Move(VirtualDirectory destination, string newName)
