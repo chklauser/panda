@@ -20,7 +20,10 @@ namespace Panda
         /// </summary>
         [PublicAPI]
         [NotNull]
-        public abstract string FullName { get; }
+        public virtual string FullName
+        {
+            get { return ParentDirectory.FullName + VirtualFileSystem.SeparatorChar + Name; }
+        }
 
         [PublicAPI]
         public abstract long Size { get; }

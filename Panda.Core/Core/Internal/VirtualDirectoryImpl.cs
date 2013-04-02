@@ -290,11 +290,6 @@ namespace Panda.Core.Internal
             get { return _name; }
         }
 
-        public override string FullName
-        {
-            get { return _parentDirectory.FullName + VirtualFileSystem.SeparatorChar + Name; }
-        }
-
         public override long Size
         {
             get { throw new NotImplementedException(); }
