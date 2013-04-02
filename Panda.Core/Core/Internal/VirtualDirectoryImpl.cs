@@ -226,7 +226,7 @@ namespace Panda.Core.Internal
             DirectoryEntry de = new DirectoryEntry(name, db.Offset, DirectoryEntryFlags.Directory);
 
             // add DirectoryEntry referencing this new Block to this DirectoryBlock or a DirectoryContinuationBlock of it
-            AddVirtualNodeToCurrentDirectoryNode(de);
+            _AddDirectoryEntryToCurrentDirectoryNode(de);
 
             return new VirtualDirectoryImpl(_disk, db.Offset, this, name);
         }
@@ -235,7 +235,7 @@ namespace Panda.Core.Internal
         /// Adds a DirectoryEntry to this DirectoryBlock or a DirectoryContinuationBlock
         /// </summary>
         /// <param name="de">DirectoryEntry to add</param>
-        private void AddVirtualNodeToCurrentDirectoryNode(DirectoryEntry de)
+        private void _AddDirectoryEntryToCurrentDirectoryNode(DirectoryEntry de)
         {
             bool nodeAdded = false;
 
