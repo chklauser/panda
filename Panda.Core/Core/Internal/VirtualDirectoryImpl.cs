@@ -279,20 +279,25 @@ namespace Panda.Core.Internal
 
         public override Task<VirtualFile> CreateFileAsync(string name, System.IO.Stream dataSource)
         {
-            // check file name
-            VirtualFileSystem.CheckNodeName(name);
+            Task.Run(
+                () =>
+                    {
+                        // check file name
+                        VirtualFileSystem.CheckNodeName(name);
 
-            // create new FileBlock
-            var fb = _disk.BlockManager.AllocateFileBlock();
+                        // create new FileBlock
+                        var fb = _disk.BlockManager.AllocateFileBlock();
 
-            // create a new DirectoryEntry and add address to FileBlock to it
-            var de = new DirectoryEntry(name, fb.Offset, DirectoryEntryFlags.File);
+                        // create a new DirectoryEntry and add address to FileBlock to it
+                        var de = new DirectoryEntry(name, fb.Offset, DirectoryEntryFlags.File);
 
-            // do { if able { add a new DataBlock to the FileBlock } else { create new FileContinuationBlock and add it there } and then
-            // stream data from dataSource into current DataBlock } while (stream still has data)
+                        // do { if able { add a new DataBlock to the FileBlock } else { create new FileContinuationBlock and add it there } and then
+                        // stream data from dataSource into current DataBlock } while (stream still has data)
 
-            // add DirectoryEntry to this DirectoryBlock or a DirectoryContinuationBlock of it
-            AddDirectoryEntryToCurrentDirectoryNode(de);
+                        // add DirectoryEntry to this DirectoryBlock or a DirectoryContinuationBlock of it
+                        AddDirectoryEntryToCurrentDirectoryNode(de);
+                    }
+                );
         }
 
         public override string Name
