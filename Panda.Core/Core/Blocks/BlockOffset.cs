@@ -10,7 +10,7 @@ namespace Panda.Core.Blocks
     /// <remarks><para>There are explicit conversions to and from the underlying type. The conversion operators are marked 'explicit' in order
     /// to force the programmer to think twice when treating an integer as a block offset (and vice-versa)</para>
     /// <para>See `newtype` in Haskell</para></remarks>
-    [StructLayout(LayoutKind.Sequential) ]
+    [StructLayout(LayoutKind.Sequential)]
     public struct BlockOffset : IEquatable<BlockOffset>
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1051:DoNotDeclareVisibleInstanceFields",Justification = @"

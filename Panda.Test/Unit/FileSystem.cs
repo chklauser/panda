@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using System.Linq;
+using System.Text;
 using NUnit.Framework;
+using Panda.Core;
 
 namespace Panda.Test.Unit
 {
@@ -84,6 +86,54 @@ namespace Panda.Test.Unit
             var bytesRead = str.Read(buffer, 0, 20);
             Assert.That(bytesRead, Is.EqualTo(0), "bytes read");
             Assert.That(buffer, Is.All.EqualTo(guard), "The buffer was changed, even though no bytes were read. This indicates an error in the stream implementation");
+        }
+
+        /// <summary>
+        /// Tests for navigating around in the file system with paths
+        /// </summary>
+        #region Navigate
+
+        [Test, ExpectedException(typeof(PathNotFoundException))]
+        public void NavigateToNotExistingDirectory()
+        {
+            CreateMemDisk();
+
+            // check what happens when the directory doesn't exist
+            Disk.Root.Navigate("idontexist");
+        }
+
+        [Test]
+        public void Navigate()
+        {
+            CreateMemDisk();
+
+            // create directory
+            Disk.Root.CreateDirectory("peter");
+
+            // check if navigate returns a directory
+            Assert.That(Disk.Root.Navigate("peter"), Is.AssignableTo<VirtualDirectory>());
+
+            // create a file in the directory
+            ((VirtualDirectory) Disk.Root.Navigate("peter")).CreateFile("peter.txt", "");
+
+            // check if navigate returns a file
+            Assert.That(Disk.Root.Navigate("peter/peter.txt"), Is.AssignableTo<VirtualFile>());
+        }
+
+        #endregion
+
+        [Test]
+        public void CreateTextFile()
+        {
+            CreateMemDisk();
+
+            Disk.Root.CreateFile("peter.txt", Encoding.UTF8.GetBytes("test"));
+
+            //var returnStream = ((VirtualFile) Disk.Root.Navigate("peter.txt")).Open();
+            //var stringReader = new StreamReader(returnStream, Encoding.UTF8);
+            //var bla = stringReader.ReadToEnd();
+            
+            Assert.That((new StreamReader(((VirtualFile) Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(), Is.EqualTo("test"));
         }
     }
 }

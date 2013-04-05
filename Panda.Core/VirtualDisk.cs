@@ -2,12 +2,15 @@
 using System.IO;
 using System.Security;
 using JetBrains.Annotations;
+using Panda.Core;
+using Panda.Core.IO;
+using Panda.Core.IO.MemoryMapped;
 using Panda.Core.Internal;
 
 namespace Panda
 {
     [PublicAPI]
-    public abstract class VirtualDisk
+    public abstract class VirtualDisk : IDisposable
     {
         #region Virtual disk management API
 
@@ -23,10 +26,11 @@ namespace Panda
         [NotNull]
         public static VirtualDisk OpenExisting([NotNull] string path)
         {
-            if (path != null)
+            if (path == null)
                 throw new ArgumentNullException("path");
-            
-            throw new NotImplementedException("VirtualDisk::OpenExisting");
+
+            var space = new MemoryMappedFileSpace(path);
+            return _wrapVirtualDisk(space);
         }
 
         /// <summary>
@@ -48,7 +52,18 @@ namespace Panda
             
             if(capacity < 0)
                 throw new ArgumentOutOfRangeException("capacity","Capacity must be positive.");
-            throw new NotImplementedException("VirtualDisk::Create");
+
+            var blockCount = (uint) (capacity/VirtualFileSystem.DefaultBlockSize + 1u);
+            var space = MemoryMappedFileSpace.CreateNew(path, VirtualFileSystem.DefaultBlockSize,
+                                            blockCount);
+            RawBlockManager.Initialize(space, blockCount,VirtualFileSystem.DefaultBlockSize);
+            return _wrapVirtualDisk(space);
+        }
+
+        private static VirtualDisk _wrapVirtualDisk(IRawPersistenceSpace space)
+        {
+            var blockManager = SingleInstanceRawBlockManager.Create(space);
+            return new VirtualDiskImpl(blockManager, new AscendingOffsetLockingPolicy());
         }
 
         /// <summary>
@@ -113,6 +128,25 @@ namespace Panda
         public VirtualNode Navigate(string path)
         {
             return Root.Navigate(path);
+        }
+
+        ~VirtualDisk()
+        {
+            Dispose(false);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

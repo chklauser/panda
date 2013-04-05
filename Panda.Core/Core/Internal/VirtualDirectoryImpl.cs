@@ -56,7 +56,7 @@ namespace Panda.Core.Internal
             // is path empty?
             if (path.Count == 0)
             {
-                throw new IllegalPathException("Empty path.");
+                return this;
             }
             else
             {
@@ -165,7 +165,7 @@ namespace Panda.Core.Internal
             // search in ContinuationBlocks
             while (currentDirectoryBlock.ContinuationBlockOffset != null)
             {
-                // .Value is needed because ContinuationBlock is nullable
+                // .Value is needed because ContinuationBlockOffset is nullable
                 currentDirectoryBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentDirectoryBlock.ContinuationBlockOffset.Value);
                 foreach (DirectoryEntry de in currentDirectoryBlock)
                 {

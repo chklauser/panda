@@ -17,6 +17,19 @@ namespace Panda.Core.Internal
             _rootDirectory = new VirtualRootDirectoryImpl(this);
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            if (disposing)
+            {
+                var bm = _blockManager as IDisposable;
+                if (bm != null)
+                {
+                    bm.Dispose();
+                }
+            }
+        }
+
         public override long Capacity
         {
             get { throw new System.NotImplementedException(); }

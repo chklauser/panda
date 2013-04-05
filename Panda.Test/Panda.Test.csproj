@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CodeAnalysisRuleSet>..\jcd-csharp.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -41,9 +42,13 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Integration\Specification.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unit\FileSystem.cs" />
     <Compile Include="Unit\FileSystemBlackBox.cs" />
+    <Compile Include="Unit\RawBlockManagerMappedTests.cs" />
+    <Compile Include="Unit\RawBlockManagerMemTests.cs" />
+    <Compile Include="Unit\RawBlockManagerTestsBase.cs" />
     <Compile Include="VirtualDiskManagement.cs" />
   </ItemGroup>
   <ItemGroup>
