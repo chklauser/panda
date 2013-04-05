@@ -157,7 +157,7 @@ namespace Panda.Core.Internal
             {
                 if (blockOffset == _blockOffset)
                 {
-                    return Tuple.Create(de, currentDirectoryBlock, null);
+                    return Tuple.Create<DirectoryEntry, IDirectoryContinuationBlock, IDirectoryContinuationBlock>(de, currentDirectoryBlock, null);
                 }
             }
 
