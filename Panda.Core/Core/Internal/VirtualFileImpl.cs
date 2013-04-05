@@ -33,19 +33,14 @@ namespace Panda.Core.Internal
             get { return _name; }
         }
 
-        public override string FullName
-        {
-            get { throw new NotImplementedException(); }
-        }
-
         public override long Size
         {
-            get { throw new NotImplementedException(); }
+            get { return _disk.BlockManager.GetFileBlock(_blockOffset).Size; }
         }
 
         public override bool IsRoot
         {
-            get { throw new NotImplementedException(); }
+            get { return false; }
         }
 
         public override VirtualDirectory ParentDirectory
@@ -55,9 +50,27 @@ namespace Panda.Core.Internal
 
         public override void Rename(string newName)
         {
-            throw new NotImplementedException();
+            // check file name
+            VirtualFileSystem.CheckNodeName(newName);
+
+            // search DirectoryEntry of this directory in the parent directory
+            var tuple = _parentDirectory.FindDirectoryEntry(_blockOffset);
+
+            // create new DirectoryEntry for this directory with the new name, other stuff remains unchanged
+            var newDe = new DirectoryEntry(newName, tuple.Item1.BlockOffset, tuple.Item1.Flags);
+
+            // remove old DirectoryEntry
+            tuple.Item2.DeleteEntry(tuple.Item1);
+
+            // add new DirectoryEntry
+            _parentDirectory.AddDirectoryEntryToCurrentDirectoryNode(newDe);
         }
 
+        /// <summary>
+        /// Delete File: First delete directoryEntry in Parent. Then go trough all ContinuationBlocks
+        /// and free its DataBlocks. Do the same with the FileBlock. After that free the FileBlock and 
+        /// ContinuationBlocks intself.
+        /// </summary>
         public override void Delete()
         {
             // delete directoryEntry of current Block
@@ -92,7 +105,25 @@ namespace Panda.Core.Internal
 
         public override void Move(VirtualDirectory destination, string newName)
         {
-            throw new NotImplementedException();
+            Move(destination as VirtualDirectoryImpl, newName);
+        }
+
+        public void Move(VirtualDirectoryImpl destination, string newName)
+        {
+            // check directory name
+            VirtualFileSystem.CheckNodeName(newName);
+
+            // search DirectoryEntry of this directory in the parent directory
+            var tuple = _parentDirectory.FindDirectoryEntry(_blockOffset);
+
+            // create new DirectoryEntry for this directory with the new name, other stuff remains unchanged
+            var newDe = new DirectoryEntry(newName, tuple.Item1.BlockOffset, tuple.Item1.Flags);
+
+            // remove old DirectoryEntry
+            tuple.Item2.DeleteEntry(tuple.Item1);
+
+            // add new DirectoryEntry in the new destination directory
+            destination.AddDirectoryEntryToCurrentDirectoryNode(newDe);
         }
     }
 }

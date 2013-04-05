@@ -74,6 +74,7 @@ namespace Panda.Core.Blocks
     [Flags]
     public enum DirectoryEntryFlags : byte
     {
+        None = 0,
         Directory = 1
     }
 }

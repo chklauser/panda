@@ -23,5 +23,15 @@ namespace Panda.Core.Internal
         {
             get { return String.Empty; }
         }
+
+        public override void Rename(string newName)
+        {
+            throw new DontTouchRootException("Root directory cannot be renamed.");
+        }
+
+        public override void Move(VirtualDirectory destination, string newName)
+        {
+            throw new DontTouchRootException("Root directory cannot be moved.");
+        }
     }
 }
