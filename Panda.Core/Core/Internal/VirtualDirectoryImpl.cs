@@ -388,8 +388,10 @@ namespace Panda.Core.Internal
                             int numDataBlockOffsetsWritten = 0;
 
                             // add each data block offset to the file blocks
-                            foreach (BlockOffset offset in dataBlocks)
+                            for (int i = 0; i < dataBlocks.Count; i += numDataBlockOffsetsWritten )
                             {
+                                numDataBlockOffsetsWritten = 0;
+
                                 // does the file block have remaining capacity to add the data block offset to it?
                                 if (currentFileBlock.Count >= currentFileBlock.ListCapacity)
                                 {
@@ -405,12 +407,24 @@ namespace Panda.Core.Internal
                                 }
 
                                 // TODO: ToArray's could be cached
-                                // add as many block offsets to the current file block as possible
-                                Array.Copy(dataBlocks.ToArray(),
-                                    (long) numDataBlockOffsetsWritten - 1,
-                                    currentFileBlock.ToArray(),
-                                    (long) currentFileBlock.Count - 1,
-                                    (long) currentFileBlock.ListCapacity - currentFileBlock.Count);
+                                if (dataBlocks.Count > currentFileBlock.ListCapacity - currentFileBlock.Count)
+                                {
+                                    // add as many block offsets to the current file block as possible (fill the current file block)
+                                    Array.Copy(dataBlocks.ToArray(),
+                                        (long) i,
+                                        currentFileBlock.ToArray(),
+                                        (long) currentFileBlock.Count - 1,
+                                        (long) currentFileBlock.ListCapacity - currentFileBlock.Count);
+                                }
+                                else
+                                {
+                                    // add the blocks that are left, they will all fit into the current file block
+                                    Array.Copy(dataBlocks.ToArray(),
+                                         (long)i,
+                                         currentFileBlock.ToArray(),
+                                         (long)currentFileBlock.Count - 1,
+                                         (long)dataBlocks.Count); 
+                                }
 
                                 numDataBlockOffsetsWritten += currentFileBlock.ListCapacity - currentFileBlock.Count;
                             }
