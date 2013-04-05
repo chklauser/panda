@@ -317,7 +317,7 @@ namespace Panda.Core.Internal
             }
         }
 
-        public override Task<VirtualFile> CreateFileAsync(string name, System.IO.Stream dataSource)
+        public override Task<VirtualFile> CreateFileAsync(string name, Stream dataSource)
         {
             // check if the stream is readable
             if (!dataSource.CanRead)
@@ -329,6 +329,15 @@ namespace Panda.Core.Internal
                     {
                         // check file name
                         VirtualFileSystem.CheckNodeName(name);
+
+                        // is there already a file with this name -> throw an error!
+                        foreach (var node in this)
+                        {
+                            if (name == node.Name)
+                            {
+                                throw new PandaException("There is already a node with this name!");
+                            }
+                        }
 
                         // create new FileBlock
                         var fb = _disk.BlockManager.AllocateFileBlock();
@@ -343,7 +352,7 @@ namespace Panda.Core.Internal
                         long fileSize = 0;
                         
                         // and of how many bytes read
-                        int bytesRead = 0;
+                        int bytesRead;
 
                         // and use a list of block offsets to data blocks
                         var dataBlocks = new List<BlockOffset>();
