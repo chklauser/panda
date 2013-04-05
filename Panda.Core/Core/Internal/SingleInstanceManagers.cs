@@ -59,7 +59,23 @@ namespace Panda.Core.IO
         {
             // assume exclusive access
             ReferenceCache.RegisterAccess(block);
-            _existingBlocks.Add(block.Offset, new WeakReference<IBlock>(block));
+            IBlock existing;
+            WeakReference<IBlock> weakExisting;
+            if (_existingBlocks.TryGetValue(block.Offset, out weakExisting) && weakExisting.TryGetTarget(out existing))
+            {
+                if (!ReferenceEquals(existing, block))
+                {
+                    throw new InvalidOperationException("Two block instances for the same offset detected.");
+                }
+                else
+                {
+                    // already added
+                }
+            }
+            else
+            {
+                _existingBlocks[block.Offset] = new WeakReference<IBlock>(block);
+            }
         }
 
         protected void TrackNewBlock(IBlock block)
@@ -126,36 +142,84 @@ namespace Panda.Core.IO
         }
 
         public override IDirectoryBlock AllocateDirectoryBlock()
-        {
-            _handleGc();
+        {		
             var block = base.AllocateDirectoryBlock();
-            TrackNewBlock(block);
-            return block;
+			_lock.Wait();
+			try
+			{
+				_handleGc();
+				_trackNewBlock(block);				
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}
         }
 
         public override IDirectoryContinuationBlock AllocateDirectoryContinuationBlock()
         {
-            _handleGc();
             var block = base.AllocateDirectoryBlock();
-            TrackNewBlock(block);
-            return block;
+			_lock.Wait();
+            try
+			{
+				_handleGc();
+				_trackNewBlock(block);				
+				return block;
+            }
+			finally
+			{
+				_lock.Release();
+			}
         }
 
         public override IFileBlock AllocateFileBlock()
         {
-            _handleGc();
-            var block = base.AllocateFileBlock();
-            TrackNewBlock(block);
-            return block;
+			var block = base.AllocateFileBlock();
+			_lock.Wait();
+			try
+			{
+				_handleGc();            
+				_trackNewBlock(block);
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}
         }
 
         public override IFileContinuationBlock AllocateFileContinuationBlock()
         {
-            _handleGc();
             var block = base.AllocateFileContinuationBlock();
-            TrackNewBlock(block);
-            return block;
+			_lock.Wait();
+			try
+			{
+				_handleGc();
+				_trackNewBlock(block);
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}			
         }
+
+		public override IEmptyListBlock AllocateEmptyListBlock()
+		{
+			var block = base.AllocateEmptyListBlock();
+			_lock.Wait();
+			try
+			{
+				_handleGc();
+				TrackNewBlock(block);
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}			
+		}
 
         public override void FreeBlock(BlockOffset blockOffset)
         {
@@ -180,10 +244,10 @@ namespace Panda.Core.IO
 
         public override IDirectoryBlock GetDirectoryBlock(BlockOffset blockOffset)
         {
-            _handleGc();
 			_lock.Wait();
 			try
 			{
+				_handleGc();
 				IDirectoryBlock block;
 				if (!_tryGetExisting(blockOffset, out block))
 				{
@@ -200,10 +264,10 @@ namespace Panda.Core.IO
 
         public override IDirectoryContinuationBlock GetDirectoryContinuationBlock(BlockOffset blockOffset)
         {
-            _handleGc();
             _lock.Wait();
 			try
 			{
+				_handleGc();
 				IDirectoryContinuationBlock block;
 				if (!_tryGetExisting(blockOffset, out block))
 				{
@@ -220,11 +284,11 @@ namespace Panda.Core.IO
 
         public override IFileBlock GetFileBlock(BlockOffset blockOffset)
         {
-            _handleGc();
             
             _lock.Wait();
 			try
 			{
+				_handleGc();
 				IFileBlock block;
 				if (!_tryGetExisting(blockOffset, out block))
 				{
@@ -241,10 +305,10 @@ namespace Panda.Core.IO
 
         public override IFileContinuationBlock GetFileContinuationBlock(BlockOffset blockOffset)
         {
-            _handleGc();
             _lock.Wait();
 			try
 			{
+				_handleGc();
 				IFileContinuationBlock block;
 				if (!_tryGetExisting(blockOffset, out block))
 				{
@@ -258,6 +322,26 @@ namespace Panda.Core.IO
 				_lock.Release();
 			}
         }
+
+		public override IEmptyListBlock GetEmptyListBlock(BlockOffset blockOffset)
+		{
+			_lock.Wait();
+			try
+			{
+				_handleGc();
+				IEmptyListBlock block;
+				if(!_tryGetExisting(blockOffset, out block)) 
+				{
+					block = base.GetEmptyListBlock(blockOffset);
+					_trackNewBlock(block);
+				}
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}
+		}
 
 		#region IDisposable
 
@@ -341,7 +425,23 @@ namespace Panda.Test.InMemory.Blocks
         {
             // assume exclusive access
             ReferenceCache.RegisterAccess(block);
-            _existingBlocks.Add(block.Offset, new WeakReference<IBlock>(block));
+            IBlock existing;
+            WeakReference<IBlock> weakExisting;
+            if (_existingBlocks.TryGetValue(block.Offset, out weakExisting) && weakExisting.TryGetTarget(out existing))
+            {
+                if (!ReferenceEquals(existing, block))
+                {
+                    throw new InvalidOperationException("Two block instances for the same offset detected.");
+                }
+                else
+                {
+                    // already added
+                }
+            }
+            else
+            {
+                _existingBlocks[block.Offset] = new WeakReference<IBlock>(block);
+            }
         }
 
         protected void TrackNewBlock(IBlock block)
@@ -408,36 +508,69 @@ namespace Panda.Test.InMemory.Blocks
         }
 
         public override IDirectoryBlock AllocateDirectoryBlock()
-        {
-            _handleGc();
+        {		
             var block = base.AllocateDirectoryBlock();
-            TrackNewBlock(block);
-            return block;
+			_lock.Wait();
+			try
+			{
+				_handleGc();
+				_trackNewBlock(block);				
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}
         }
 
         public override IDirectoryContinuationBlock AllocateDirectoryContinuationBlock()
         {
-            _handleGc();
             var block = base.AllocateDirectoryBlock();
-            TrackNewBlock(block);
-            return block;
+			_lock.Wait();
+            try
+			{
+				_handleGc();
+				_trackNewBlock(block);				
+				return block;
+            }
+			finally
+			{
+				_lock.Release();
+			}
         }
 
         public override IFileBlock AllocateFileBlock()
         {
-            _handleGc();
-            var block = base.AllocateFileBlock();
-            TrackNewBlock(block);
-            return block;
+			var block = base.AllocateFileBlock();
+			_lock.Wait();
+			try
+			{
+				_handleGc();            
+				_trackNewBlock(block);
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}
         }
 
         public override IFileContinuationBlock AllocateFileContinuationBlock()
         {
-            _handleGc();
             var block = base.AllocateFileContinuationBlock();
-            TrackNewBlock(block);
-            return block;
+			_lock.Wait();
+			try
+			{
+				_handleGc();
+				_trackNewBlock(block);
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}			
         }
+
 
         public override void FreeBlock(BlockOffset blockOffset)
         {
@@ -462,10 +595,10 @@ namespace Panda.Test.InMemory.Blocks
 
         public override IDirectoryBlock GetDirectoryBlock(BlockOffset blockOffset)
         {
-            _handleGc();
 			_lock.Wait();
 			try
 			{
+				_handleGc();
 				IDirectoryBlock block;
 				if (!_tryGetExisting(blockOffset, out block))
 				{
@@ -482,10 +615,10 @@ namespace Panda.Test.InMemory.Blocks
 
         public override IDirectoryContinuationBlock GetDirectoryContinuationBlock(BlockOffset blockOffset)
         {
-            _handleGc();
             _lock.Wait();
 			try
 			{
+				_handleGc();
 				IDirectoryContinuationBlock block;
 				if (!_tryGetExisting(blockOffset, out block))
 				{
@@ -502,11 +635,11 @@ namespace Panda.Test.InMemory.Blocks
 
         public override IFileBlock GetFileBlock(BlockOffset blockOffset)
         {
-            _handleGc();
             
             _lock.Wait();
 			try
 			{
+				_handleGc();
 				IFileBlock block;
 				if (!_tryGetExisting(blockOffset, out block))
 				{
@@ -523,10 +656,10 @@ namespace Panda.Test.InMemory.Blocks
 
         public override IFileContinuationBlock GetFileContinuationBlock(BlockOffset blockOffset)
         {
-            _handleGc();
             _lock.Wait();
 			try
 			{
+				_handleGc();
 				IFileContinuationBlock block;
 				if (!_tryGetExisting(blockOffset, out block))
 				{
@@ -540,6 +673,7 @@ namespace Panda.Test.InMemory.Blocks
 				_lock.Release();
 			}
         }
+
 
 		#region IDisposable
 

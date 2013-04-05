@@ -282,6 +282,34 @@ namespace Panda.Test.Unit
             Assert.That(Encoding.UTF32.GetString(check), Is.EqualTo(sentinel));
         }
 
+        [Test]
+        public void WriteDirectoryDirectoryEntry()
+        {
+            CreateSpace();
+
+            var subdir = BlockManager.AllocateDirectoryBlock();
+            var dir = BlockManager.AllocateDirectoryBlock();
+            var result = dir.TryAddEntry(new DirectoryEntry("the-file-name", subdir.Offset, DirectoryEntryFlags.Directory));
+
+            Assert.That(result,Is.True,"TryAddEntry should report success.");
+            Assert.That(dir.Count == 1);
+            var entries = dir.ToList();
+            Assert.That(entries.Count,Is.EqualTo(1),"Size of the collection of entries");
+            // It is important that we have 2 distinct instances of the directory entry
+            Assert.That(entries,Is.EquivalentTo(new[]{new DirectoryEntry("the-file-name",subdir.Offset,DirectoryEntryFlags.Directory)}));
+        }
+
+        [Test]
+        public void WriteFileDirectoryEntry()
+        {
+            CreateSpace();
+
+            var file = BlockManager.AllocateFileBlock();
+            var dir = BlockManager.AllocateDirectoryBlock();
+            var result = dir.TryAddEntry(new DirectoryEntry("the file name", file.Offset, 0));
+            
+        }
+
         #region Disposal
 
         public void Dispose()

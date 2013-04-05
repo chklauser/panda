@@ -48,6 +48,9 @@
     </Compile>
     <Compile Include="Core\IO\RawBlock.cs" />
     <Compile Include="Core\IO\RawContinuedBlock.cs" />
+    <Compile Include="Core\IO\RawDirectoryEntryListBlock.cs" />
+    <Compile Include="Core\IO\RawEmptyListBlock.cs" />
+    <Compile Include="Core\IO\RawFileBlock.cs" />
     <Compile Include="Core\IO\RawOffsetListBlock.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Test\InMemory\Blocks\MemBlock.cs" />
