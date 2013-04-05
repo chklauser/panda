@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Panda.Core.Blocks;
 
@@ -24,9 +21,9 @@ namespace Panda.Core.Internal
             _name = name;
         }
 
-        public override System.IO.Stream Open()
+        public override Stream Open()
         {
-            return new VirtualFileOpenStream(_disk, this._blockOffset);
+            return new VirtualFileOpenStream(_disk, _disk.BlockManager.GetFileBlock(_blockOffset));
         }
 
         public override string Name

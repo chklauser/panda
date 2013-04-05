@@ -1,21 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Panda.Core.Blocks;
 
 namespace Panda.Core.Internal
 {
     class VirtualFileOpenStream : System.IO.Stream
     {
-        private readonly VirtualDiskImpl _disk;
+        [NotNull] private readonly VirtualDiskImpl _disk;
 
         /// <summary>
         /// Block offset of the original (=first) file block
         /// </summary>
-        private readonly BlockOffset _blockOffset;
+        [NotNull] private readonly IFileBlock _file;
 
         /// <summary>
         /// Number of bytes read from file until now
@@ -25,22 +27,63 @@ namespace Panda.Core.Internal
         /// <summary>
         /// Current file continuation block where the stream should read
         /// </summary>
-        private IFileContinuationBlock _currentFileContinuationBlock;
+        [CanBeNull] private IFileContinuationBlock _currentFileBlock;
 
-        private int _currentNumberOfDataBlockOffsetInFileContinuationBlock;
+        /// <summary>
+        /// A queue that holds block offsets that we have read from the current file (continuation) block ahead of time
+        /// </summary>
+        [NotNull]
+        private readonly Queue<BlockOffset> _offsetBuffer = new Queue<BlockOffset>();
+
+        [CanBeNull] private BlockOffset? _currentDataBlock = null;
 
         /// <summary>
         /// Current block offset in data block
         /// </summary>
-        private int _currentDataBlockOffset;
+        private int _currentOffsetIntoDataBlock;
 
-        public VirtualFileOpenStream(VirtualDiskImpl disk, BlockOffset blockOffset)
+        public VirtualFileOpenStream([NotNull] VirtualDiskImpl disk, [NotNull] IFileBlock file)
         {
+            if (file == null)
+                throw new ArgumentNullException("file");
+            if (disk == null)
+                throw new ArgumentNullException("disk");
+            
             _disk = disk;
-            _blockOffset = blockOffset;
+            _file = file;
 
-            _currentFileContinuationBlock = _disk.BlockManager.GetFileContinuationBlock(blockOffset);
+            _currentFileBlock = _file;
             _bytesRead = 0;
+
+            // Make sure the buffer starts out initialized
+            _moveToNextContinuationBlock();
+        }
+
+        /// <summary>
+        /// Copies the data block offsets of the <see cref="_currentFileBlock"/> to the <see cref="_offsetBuffer"/>. Signals if there are potentially more continuation blocks.
+        /// </summary>
+        /// <returns>True if it makes sense to call the method again; false otherwise</returns>
+        private bool _moveToNextContinuationBlock()
+        {
+            // It must be safe to call this method, even if it has returned false before.
+            if (_currentFileBlock == null)
+                return false;
+
+            // Read the entire offset list into our buffer
+            foreach (var dataBlockOffset in _currentFileBlock)
+                _offsetBuffer.Enqueue(dataBlockOffset);
+
+            // See if it makes sense to have _moveNext called again
+            if (_currentFileBlock.ContinuationBlockOffset != null)
+            {
+                _currentFileBlock = _disk.BlockManager.GetFileContinuationBlock(_currentFileBlock.ContinuationBlockOffset.Value);
+            }
+            else
+            {
+                _currentFileBlock = null;
+            }
+
+            return true;
         }
 
         public override void Flush()
@@ -60,61 +103,65 @@ namespace Panda.Core.Internal
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            // read one block and return it if count larger than block size
+            if (buffer == null)
+                throw new ArgumentNullException("buffer");
+            if(count > buffer.Length-offset)
+                throw new ArgumentOutOfRangeException("count",count,"Not enough space in array for that number of bytes.");
 
-            // TODO: Cache toArray()
-            BlockOffset dataBlockOffset =
-                _currentFileContinuationBlock.ToArray()[_currentNumberOfDataBlockOffsetInFileContinuationBlock];
+            return _read(buffer, offset, count);
+        }
 
-            int numberOfBytesRead;
-
-            if (count + _currentDataBlockOffset <= _disk.BlockManager.DataBlockSize)
+        private int _read(byte[] buffer, int offset, int count)
+        {
+            if (_currentDataBlock.HasValue)
             {
-                numberOfBytesRead = count;
-                _disk.BlockManager.ReadDataBlock(dataBlockOffset, buffer, _currentDataBlockOffset, numberOfBytesRead);
-                _currentDataBlockOffset = count;
+                // supply from current data block, don't go over "edge" 
+                // of this block. We'd rather just return less than what
+                // the client asked for.
+
+                var bytesLeftInBlock = _disk.BlockManager.DataBlockSize - _currentOffsetIntoDataBlock;
+                var effectiveCount = Math.Min(bytesLeftInBlock, count);
+                _disk.BlockManager.ReadDataBlock(_currentDataBlock.Value, buffer, offset, _currentOffsetIntoDataBlock,
+                    effectiveCount);
+
+                // Update counters
+                _currentOffsetIntoDataBlock += effectiveCount;
+                _bytesRead += effectiveCount;
+
+                if (_currentOffsetIntoDataBlock >= _disk.BlockManager.DataBlockSize)
+                {
+                    Debug.Assert(_currentOffsetIntoDataBlock == _disk.BlockManager.DataBlockSize);
+                    // we have read to the end of this data block, mark it as read by forgetting about it
+                    // it has already been removed from the queue/buffer
+                    _currentFileBlock = null;
+                }
+                return effectiveCount;
+            }
+                // we first need to get our hands on a data block.
+                // Check buffer first
+            else if (_offsetBuffer.Count > 0)
+            {
+                _currentDataBlock = _offsetBuffer.Dequeue();
+                _currentOffsetIntoDataBlock = 0;
+
+                // and then proceed as before
+                return _read(buffer, offset, count);
             }
             else
             {
-                numberOfBytesRead = count % _disk.BlockManager.DataBlockSize - _currentDataBlockOffset;
-                _disk.BlockManager.ReadDataBlock(dataBlockOffset, buffer, _currentDataBlockOffset, numberOfBytesRead);
-                _currentDataBlockOffset = 0;
-            }
-
-            _bytesRead += numberOfBytesRead;
-
-            return _movePointersToNextDataBlockOffset() ? numberOfBytesRead : 0; 
-        }
-
-        /// <summary>
-        /// Moves all pointers to the next data block offset. Returns false if at end of file.
-        /// </summary>
-        /// <returns>False if at end of file</returns>
-        private bool _movePointersToNextDataBlockOffset()
-        {
-            // check if already on end of file continuation block
-            if (_currentNumberOfDataBlockOffsetInFileContinuationBlock >= _currentFileContinuationBlock.Count - 1)
-            {
-                // is there a next file continuation block?
-                if (_currentFileContinuationBlock.ContinuationBlockOffset.HasValue)
+                // see if we can get more data block offsets into our buffer
+                if (_moveToNextContinuationBlock())
                 {
-                    // set pointers to next file continuation block
-                    _currentFileContinuationBlock =
-                        _disk.BlockManager.GetFileContinuationBlock(
-                            _currentFileContinuationBlock.ContinuationBlockOffset.Value);
-                    _currentNumberOfDataBlockOffsetInFileContinuationBlock = 0;
-                    return true;
+                    // offset buffer now might contain more entries
+                    // proceed as before
+                    return _read(buffer, offset, count);
                 }
                 else
                 {
-                    // at end of file
-                    return false;
+                    // we can't get our hands on any additional blocks
+                    // zero signals that the we have reached EOF.
+                    return 0;
                 }
-            }
-            else
-            {
-                _currentNumberOfDataBlockOffsetInFileContinuationBlock += 1;
-                return true;
             }
         }
 
@@ -140,7 +187,7 @@ namespace Panda.Core.Internal
 
         public override long Length
         {
-            get { return _disk.BlockManager.GetFileBlock(_blockOffset).Size; }
+            get { return _file.Size; }
         }
 
         public override long Position
