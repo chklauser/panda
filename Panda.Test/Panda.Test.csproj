@@ -42,6 +42,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Integration\Specification.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unit\FileSystem.cs" />
     <Compile Include="Unit\FileSystemBlackBox.cs" />

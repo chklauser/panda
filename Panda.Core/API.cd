@@ -11,14 +11,15 @@
   <Class Name="Panda.VirtualDisk" Collapsed="true">
     <Position X="5.25" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAABCAAAAIAAgACgAAAAgAAAAAQAAAABAg=</HashCode>
+      <HashCode>AAAAAAAAACAABCAAAAIAAgACgAABAgAAAAAQAAAABAg=</HashCode>
       <FileName>VirtualDisk.cs</FileName>
     </TypeIdentifier>
+    <Lollipop Position="0.2" />
   </Class>
   <Class Name="Panda.VirtualFileSystem" Collapsed="true">
     <Position X="7" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAACAAAAAAAAAAAAAAAAQgAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAACAAEAAAAAAAAAAAAAQgAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>VirtualFileSystem.cs</FileName>
     </TypeIdentifier>
   </Class>

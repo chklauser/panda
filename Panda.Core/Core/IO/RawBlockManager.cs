@@ -15,7 +15,6 @@ namespace Panda.Core.IO
         protected internal const int RootDirectoryFieldOffset = 2;
         protected internal const int BlockSizeFieldOffset = 1;
         protected internal const int BlockCountFieldOffset = 0;
-        protected internal const uint DefaultBlockSize = 4096;
 
         /// <summary>
         /// Currently, the meta information block at the beginning takes 20 bytes. In order to have some room to grow, we
@@ -49,7 +48,7 @@ namespace Panda.Core.IO
             [NotNull]
             IRawPersistenceSpace space,
             uint blockCount,
-            uint blockSize = DefaultBlockSize,
+            uint blockSize = VirtualFileSystem.DefaultBlockSize,
             BlockOffset? rootDirectoryOffset = null,
             BlockOffset? emptyListOffset = null)
         {

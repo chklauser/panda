@@ -6,6 +6,8 @@ namespace Panda
 {
     public static class VirtualFileSystem
     {
+        public const uint DefaultBlockSize = 4096;
+
         /// <summary>
         /// The path separator used by the Panda virtual file system.
         /// </summary>
