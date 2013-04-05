@@ -56,7 +56,7 @@ namespace Panda.Core.Internal
             // is path empty?
             if (path.Count == 0)
             {
-                throw new IllegalPathException("Empty path.");
+                return this;
             }
             else
             {
