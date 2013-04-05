@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Panda.Core.Blocks;
@@ -38,7 +37,7 @@ namespace Panda.Core.Internal
             else
             {
                 // relative path given, parse path and call Navigate(Array<string>)
-                return Navigate(Panda.Core.PathUtil.parsePath(path));
+                return Navigate(PathUtil.parsePath(path));
             }
         }
 
@@ -394,7 +393,7 @@ namespace Panda.Core.Internal
                             var currentFileBlock = fb as IFileContinuationBlock;
 
                             // and of how many data block offsets already written
-                            int numDataBlockOffsetsWritten = 0;
+                            int numDataBlockOffsetsWritten;
 
                             // add each data block offset to the file blocks
                             for (int i = 0; i < dataBlocks.Count; i += numDataBlockOffsetsWritten )
@@ -518,7 +517,6 @@ namespace Panda.Core.Internal
             }
 
             // go trough all directoryEntries (also from ContinationBlocks) and invoke Delete(), done by enumerator:
-            var directoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
             foreach (var node in this)
             {
                  node.Delete();
@@ -555,7 +553,7 @@ namespace Panda.Core.Internal
 
         private void _copy(VirtualDirectoryImpl destination)
         {
-            var newDir = destination.CreateDirectory(this.Name);
+            var newDir = destination.CreateDirectory(Name);
             foreach (VirtualNode node in this)
             {
                 node.Copy(newDir);
