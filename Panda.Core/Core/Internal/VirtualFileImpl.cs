@@ -108,6 +108,11 @@ namespace Panda.Core.Internal
             Move(destination as VirtualDirectoryImpl, newName);
         }
 
+        public override Task ExportAsync(string path)
+        {
+            throw new NotImplementedException();
+        }
+
         public void Move(VirtualDirectoryImpl destination, string newName)
         {
             // check directory name

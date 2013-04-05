@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using NUnit.Framework;
 using Panda.Core.Blocks;
 using Panda.Core.IO;
@@ -10,23 +8,29 @@ using Panda.Core.IO.InMemory;
 
 namespace Panda.Test.Unit
 {
-    [TestFixture]
-    public class RawBlockManagerTests : IDisposable
+    public abstract class RawBlockManagerTestsBase : IDisposable
     {
-        public const uint DefaultBlockSize = 32;
-
-        public IRawPersistenceSpace Space { get; set; }
         internal IBlockManager BlockManager;
+        public const uint DefaultBlockSize = 32;
+        public IRawPersistenceSpace Space { get; set; }
         public uint BlockCount { get; set; }
         public uint BlockSize { get; set; }
 
+        [SetUp]
+        protected virtual void SetUp()
+        {
+            
+        }
+
         public unsafe void CreateSpace(uint blockCount = 24, uint blockSize = DefaultBlockSize)
         {
-            Space = new InMemorySpace(blockCount*blockSize);
+            Space = InstantiateSpace(blockCount, blockSize);
             RawBlockManager.DebugBackdrop((byte*) Space.Pointer,(uint) Space.Capacity);
             RawBlockManager.Initialize(Space, BlockCount = blockCount,BlockSize = blockSize);
             BlockManager = SingleInstanceRawBlockManager.Create(Space);
         }
+
+        protected abstract IRawPersistenceSpace InstantiateSpace(uint blockCount, uint blockSize);
 
         public unsafe byte GetByteAt(uint blockOffset, int blockIndex)
         {
@@ -56,20 +60,14 @@ namespace Panda.Test.Unit
             return *uintPtr;
         }
 
-        [TearDown]
-        public void TearDown()
-        {
-            Dispose();
-        }
-
         [Test]
         public void WriteSingleByte()
         {
             CreateSpace();
 
-            BlockManager.WriteDataBlock((BlockOffset) 1, new byte[] {0xEF});
+            BlockManager.WriteDataBlock((BlockOffset)1, new byte[] { 0xEF });
 
-            Assert.That(GetByteAt(1,0),Is.EqualTo(0xEF));
+            Assert.That(GetByteAt(1, 0), Is.EqualTo(0xEF));
         }
 
         [Test]
@@ -78,12 +76,12 @@ namespace Panda.Test.Unit
             CreateSpace();
 
             const byte sentinel = 0xFE;
-            SetByteAt(1,0, sentinel);
+            SetByteAt(1, 0, sentinel);
 
             var dest = new byte[1];
-            BlockManager.ReadDataBlock((BlockOffset) 1,dest);
+            BlockManager.ReadDataBlock((BlockOffset)1, dest);
 
-            Assert.That(dest[0],Is.EqualTo(sentinel));
+            Assert.That(dest[0], Is.EqualTo(sentinel));
         }
 
         [Test]
@@ -115,9 +113,9 @@ namespace Panda.Test.Unit
             // Use a number of parameter combinations
             // Yes, the expressions have to be that complicated, because NUnit is very, very
             // particular about the exact argument type
-            [Values(0, 3)] int destIndex, 
-            [Values(0, (int) DefaultBlockSize/2-1, (int) DefaultBlockSize-1)] int blockIndex,
-            [Values(4, (int) DefaultBlockSize, (int) (2u * DefaultBlockSize))] int arrayLen)
+            [Values(0, 3)] int destIndex,
+            [Values(0, (int)DefaultBlockSize / 2 - 1, (int)DefaultBlockSize - 1)] int blockIndex,
+            [Values(4, (int)DefaultBlockSize, (int)(2u * DefaultBlockSize))] int arrayLen)
         {
             CreateSpace();
 
@@ -125,7 +123,7 @@ namespace Panda.Test.Unit
             SetByteAt(1, blockIndex, sentinel);
 
             var dest = new byte[arrayLen];
-            BlockManager.ReadDataBlock((BlockOffset)1, dest,destIndex,blockIndex,1);
+            BlockManager.ReadDataBlock((BlockOffset)1, dest, destIndex, blockIndex, 1);
 
             Assert.That(dest[destIndex], Is.EqualTo(sentinel));
         }
@@ -135,46 +133,46 @@ namespace Panda.Test.Unit
         {
             CreateSpace();
 
-            SetUInt32At(0,RawBlockManager.RootDirectoryFieldOffset,0x15);
+            SetUInt32At(0, RawBlockManager.RootDirectoryFieldOffset, 0x15);
 
-            Assert.That(BlockManager.RootDirectoryBlockOffset, Is.EqualTo((BlockOffset) 0x15),
+            Assert.That(BlockManager.RootDirectoryBlockOffset, Is.EqualTo((BlockOffset)0x15),
                 "RootBlockOffset at " + RawBlockManager.RootDirectoryFieldOffset);
         }
 
-        [Test, ExpectedException(typeof (ArgumentNullException))]
+        [Test, ExpectedException(typeof(ArgumentNullException))]
         public void WriteDataNullCheck()
         {
             CreateSpace();
 
-// ReSharper disable AssignNullToNotNullAttribute
-            BlockManager.WriteDataBlock((BlockOffset) 1,null);
-// ReSharper restore AssignNullToNotNullAttribute
+            // ReSharper disable AssignNullToNotNullAttribute
+            BlockManager.WriteDataBlock((BlockOffset)1, null);
+            // ReSharper restore AssignNullToNotNullAttribute
         }
 
-        [Test, ExpectedException(typeof (ArgumentException))]
-        public void WriteDataTooLarge([Values(RawBlockManager.MinimumBlockSize,513u)] uint blockSize)
+        [Test, ExpectedException(typeof(ArgumentException))]
+        public void WriteDataTooLarge([Values(RawBlockManager.MinimumBlockSize, 513u)] uint blockSize)
         {
-            CreateSpace(blockSize:blockSize);
+            CreateSpace(blockSize: blockSize);
 
-            var data = new byte[blockSize+1];
-            BlockManager.WriteDataBlock((BlockOffset) 1,data);
+            var data = new byte[blockSize + 1];
+            BlockManager.WriteDataBlock((BlockOffset)1, data);
         }
 
-        [Test, ExpectedException(typeof (ArgumentNullException))]
+        [Test, ExpectedException(typeof(ArgumentNullException))]
         public void ReadDataNullCheck()
         {
             CreateSpace();
 
-            BlockManager.ReadDataBlock((BlockOffset) 1,null);
+            BlockManager.ReadDataBlock((BlockOffset)1, null);
         }
 
-        [Test, ExpectedException(typeof (ArgumentOutOfRangeException))]
-        public void ReadDataBlockIndexOutOfRange([Values((int) DefaultBlockSize+1,(int) DefaultBlockSize+15)] int blockIndex)
+        [Test, ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void ReadDataBlockIndexOutOfRange([Values((int)DefaultBlockSize + 1, (int)DefaultBlockSize + 15)] int blockIndex)
         {
             CreateSpace();
 
             var data = new byte[BlockSize];
-            BlockManager.ReadDataBlock((BlockOffset) 1, data, blockIndex: blockIndex);
+            BlockManager.ReadDataBlock((BlockOffset)1, data, blockIndex: blockIndex);
         }
 
         [Test]
@@ -183,16 +181,16 @@ namespace Panda.Test.Unit
             CreateSpace();
 
             var data = new byte[BlockSize];
-            BlockManager.ReadDataBlock((BlockOffset)1, data, blockIndex: (int) BlockSize);
+            BlockManager.ReadDataBlock((BlockOffset)1, data, blockIndex: (int)BlockSize);
         }
 
         [Test, ExpectedException(typeof(ArgumentOutOfRangeException))]
-        public void ReadDataDestinationIndexOutOfRange([Values(0,1)] int delta)
+        public void ReadDataDestinationIndexOutOfRange([Values(0, 1)] int delta)
         {
             CreateSpace();
 
-            var data = new byte[BlockSize/2];
-            BlockManager.ReadDataBlock((BlockOffset)1, data,(int) (BlockSize/2 + delta),count:1);
+            var data = new byte[BlockSize / 2];
+            BlockManager.ReadDataBlock((BlockOffset)1, data, (int)(BlockSize / 2 + delta), count: 1);
         }
 
         [Test]
@@ -202,20 +200,20 @@ namespace Panda.Test.Unit
 
             var data = new byte[BlockSize / 2];
             BlockManager.ReadDataBlock((BlockOffset)1, data, (int)(BlockSize / 2));
-            Assert.That(data,Is.All.EqualTo(0),"Data should not have been changed.");
+            Assert.That(data, Is.All.EqualTo(0), "Data should not have been changed.");
         }
 
         [Test, ExpectedException(typeof(ArgumentOutOfRangeException))]
-        public void CountLargerThanRemainingDestinationIsIllegal([Values(1,(int) DefaultBlockSize*2)] int delta)
+        public void CountLargerThanRemainingDestinationIsIllegal([Values(1, (int)DefaultBlockSize * 2)] int delta)
         {
             CreateSpace();
 
             var data = new byte[BlockSize / 2];
-            BlockManager.ReadDataBlock((BlockOffset)1, data, count: (int?) (BlockSize/2+delta));
+            BlockManager.ReadDataBlock((BlockOffset)1, data, count: (int?)(BlockSize / 2 + delta));
         }
 
         [Test, ExpectedException(typeof(ArgumentOutOfRangeException))]
-        public void CountNegativeCountIsIllegal([Values(1, (int) DefaultBlockSize*2)] int delta)
+        public void CountNegativeCountIsIllegal([Values(1, (int)DefaultBlockSize * 2)] int delta)
         {
             CreateSpace();
 
@@ -238,7 +236,7 @@ namespace Panda.Test.Unit
             CreateSpace();
 
             var data = new byte[BlockSize / 2];
-            BlockManager.ReadDataBlock((BlockOffset)1, data, blockIndex:-1);
+            BlockManager.ReadDataBlock((BlockOffset)1, data, blockIndex: -1);
         }
 
         [Test]
@@ -246,7 +244,7 @@ namespace Panda.Test.Unit
         {
             CreateSpace();
 
-            Assert.That(BlockManager.TotalBlockCount,Is.EqualTo(BlockCount));
+            Assert.That(BlockManager.TotalBlockCount, Is.EqualTo(BlockCount));
         }
 
         [Test]
@@ -255,14 +253,14 @@ namespace Panda.Test.Unit
             const string sentinel = "There is really n\0thing magical about this string.";
             var data = Encoding.UTF32.GetBytes(sentinel);
 
-            CreateSpace(blockSize:(uint) data.Length);
+            CreateSpace(blockSize: (uint)data.Length);
 
-            BlockManager.WriteDataBlock((BlockOffset) 2,data);
+            BlockManager.WriteDataBlock((BlockOffset)2, data);
 
             var check = new byte[data.Length];
-            BlockManager.ReadDataBlock((BlockOffset) 2,check);
+            BlockManager.ReadDataBlock((BlockOffset)2, check);
 
-            Assert.That(Encoding.UTF32.GetString(check),Is.EqualTo(sentinel));
+            Assert.That(Encoding.UTF32.GetString(check), Is.EqualTo(sentinel));
         }
 
         [Test]
@@ -291,12 +289,12 @@ namespace Panda.Test.Unit
             var dir = BlockManager.AllocateDirectoryBlock();
             var result = dir.TryAddEntry(new DirectoryEntry("the-file-name", subdir.Offset, DirectoryEntryFlags.Directory));
 
-            Assert.That(result,Is.True,"TryAddEntry should report success.");
+            Assert.That(result, Is.True, "TryAddEntry should report success.");
             Assert.That(dir.Count == 1);
             var entries = dir.ToList();
-            Assert.That(entries.Count,Is.EqualTo(1),"Size of the collection of entries");
+            Assert.That(entries.Count, Is.EqualTo(1), "Size of the collection of entries");
             // It is important that we have 2 distinct instances of the directory entry
-            Assert.That(entries,Is.EquivalentTo(new[]{new DirectoryEntry("the-file-name",subdir.Offset,DirectoryEntryFlags.Directory)}));
+            Assert.That(entries, Is.EquivalentTo(new[] { new DirectoryEntry("the-file-name", subdir.Offset, DirectoryEntryFlags.Directory) }));
         }
 
         [Test]
@@ -306,8 +304,18 @@ namespace Panda.Test.Unit
 
             var file = BlockManager.AllocateFileBlock();
             var dir = BlockManager.AllocateDirectoryBlock();
-            var result = dir.TryAddEntry(new DirectoryEntry("the file name", file.Offset, 0));
-            
+            var result = dir.TryAddEntry(new DirectoryEntry("the file name", file.Offset, DirectoryEntryFlags.None));
+            var entries = dir.ToList();
+            Assert.That(entries.Count, Is.EqualTo(1), "Number of directory entries");
+            Assert.That(entries,
+                        Is.EquivalentTo(new[] { new DirectoryEntry("the file name", file.Offset, DirectoryEntryFlags.None) }));
+
+        }
+
+        [TearDown]
+        public virtual void TearDown()
+        {
+            Dispose();
         }
 
         #region Disposal
@@ -342,7 +350,7 @@ namespace Panda.Test.Unit
             }
         }
 
-        ~RawBlockManagerTests()
+        ~RawBlockManagerTestsBase()
         {
             Dispose(false);
         }
