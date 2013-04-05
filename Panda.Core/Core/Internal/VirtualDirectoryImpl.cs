@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Panda.Core.Blocks;
@@ -37,7 +37,7 @@ namespace Panda.Core.Internal
             else
             {
                 // relative path given, parse path and call Navigate(Array<string>)
-                return Navigate(Panda.Core.PathUtil.parsePath(path));
+                return Navigate(PathUtil.parsePath(path));
             }
         }
 
@@ -212,12 +212,62 @@ namespace Panda.Core.Internal
 
         public override Task<VirtualNode> ImportAsync(string path)
         {
-            throw new NotImplementedException();
+            return Task.Run(
+                () =>
+                    {
+                        var node = _import(path);
+                        return node;
+                    });
+        }
+
+        private VirtualNode _import([NotNull] string path)
+        {
+            if (File.Exists(path))
+            {
+                // 'using' is shortcut sucht that we don't have to close the FileStream in the end. Done automatically due to using.
+                using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                {
+                    // ReSharper disable AssignNullToNotNullAttribute
+                    return CreateFile(Path.GetFileName(path), fs);
+                    // ReSharper restore AssignNullToNotNullAttribute
+                }
+            }
+            else if (Directory.Exists(path))
+            {
+                // ReSharper disable AssignNullToNotNullAttribute
+                var directory = (VirtualDirectoryImpl) CreateDirectory(Path.GetFileName(path));
+                // ReSharper restore AssignNullToNotNullAttribute
+                var content = Directory.EnumerateFileSystemEntries(path);
+                foreach (var current in content)
+                {
+                    directory._import(current);
+                }
+                return directory;
+            }
+            else
+            {
+                // FileSystemEntrie not found!
+                throw new PandaException("FileSystemEntrie not found!");
+            }
         }
 
         public override Task ExportAsync(string path)
         {
-            throw new NotImplementedException();
+            return Task.Run(
+                () =>
+                {
+                    _export(path);
+                });
+        }
+
+        private void _export(string path)
+        {
+            Directory.CreateDirectory(path);
+            foreach (var de in this)
+            {
+                path = Path.Combine(path, de.Name);
+                de.Export(path);
+            }
         }
 
         public override VirtualDirectory CreateDirectory(string name)
@@ -280,7 +330,7 @@ namespace Panda.Core.Internal
             }
         }
 
-        public override Task<VirtualFile> CreateFileAsync(string name, System.IO.Stream dataSource)
+        public override Task<VirtualFile> CreateFileAsync(string name, Stream dataSource)
         {
             // check if the stream is readable
             if (!dataSource.CanRead)
@@ -292,6 +342,15 @@ namespace Panda.Core.Internal
                     {
                         // check file name
                         VirtualFileSystem.CheckNodeName(name);
+
+                        // is there already a file with this name -> throw an error!
+                        foreach (var node in this)
+                        {
+                            if (name == node.Name)
+                            {
+                                throw new PandaException("There is already a node with this name!");
+                            }
+                        }
 
                         // create new FileBlock
                         var fb = _disk.BlockManager.AllocateFileBlock();
@@ -306,7 +365,7 @@ namespace Panda.Core.Internal
                         long fileSize = 0;
                         
                         // and of how many bytes read
-                        int bytesRead = 0;
+                        int bytesRead;
 
                         // and use a list of block offsets to data blocks
                         var dataBlocks = new List<BlockOffset>();
@@ -348,11 +407,13 @@ namespace Panda.Core.Internal
                             var currentFileBlock = fb as IFileContinuationBlock;
 
                             // and of how many data block offsets already written
-                            int numDataBlockOffsetsWritten = 0;
+                            int numDataBlockOffsetsWritten;
 
                             // add each data block offset to the file blocks
-                            foreach (BlockOffset offset in dataBlocks)
+                            for (int i = 0; i < dataBlocks.Count; i += numDataBlockOffsetsWritten )
                             {
+                                numDataBlockOffsetsWritten = 0;
+
                                 // does the file block have remaining capacity to add the data block offset to it?
                                 if (currentFileBlock.Count >= currentFileBlock.ListCapacity)
                                 {
@@ -367,13 +428,34 @@ namespace Panda.Core.Internal
                                     currentFileBlock = newFileBlock;
                                 }
 
+                                // create array with block offsets with length of the file block
+                                var currentFileBlockOffsets = new BlockOffset[currentFileBlock.ListCapacity];
+
+                                // copy the adresses from the file block into the array
+                                Array.Copy(currentFileBlock.ToArray(), currentFileBlockOffsets, currentFileBlock.Count);
+
                                 // TODO: ToArray's could be cached
-                                // add as many block offsets to the current file block as possible
-                                Array.Copy(dataBlocks.ToArray(),
-                                    (long) numDataBlockOffsetsWritten - 1,
-                                    currentFileBlock.ToArray(),
-                                    (long) currentFileBlock.Count - 1,
-                                    (long) currentFileBlock.ListCapacity - currentFileBlock.Count);
+                                if (dataBlocks.Count > currentFileBlock.ListCapacity - currentFileBlock.Count)
+                                {
+                                    // add as many block offsets to the current file block as possible (fill the current file block)
+                                    Array.Copy(dataBlocks.ToArray(),
+                                        (long) i,
+                                        currentFileBlock.ToArray(),
+                                        (long) currentFileBlock.Count,
+                                        (long) currentFileBlock.ListCapacity - currentFileBlock.Count);
+                                }
+                                else
+                                {
+                                    // add the blocks that are left, they will all fit into the current file block
+                                    Array.Copy(dataBlocks.ToArray(),
+                                         (long)i,
+                                         currentFileBlockOffsets,
+                                         (long)currentFileBlock.Count,
+                                         (long)dataBlocks.Count); 
+                                }
+
+                                // write new data block offsets to file block
+                                currentFileBlock.ReplaceOffsets(currentFileBlock.ToArray());
 
                                 numDataBlockOffsetsWritten += currentFileBlock.ListCapacity - currentFileBlock.Count;
                             }
@@ -449,7 +531,6 @@ namespace Panda.Core.Internal
             }
 
             // go trough all directoryEntries (also from ContinationBlocks) and invoke Delete(), done by enumerator:
-            var directoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
             foreach (var node in this)
             {
                  node.Delete();
@@ -458,10 +539,10 @@ namespace Panda.Core.Internal
 
         public override void Move(VirtualDirectory destination, string newName)
         {
-            Move(destination as VirtualDirectoryImpl, newName);
+            _move((VirtualDirectoryImpl) destination, newName);
         }
 
-        public void Move(VirtualDirectoryImpl destination, string newName)
+        private void _move(VirtualDirectoryImpl destination, string newName)
         {
             // check directory name
             VirtualFileSystem.CheckNodeName(newName);
@@ -477,6 +558,20 @@ namespace Panda.Core.Internal
 
             // add new DirectoryEntry in the new destination directory
             destination.AddDirectoryEntryToCurrentDirectoryNode(newDe);
+        }
+
+        public override void Copy(VirtualDirectory destination)
+        {
+            _copy((VirtualDirectoryImpl) destination);
+        }
+
+        private void _copy(VirtualDirectoryImpl destination)
+        {
+            var newDir = destination.CreateDirectory(Name);
+            foreach (VirtualNode node in this)
+            {
+                node.Copy(newDir);
+            }
         }
     }
 }

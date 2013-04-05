@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,7 +26,7 @@ namespace Panda.Core.Internal
 
         public override System.IO.Stream Open()
         {
-            throw new NotImplementedException();
+            return new VirtualFileOpenStream(_disk, this._blockOffset);
         }
 
         public override string Name
@@ -105,15 +106,10 @@ namespace Panda.Core.Internal
 
         public override void Move(VirtualDirectory destination, string newName)
         {
-            Move(destination as VirtualDirectoryImpl, newName);
+            _move((VirtualDirectoryImpl) destination, newName);
         }
 
-        public override Task ExportAsync(string path)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Move(VirtualDirectoryImpl destination, string newName)
+        private void _move(VirtualDirectoryImpl destination, string newName)
         {
             // check directory name
             VirtualFileSystem.CheckNodeName(newName);
@@ -129,6 +125,30 @@ namespace Panda.Core.Internal
 
             // add new DirectoryEntry in the new destination directory
             destination.AddDirectoryEntryToCurrentDirectoryNode(newDe);
+        }
+
+        public override void Copy(VirtualDirectory destination)
+        {
+            _copy((VirtualDirectoryImpl) destination);
+        }
+
+        public override Task ExportAsync(string path)
+        {
+            return Task.Run( () =>
+                {
+                    var fs = File.Create(path);
+                    using (var stream = this.Open())
+                    {
+                        stream.CopyTo(fs);
+                    }
+                }   
+            );
+
+        }
+
+        private void _copy(VirtualDirectoryImpl destination)
+        {
+            destination.CreateFile(this.Name, this.Open());
         }
     }
 }

@@ -3,7 +3,7 @@
   <Class Name="Panda.VirtualDirectory" Collapsed="true">
     <Position X="0.5" Y="1.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAQAAAEAAAEABAAKAYEBAQgAAgAAAAEAAAQAAIQISA=</HashCode>
+      <HashCode>AAAQAAAEAAAEABAAKAYEAAQgAAAAAAAEAAAQAAIQISA=</HashCode>
       <FileName>VirtualDirectory.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -18,15 +18,8 @@
   <Class Name="Panda.VirtualFileSystem" Collapsed="true">
     <Position X="7" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAACAAAAAAAAAAAAAAAAQgAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>VirtualFileSystem.cs</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="Panda.VirtualNode" Collapsed="true">
-    <Position X="1.75" Y="0.5" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAAAAQAAAIAAgIAAAAAAAAQAAAEAAAAAAQAAAAAAgAA=</HashCode>
-      <FileName>VirtualNode.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Panda.VirtualFile" Collapsed="true">
@@ -50,6 +43,13 @@
       <FileName>Core\Blocks\DirectoryEntry.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Panda.VirtualNode" Collapsed="true">
+    <Position X="1.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAQAAAIAAgIAAAAAABAQAAgkAAAAAAQAAAAAAgAA=</HashCode>
+      <FileName>VirtualNode.cs</FileName>
+    </TypeIdentifier>
   </Class>
   <Struct Name="Panda.Core.Blocks.BlockOffset" BaseTypeListCollapsed="true">
     <Position X="16.75" Y="3" Width="1.5" />
@@ -125,7 +125,7 @@
   <Enum Name="Panda.Core.Blocks.DirectoryEntryFlags">
     <Position X="16.25" Y="1.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAA=</HashCode>
       <FileName>Core\Blocks\DirectoryEntry.cs</FileName>
     </TypeIdentifier>
   </Enum>

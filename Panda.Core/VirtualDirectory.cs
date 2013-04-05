@@ -109,7 +109,6 @@ namespace Panda
                                               int? count)
         {
             var task = CreateFileAsync(name, data, index, count);
-            task.RunSynchronously();
             return task.Result;
         }
 

@@ -57,6 +57,9 @@ namespace Panda
         public abstract void Move([NotNull] VirtualDirectory destination, [NotNull] string newName);
 
         [PublicAPI]
+        public abstract void Copy([NotNull] VirtualDirectory destination);
+
+        [PublicAPI]
         public abstract Task ExportAsync(string path);
 
         [PublicAPI]
