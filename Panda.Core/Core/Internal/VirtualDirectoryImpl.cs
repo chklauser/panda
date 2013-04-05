@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Panda.Core.Blocks;
@@ -38,7 +37,7 @@ namespace Panda.Core.Internal
             else
             {
                 // relative path given, parse path and call Navigate(Array<string>)
-                return Navigate(Panda.Core.PathUtil.parsePath(path));
+                return Navigate(PathUtil.parsePath(path));
             }
         }
 
