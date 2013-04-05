@@ -38,9 +38,6 @@ This document describes the design and implementation of the \emph{Panda Virtual
 
 \section{VFS Core}
 
-% TODO: Remove this line
-\textbf{[This section has to be completed by April 8th.]}
-
 %TODO: Remove this text and replace it with actual content
 \emph{Give a short description (1-2 paragraphs) of what VFS Core is.}
 
@@ -55,6 +52,30 @@ This document describes the design and implementation of the \emph{Panda Virtual
 
 % TODO: Remove this text and replace it with actual content
 \emph{Give an overview of the design of this part and describe in general terms how the implementation works. You can mention design patterns used, class diagrams, definition of custom file formats, network protocols, or anything else that helps understand the implementation.}
+
+\subsubsection{General Remarks}
+
+\begin{itemize}
+	\item Offsets \& lengths in bytes.
+	\item The VFS is organized in blocks with fixed BLOCK\_SIZE.
+	\item All addresses are in number of blocks from 0 and of length 4 bytes.
+	\item Only single links to blocks (not more than one hard-link) are allowed. This means that one file or directory can only be in one directory.
+	\item Block address 0 is illegal, it means absence of a block.
+\end{itemize}
+
+\subsubsection{Metadata}
+
+Metadata of the whole VFS starts at address 0.\\
+
+\begin{tabular}{|c|c|c|p{5cm}|}\hline
+Offset (absolute)	&Length	&C\# data-type	&Description\\\hline
+0	&4	&UInt32	&Number of blocks in entire VFS\\
+4	&4	&UInt32	&BLOCK\_SIZE in bytes\\
+8	&4	&UInt32	&Address of root directory node\\
+12	&4	&UInt32	&Address of empty page block. Must never be 0\\
+16	&4	&UInt32	&“break” in number of blocks, see empty space management.\\
+20	&Blocksize -20	&UInt32	&Empty (initialized with 0)\\\hline
+\end{tabular}
 
 
 
