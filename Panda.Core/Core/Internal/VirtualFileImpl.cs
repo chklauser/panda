@@ -35,7 +35,7 @@ namespace Panda.Core.Internal
 
         public override long Size
         {
-            get { throw new NotImplementedException(); }
+            get { return _disk.BlockManager.GetFileBlock(_blockOffset).Size; }
         }
 
         public override bool IsRoot
