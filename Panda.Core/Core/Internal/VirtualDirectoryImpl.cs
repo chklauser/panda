@@ -458,10 +458,10 @@ namespace Panda.Core.Internal
 
         public override void Move(VirtualDirectory destination, string newName)
         {
-            Move(destination as VirtualDirectoryImpl, newName);
+            _move((VirtualDirectoryImpl) destination, newName);
         }
 
-        public void Move(VirtualDirectoryImpl destination, string newName)
+        private void _move(VirtualDirectoryImpl destination, string newName)
         {
             // check directory name
             VirtualFileSystem.CheckNodeName(newName);
@@ -477,6 +477,20 @@ namespace Panda.Core.Internal
 
             // add new DirectoryEntry in the new destination directory
             destination.AddDirectoryEntryToCurrentDirectoryNode(newDe);
+        }
+
+        public override void Copy(VirtualDirectory destination)
+        {
+            _copy((VirtualDirectoryImpl) destination);
+        }
+
+        private void _copy(VirtualDirectoryImpl destination)
+        {
+            var newDir = destination.CreateDirectory(this.Name);
+            foreach (VirtualNode node in this)
+            {
+                node.Copy(newDir);
+            }
         }
     }
 }
