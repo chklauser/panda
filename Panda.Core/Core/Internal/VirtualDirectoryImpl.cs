@@ -279,7 +279,12 @@ namespace Panda.Core.Internal
 
         public override Task<VirtualFile> CreateFileAsync(string name, System.IO.Stream dataSource)
         {
-            Task.Run(
+            // check if the stream is readable
+            if (!dataSource.CanRead)
+            {
+                throw new PandaException("Stream not readable.");
+            }
+            return Task.Run(
                 () =>
                     {
                         // check file name
@@ -289,20 +294,97 @@ namespace Panda.Core.Internal
                         var fb = _disk.BlockManager.AllocateFileBlock();
 
                         // create a new DirectoryEntry and add address to FileBlock to it
-                        var de = new DirectoryEntry(name, fb.Offset, DirectoryEntryFlags.File);
+                        var de = new DirectoryEntry(name, fb.Offset, DirectoryEntryFlags.None);
 
-                        // if (stream has data) {
-                            // do {
-                                // if able { add a new DataBlock to the FileBlock }
-                                // else { create new FileContinuationBlock and add it there }
-                                // stream data from dataSource into current DataBlock
-                            // } while (stream still has data)
-                        // } else {
-                            // exception
-                        // }
+                        // create buffer with size of a data block
+                        var buffer = new byte[_disk.BlockManager.DataBlockSize];
+
+                        // keep track of file size
+                        long fileSize = 0;
+                        
+                        // and of how many bytes read
+                        int bytesRead = 0;
+
+                        // and use a list of block offsets to data blocks
+                        var dataBlocks = new List<BlockOffset>();
+
+                        // and a current dataBlock offset
+                        BlockOffset dataBlockOffset;
+
+                        // read entire data blocks from stream
+                        while ((bytesRead = dataSource.Read(buffer, 0, buffer.Length)) > 0)
+                        {
+                            // sum up file size
+                            fileSize += bytesRead;
+
+                            // create new data block
+                            dataBlockOffset = _disk.BlockManager.AllocateDataBlock();
+
+                            // write data into data block
+                            _disk.BlockManager.WriteDataBlock(dataBlockOffset, buffer);
+
+                            // add address of current data block to array
+                            dataBlocks.Add(dataBlockOffset);
+                        }
+
+                        // less than one data block read => finished stream reading
+
+                            // sum uf file size
+                            fileSize += bytesRead;
+                            // create new data block
+                            dataBlockOffset = _disk.BlockManager.AllocateDataBlock();
+                            // write data into data block
+                            _disk.BlockManager.WriteDataBlock(dataBlockOffset, buffer);
+                            // add address of current data block to array
+                            dataBlocks.Add(dataBlockOffset);
+
+
+                        // write all the data offset blocks into the files blocks
+
+                            // keep track of the current fileblock
+                            var currentFileBlock = fb as IFileContinuationBlock;
+
+                            // and of how many data block offsets already written
+                            int numDataBlockOffsetsWritten = 0;
+
+                            // add each data block offset to the file blocks
+                            foreach (BlockOffset offset in dataBlocks)
+                            {
+                                // does the file block have remaining capacity to add the data block offset to it?
+                                if (currentFileBlock.Count >= currentFileBlock.ListCapacity)
+                                {
+                                    // if not
+                                    // create e new file block
+                                    var newFileBlock = _disk.BlockManager.AllocateFileContinuationBlock();
+
+                                    // and add its offset to the continuation block offset of the other 
+                                    currentFileBlock.ContinuationBlockOffset = newFileBlock.Offset;
+
+                                    // and set the new file block as current file block
+                                    currentFileBlock = newFileBlock;
+                                }
+
+                                // TODO: ToArray's could be cached
+                                // add as many block offsets to the current file block as possible
+                                Array.Copy(dataBlocks.ToArray(),
+                                    (long) numDataBlockOffsetsWritten - 1,
+                                    currentFileBlock.ToArray(),
+                                    (long) currentFileBlock.Count - 1,
+                                    (long) currentFileBlock.ListCapacity - currentFileBlock.Count);
+
+                                numDataBlockOffsetsWritten += currentFileBlock.ListCapacity - currentFileBlock.Count;
+                            }
 
                         // add DirectoryEntry to this DirectoryBlock or a DirectoryContinuationBlock of it
                         AddDirectoryEntryToCurrentDirectoryNode(de);
+
+                        // don't close the stream
+
+                        // write file size
+                        fb.Size = fileSize;
+
+                        // return VirtualFile
+                        return (VirtualFile) new VirtualFileImpl(_disk, fb.Offset, this, name);
                     }
                 );
         }
