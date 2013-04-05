@@ -104,7 +104,7 @@ pip-log.txt
 ##########
 ## LaTeX
 ##########
-Meta/*.backup
-Meta/*.aux
-Meta/*.log
-Meta/report.pdf
+Report/*.backup
+Report/*.aux
+Report/*.log
+Report/report.pdf
