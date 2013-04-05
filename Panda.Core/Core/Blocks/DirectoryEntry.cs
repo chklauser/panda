@@ -3,6 +3,10 @@ using JetBrains.Annotations;
 
 namespace Panda.Core.Blocks
 {
+    /// <summary>
+    /// A representation of an individual entry in a directory.
+    /// </summary>
+    /// <remarks>This class exhibits immutable value semantics. It cannot be used to update directory entries in a directory block, as blocks are changed as a whole.</remarks>
     public sealed class DirectoryEntry : IEquatable<DirectoryEntry>
     {
         [NotNull]
@@ -68,7 +72,7 @@ namespace Panda.Core.Blocks
     }
 
     [Flags]
-    public enum DirectoryEntryFlags
+    public enum DirectoryEntryFlags : byte
     {
         None = 0,
         Directory = 1

@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 
 namespace Panda
@@ -57,5 +58,15 @@ namespace Panda
 
         [PublicAPI]
         public abstract void Copy([NotNull] VirtualDirectory destination);
+
+        [PublicAPI]
+        public abstract Task ExportAsync(string path);
+
+        [PublicAPI]
+        public virtual void Export(string path)
+        {
+            // Optional: provide a more efficient synchronous implementation
+            ExportAsync(path).RunSynchronously();
+        }
     }
 }

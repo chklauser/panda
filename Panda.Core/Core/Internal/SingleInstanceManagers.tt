@@ -14,7 +14,7 @@ using Panda.Core.Internal;
 
 <# 
 	Impl[] implementationClasses = new Impl[] {
-		//new Impl { T = "Panda.Core.IO.RawBlockManager", CtorParams = "IRawPersistenceSpace persistenceSpace", CtorArgs = "persistenceSpace" },
+		new Impl { T = "Panda.Core.IO.RawBlockManager", CtorParams = "IRawPersistenceSpace persistenceSpace", CtorArgs = "persistenceSpace", ManagesEmptyBlocks = true },
 		new Impl { T = "Panda.Test.InMemory.Blocks.MemBlockManager", CtorParams = "uint totalBlockCount, BlockOffset rootDirectoryBlockOffset, int metaBlockCapacity, int dataBlockCapacity", CtorArgs = "totalBlockCount, rootDirectoryBlockOffset, metaBlockCapacity, dataBlockCapacity"}
 	};
 	foreach(var impl in implementationClasses) {
@@ -81,7 +81,23 @@ namespace <#=TNs#>
         {
             // assume exclusive access
             ReferenceCache.RegisterAccess(block);
-            _existingBlocks.Add(block.Offset, new WeakReference<IBlock>(block));
+            IBlock existing;
+            WeakReference<IBlock> weakExisting;
+            if (_existingBlocks.TryGetValue(block.Offset, out weakExisting) && weakExisting.TryGetTarget(out existing))
+            {
+                if (!ReferenceEquals(existing, block))
+                {
+                    throw new InvalidOperationException("Two block instances for the same offset detected.");
+                }
+                else
+                {
+                    // already added
+                }
+            }
+            else
+            {
+                _existingBlocks[block.Offset] = new WeakReference<IBlock>(block);
+            }
         }
 
         protected void TrackNewBlock(IBlock block)
@@ -148,36 +164,86 @@ namespace <#=TNs#>
         }
 
         public override IDirectoryBlock AllocateDirectoryBlock()
-        {
-            _handleGc();
+        {		
             var block = base.AllocateDirectoryBlock();
-            TrackNewBlock(block);
-            return block;
+			_lock.Wait();
+			try
+			{
+				_handleGc();
+				_trackNewBlock(block);				
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}
         }
 
         public override IDirectoryContinuationBlock AllocateDirectoryContinuationBlock()
         {
-            _handleGc();
             var block = base.AllocateDirectoryBlock();
-            TrackNewBlock(block);
-            return block;
+			_lock.Wait();
+            try
+			{
+				_handleGc();
+				_trackNewBlock(block);				
+				return block;
+            }
+			finally
+			{
+				_lock.Release();
+			}
         }
 
         public override IFileBlock AllocateFileBlock()
         {
-            _handleGc();
-            var block = base.AllocateFileBlock();
-            TrackNewBlock(block);
-            return block;
+			var block = base.AllocateFileBlock();
+			_lock.Wait();
+			try
+			{
+				_handleGc();            
+				_trackNewBlock(block);
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}
         }
 
         public override IFileContinuationBlock AllocateFileContinuationBlock()
         {
-            _handleGc();
             var block = base.AllocateFileContinuationBlock();
-            TrackNewBlock(block);
-            return block;
+			_lock.Wait();
+			try
+			{
+				_handleGc();
+				_trackNewBlock(block);
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}			
         }
+
+<# if(impl.ManagesEmptyBlocks){ #>
+		public override IEmptyListBlock AllocateEmptyListBlock()
+		{
+			var block = base.AllocateEmptyListBlock();
+			_lock.Wait();
+			try
+			{
+				_handleGc();
+				TrackNewBlock(block);
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}			
+		}
+<# } #>
 
         public override void FreeBlock(BlockOffset blockOffset)
         {
@@ -202,10 +268,10 @@ namespace <#=TNs#>
 
         public override IDirectoryBlock GetDirectoryBlock(BlockOffset blockOffset)
         {
-            _handleGc();
 			_lock.Wait();
 			try
 			{
+				_handleGc();
 				IDirectoryBlock block;
 				if (!_tryGetExisting(blockOffset, out block))
 				{
@@ -222,10 +288,10 @@ namespace <#=TNs#>
 
         public override IDirectoryContinuationBlock GetDirectoryContinuationBlock(BlockOffset blockOffset)
         {
-            _handleGc();
             _lock.Wait();
 			try
 			{
+				_handleGc();
 				IDirectoryContinuationBlock block;
 				if (!_tryGetExisting(blockOffset, out block))
 				{
@@ -242,11 +308,11 @@ namespace <#=TNs#>
 
         public override IFileBlock GetFileBlock(BlockOffset blockOffset)
         {
-            _handleGc();
             
             _lock.Wait();
 			try
 			{
+				_handleGc();
 				IFileBlock block;
 				if (!_tryGetExisting(blockOffset, out block))
 				{
@@ -263,10 +329,10 @@ namespace <#=TNs#>
 
         public override IFileContinuationBlock GetFileContinuationBlock(BlockOffset blockOffset)
         {
-            _handleGc();
             _lock.Wait();
 			try
 			{
+				_handleGc();
 				IFileContinuationBlock block;
 				if (!_tryGetExisting(blockOffset, out block))
 				{
@@ -280,6 +346,28 @@ namespace <#=TNs#>
 				_lock.Release();
 			}
         }
+
+<# if(impl.ManagesEmptyBlocks) { #>
+		public override IEmptyListBlock GetEmptyListBlock(BlockOffset blockOffset)
+		{
+			_lock.Wait();
+			try
+			{
+				_handleGc();
+				IEmptyListBlock block;
+				if(!_tryGetExisting(blockOffset, out block)) 
+				{
+					block = base.GetEmptyListBlock(blockOffset);
+					_trackNewBlock(block);
+				}
+				return block;
+			}
+			finally
+			{
+				_lock.Release();
+			}
+		}
+<# } #>
 
 		#region IDisposable
 
@@ -333,5 +421,6 @@ namespace <#=TNs#>
 		public string CtorArgs { get; set; }
 		public string CtorParams { get; set; }
 		public bool IsDisposable { get; set; }
+		public bool ManagesEmptyBlocks { get; set; }
 	}
 #>
