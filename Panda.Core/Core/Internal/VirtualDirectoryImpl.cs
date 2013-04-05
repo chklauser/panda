@@ -415,6 +415,12 @@ namespace Panda.Core.Internal
                                     currentFileBlock = newFileBlock;
                                 }
 
+                                // create array with block offsets with length of the file block
+                                var currentFileBlockOffsets = new BlockOffset[currentFileBlock.ListCapacity];
+
+                                // copy the adresses from the file block into the array
+                                Array.Copy(currentFileBlock.ToArray(), currentFileBlockOffsets, currentFileBlock.Count);
+
                                 // TODO: ToArray's could be cached
                                 if (dataBlocks.Count > currentFileBlock.ListCapacity - currentFileBlock.Count)
                                 {
@@ -422,7 +428,7 @@ namespace Panda.Core.Internal
                                     Array.Copy(dataBlocks.ToArray(),
                                         (long) i,
                                         currentFileBlock.ToArray(),
-                                        (long) currentFileBlock.Count - 1,
+                                        (long) currentFileBlock.Count,
                                         (long) currentFileBlock.ListCapacity - currentFileBlock.Count);
                                 }
                                 else
@@ -430,10 +436,13 @@ namespace Panda.Core.Internal
                                     // add the blocks that are left, they will all fit into the current file block
                                     Array.Copy(dataBlocks.ToArray(),
                                          (long)i,
-                                         currentFileBlock.ToArray(),
-                                         (long)currentFileBlock.Count - 1,
+                                         currentFileBlockOffsets,
+                                         (long)currentFileBlock.Count,
                                          (long)dataBlocks.Count); 
                                 }
+
+                                // write new data block offsets to file block
+                                currentFileBlock.ReplaceOffsets(currentFileBlock.ToArray());
 
                                 numDataBlockOffsetsWritten += currentFileBlock.ListCapacity - currentFileBlock.Count;
                             }
