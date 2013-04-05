@@ -509,7 +509,6 @@ namespace Panda.Core.Internal
             }
 
             // go trough all directoryEntries (also from ContinationBlocks) and invoke Delete(), done by enumerator:
-            var directoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
             foreach (var node in this)
             {
                  node.Delete();
@@ -546,7 +545,7 @@ namespace Panda.Core.Internal
 
         private void _copy(VirtualDirectoryImpl destination)
         {
-            var newDir = destination.CreateDirectory(this.Name);
+            var newDir = destination.CreateDirectory(Name);
             foreach (VirtualNode node in this)
             {
                 node.Copy(newDir);
