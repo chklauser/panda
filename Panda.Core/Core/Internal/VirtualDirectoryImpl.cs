@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -212,7 +213,43 @@ namespace Panda.Core.Internal
 
         public override Task<VirtualNode> ImportAsync(string path)
         {
-            throw new NotImplementedException();
+            return Task.Run(
+                () =>
+                    {
+                        var node = _import(path);
+                        return node;
+                    });
+        }
+
+        private VirtualNode _import([NotNull] string path)
+        {
+            if (File.Exists(path))
+            {
+                // 'using' is shortcut sucht that we don't have to close the FileStream in the end. Done automatically due to using.
+                using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                {
+                    // ReSharper disable AssignNullToNotNullAttribute
+                    return CreateFile(Path.GetFileName(path), fs);
+                    // ReSharper restore AssignNullToNotNullAttribute
+                }
+            }
+            else if (Directory.Exists(path))
+            {
+                // ReSharper disable AssignNullToNotNullAttribute
+                var directory = (VirtualDirectoryImpl) CreateDirectory(Path.GetFileName(path));
+                // ReSharper restore AssignNullToNotNullAttribute
+                var content = Directory.EnumerateFileSystemEntries(path);
+                foreach (var current in content)
+                {
+                    directory._import(current);
+                }
+                return directory;
+            }
+            else
+            {
+                // FileSystemEntrie not found!
+                throw new PandaException("FileSystemEntrie not found!");
+            }
         }
 
         public override Task ExportAsync(string path)
