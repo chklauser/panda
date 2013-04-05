@@ -253,7 +253,21 @@ namespace Panda.Core.Internal
 
         public override Task ExportAsync(string path)
         {
-            throw new NotImplementedException();
+            return Task.Run(
+                () =>
+                {
+                    _export(path);
+                });
+        }
+
+        private void _export(string path)
+        {
+            Directory.CreateDirectory(path);
+            foreach (var de in this)
+            {
+                path = Path.Combine(path, de.Name);
+                de.Export(path);
+            }
         }
 
         public override VirtualDirectory CreateDirectory(string name)

@@ -55,16 +55,6 @@ namespace Panda
             return importTask.Result;
         }
 
-        [PublicAPI]
-        public abstract Task ExportAsync(string path);
-
-        [PublicAPI]
-        public virtual void Export(string path)
-        {
-            // Optional: provide a more efficient synchronous implementation
-            ExportAsync(path).RunSynchronously();
-        }
-
         #region File creation
 
         [NotNull]
