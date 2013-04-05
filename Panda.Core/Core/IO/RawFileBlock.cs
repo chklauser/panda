@@ -33,7 +33,7 @@ namespace Panda.Core.IO
 
         protected override int MetaDataPrefixUInt32Count
         {
-            get { return base.MetaDataPrefixUInt32Count + 1; }
+            get { return base.MetaDataPrefixUInt32Count + 2; }
         }
     }
 }

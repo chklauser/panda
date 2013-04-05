@@ -368,10 +368,9 @@ namespace Panda.Core.Internal
                         int bytesRead;
 
                         // and use a list of block offsets to data blocks
-                        var dataBlocks = new List<BlockOffset>();
+                        var dataBlocks = new Queue<BlockOffset>();
 
                         // and a current dataBlock offset
-                        BlockOffset dataBlockOffset;
 
                         // read entire data blocks from stream
                         while ((bytesRead = dataSource.Read(buffer, 0, buffer.Length)) > 0)
@@ -380,84 +379,40 @@ namespace Panda.Core.Internal
                             fileSize += bytesRead;
 
                             // create new data block
-                            dataBlockOffset = _disk.BlockManager.AllocateDataBlock();
+                            var dataBlockOffset = _disk.BlockManager.AllocateDataBlock();
 
                             // write data into data block
                             _disk.BlockManager.WriteDataBlock(dataBlockOffset, buffer);
 
                             // add address of current data block to array
-                            dataBlocks.Add(dataBlockOffset);
+                            dataBlocks.Enqueue(dataBlockOffset);
                         }
-
-                        // less than one data block read => finished stream reading
-
-                            // sum uf file size
-                            fileSize += bytesRead;
-                            // create new data block
-                            dataBlockOffset = _disk.BlockManager.AllocateDataBlock();
-                            // write data into data block
-                            _disk.BlockManager.WriteDataBlock(dataBlockOffset, buffer);
-                            // add address of current data block to array
-                            dataBlocks.Add(dataBlockOffset);
 
 
                         // write all the data offset blocks into the files blocks
 
                             // keep track of the current fileblock
-                            var currentFileBlock = fb as IFileContinuationBlock;
+                            IFileContinuationBlock currentFileBlock = fb;
 
-                            // and of how many data block offsets already written
-                            int numDataBlockOffsetsWritten;
-
-                            // add each data block offset to the file blocks
-                            for (int i = 0; i < dataBlocks.Count; i += numDataBlockOffsetsWritten )
+                            while (dataBlocks.Count > 0)
                             {
-                                numDataBlockOffsetsWritten = 0;
+                                var remainingCapacity = currentFileBlock.ListCapacity - currentFileBlock.Count;
 
-                                // does the file block have remaining capacity to add the data block offset to it?
-                                if (currentFileBlock.Count >= currentFileBlock.ListCapacity)
+                                // Allocate the next file continuation block if necessary
+                                if (remainingCapacity == 0)
                                 {
-                                    // if not
-                                    // create e new file block
-                                    var newFileBlock = _disk.BlockManager.AllocateFileContinuationBlock();
-
-                                    // and add its offset to the continuation block offset of the other 
-                                    currentFileBlock.ContinuationBlockOffset = newFileBlock.Offset;
-
-                                    // and set the new file block as current file block
-                                    currentFileBlock = newFileBlock;
+                                    var nextBlock = _disk.BlockManager.AllocateFileContinuationBlock();
+                                    currentFileBlock.ContinuationBlockOffset = nextBlock.Offset;
+                                    currentFileBlock = nextBlock;
                                 }
 
-                                // create array with block offsets with length of the file block
-                                var currentFileBlockOffsets = new BlockOffset[currentFileBlock.ListCapacity];
+                                // Take as many offsets as fit into the current block
+                                var draft = new List<BlockOffset>(remainingCapacity);
+                                while (draft.Count < remainingCapacity && dataBlocks.Count > 0)
+                                    draft.Add(dataBlocks.Dequeue());
 
-                                // copy the adresses from the file block into the array
-                                Array.Copy(currentFileBlock.ToArray(), currentFileBlockOffsets, currentFileBlock.Count);
-
-                                // TODO: ToArray's could be cached
-                                if (dataBlocks.Count > currentFileBlock.ListCapacity - currentFileBlock.Count)
-                                {
-                                    // add as many block offsets to the current file block as possible (fill the current file block)
-                                    Array.Copy(dataBlocks.ToArray(),
-                                        (long) i,
-                                        currentFileBlock.ToArray(),
-                                        (long) currentFileBlock.Count,
-                                        (long) currentFileBlock.ListCapacity - currentFileBlock.Count);
-                                }
-                                else
-                                {
-                                    // add the blocks that are left, they will all fit into the current file block
-                                    Array.Copy(dataBlocks.ToArray(),
-                                         (long)i,
-                                         currentFileBlockOffsets,
-                                         (long)currentFileBlock.Count,
-                                         (long)dataBlocks.Count); 
-                                }
-
-                                // write new data block offsets to file block
-                                currentFileBlock.ReplaceOffsets(currentFileBlock.ToArray());
-
-                                numDataBlockOffsetsWritten += currentFileBlock.ListCapacity - currentFileBlock.Count;
+                                // Write offsets
+                                currentFileBlock.ReplaceOffsets(currentFileBlock.Append(draft).ToArray());
                             }
 
                         // add DirectoryEntry to this DirectoryBlock or a DirectoryContinuationBlock of it

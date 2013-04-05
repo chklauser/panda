@@ -95,6 +95,30 @@ namespace Panda.Test.Integration
             Assert.That(buffer, Is.All.EqualTo(guard), "The buffer was changed, even though no bytes were read. This indicates an error in the stream implementation");
         }
 
+        [Test]
+        public void CreateFileShort()
+        {
+            const string data = "Hello World";
+            var vf = Disk.Root.CreateFile("f", data);
+            Assert.That(Disk.Root.Contains("f"), Is.True, "Root should contain 'f'");
+            Assert.That(vf.Name, Is.EqualTo("f"), "File does not match.");
+            Assert.That(vf.FullName, Is.EqualTo("/f"), "File full name does not match.");
+            Assert.That(vf.ParentDirectory, Is.SameAs(Disk.Root), "/f should be child of /");
+            Assert.That(vf.Size, Is.EqualTo(data.Length), "File size");
+
+            // "read" the empty file
+            var str = vf.Open();
+            Assert.That(str, Is.Not.Null);
+            Assert.That(str.CanRead, Is.True, "Stream should be readable");
+
+            const byte guard = 0xEF;
+            var buffer = Enumerable.Repeat(guard, 20).ToArray();
+            var bytesRead = str.Read(buffer, 0, 20);
+            Assert.That(bytesRead, Is.EqualTo(data.Length), "bytes read");
+            Assert.That(Encoding.UTF8.GetString(buffer.Take(bytesRead).ToArray()),Is.EqualTo(data));
+            Assert.That(buffer.Skip(data.Length), Is.All.EqualTo(guard), "The extra region of the buffer was changed. This indicates an error in the stream implementation");
+        }
+
         #region Disposal
 
         public void Dispose()

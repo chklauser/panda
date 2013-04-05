@@ -120,7 +120,13 @@ namespace Panda.Core.Internal
                 // the client asked for.
 
                 var bytesLeftInBlock = _disk.BlockManager.DataBlockSize - _currentOffsetIntoDataBlock;
+
+                // limit effective count by 1) bytes left in current data block and 2) bytes left in (logical) file
                 var effectiveCount = Math.Min(bytesLeftInBlock, count);
+                // a min-operation with an int cannot be larger than an int
+                effectiveCount = (int) Math.Min(effectiveCount, Length - _bytesRead);
+
+                // Have the block manager copy the data for us
                 _disk.BlockManager.ReadDataBlock(_currentDataBlock.Value, buffer, offset, _currentOffsetIntoDataBlock,
                     effectiveCount);
 
