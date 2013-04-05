@@ -25,7 +25,7 @@ namespace Panda.Core.Internal
 
         public override System.IO.Stream Open()
         {
-            throw new NotImplementedException();
+            return new VirtualFileOpenStream(_disk, this._blockOffset);
         }
 
         public override string Name

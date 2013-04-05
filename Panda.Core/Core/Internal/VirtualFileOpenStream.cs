@@ -34,7 +34,7 @@ namespace Panda.Core.Internal
         /// </summary>
         private int _currentDataBlockOffset;
 
-        VirtualFileOpenStream(VirtualDiskImpl disk, BlockOffset blockOffset)
+        public VirtualFileOpenStream(VirtualDiskImpl disk, BlockOffset blockOffset)
         {
             _disk = disk;
             _blockOffset = blockOffset;
