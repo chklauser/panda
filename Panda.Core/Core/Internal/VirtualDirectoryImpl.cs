@@ -149,7 +149,7 @@ namespace Panda.Core.Internal
         /// </summary>
         /// <param name="blockOffset">BlockOffset of VirtualNode to find in the DirectoryEntries.</param>
         /// <returns>Tuple of DirectoryEntry and DirectoryContinuationBlock.</returns>
-        public Tuple<DirectoryEntry, IDirectoryContinuationBlock> FindDirectoryEntry(BlockOffset blockOffset)
+        public Tuple<DirectoryEntry, IDirectoryContinuationBlock, IDirectoryContinuationBlock> FindDirectoryEntry(BlockOffset blockOffset)
         {
             // first currentDirectoryBlock
             IDirectoryContinuationBlock currentDirectoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
@@ -157,10 +157,11 @@ namespace Panda.Core.Internal
             {
                 if (blockOffset == _blockOffset)
                 {
-                    return Tuple.Create(de, currentDirectoryBlock);
+                    return Tuple.Create(de, currentDirectoryBlock, null);
                 }
             }
 
+            IDirectoryContinuationBlock previousDirectoryBlock = currentDirectoryBlock;
             // search in ContinuationBlocks
             while (currentDirectoryBlock.ContinuationBlockOffset != null)
             {
@@ -168,11 +169,13 @@ namespace Panda.Core.Internal
                 currentDirectoryBlock = _disk.BlockManager.GetDirectoryContinuationBlock(currentDirectoryBlock.ContinuationBlockOffset.Value);
                 foreach (DirectoryEntry de in currentDirectoryBlock)
                 {
-                    if (blockOffset == _blockOffset)
+                    if (blockOffset == de.BlockOffset)
                     {
-                        return Tuple.Create(de, currentDirectoryBlock);
+                        return Tuple.Create(de, currentDirectoryBlock, previousDirectoryBlock);
                     }
                 }
+
+                previousDirectoryBlock = currentDirectoryBlock;
             }
 
             // DirectoryEntry not found!
@@ -333,39 +336,19 @@ namespace Panda.Core.Internal
             var tupel = _parentDirectory.FindDirectoryEntry(_blockOffset);
             tupel.Item2.DeleteEntry(tupel.Item1);
 
-            // go trough all directoryEntries (also from ContinationBlocks) and invoke Delete():
-            var directoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
-            foreach (var de in directoryBlock)
+            // if Item2 (parent Block) is empty we link Item3 (previous Block of parent Block) to the following Block of parent Block
+            // Item3 can't be null && there must be an ContinuationBlockOffset for Item2
+            if (tupel.Item2.Count == 0 && tupel.Item3 != null && tupel.Item2.ContinuationBlockOffset != null)
             {
-                 if (de.IsDirectory)
-                 {
-                     var vd = new VirtualDirectoryImpl(_disk, de.BlockOffset, this, de.Name);
-                     vd.Delete();
-                 }
-                 else
-                 {
-                     var vf = new VirtualFileImpl(_disk, de.BlockOffset, this, de.Name);
-                     vf.Delete();
-                 }
+                tupel.Item3.ContinuationBlockOffset = tupel.Item2.ContinuationBlockOffset;
+                _disk.BlockManager.FreeBlock(tupel.Item2.Offset);
             }
-            var continuationBlockOffset = directoryBlock.ContinuationBlockOffset;
-            while (continuationBlockOffset.HasValue)
+
+            // go trough all directoryEntries (also from ContinationBlocks) and invoke Delete(), done by enumerator:
+            var directoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
+            foreach (var node in this)
             {
-                var continuationBlock = _disk.BlockManager.GetFileContinuationBlock(continuationBlockOffset.Value);
-                continuationBlockOffset = continuationBlock.ContinuationBlockOffset;
-                foreach (var de in directoryBlock)
-                {
-                    if (de.IsDirectory)
-                    {
-                        var vd = new VirtualDirectoryImpl(_disk, de.BlockOffset, this, de.Name);
-                        vd.Delete();
-                    }
-                    else
-                    {
-                        var vf = new VirtualFileImpl(_disk, de.BlockOffset, this, de.Name);
-                        vf.Delete();
-                    }
-                }
+                 node.Delete();
             }
         }
 
