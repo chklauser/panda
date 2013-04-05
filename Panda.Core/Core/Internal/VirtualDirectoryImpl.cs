@@ -10,8 +10,8 @@ namespace Panda.Core.Internal
 {
     class VirtualDirectoryImpl : VirtualDirectory
     {
-        protected readonly VirtualDiskImpl _disk;
-        protected readonly BlockOffset _blockOffset;
+        private readonly VirtualDiskImpl _disk;
+        private readonly BlockOffset _blockOffset;
         private readonly string _name;
         private readonly VirtualDirectoryImpl _parentDirectory;
 
