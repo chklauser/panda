@@ -38,6 +38,8 @@ namespace Panda.Core.Internal
         {
             _disk = disk;
             _blockOffset = blockOffset;
+
+            _currentFileContinuationBlock = _disk.BlockManager.GetFileContinuationBlock(blockOffset);
             _bytesRead = 0;
         }
 
