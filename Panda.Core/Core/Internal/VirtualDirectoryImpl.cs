@@ -394,7 +394,7 @@ namespace Panda.Core.Internal
                             var currentFileBlock = fb as IFileContinuationBlock;
 
                             // and of how many data block offsets already written
-                            int numDataBlockOffsetsWritten = 0;
+                            int numDataBlockOffsetsWritten;
 
                             // add each data block offset to the file blocks
                             for (int i = 0; i < dataBlocks.Count; i += numDataBlockOffsetsWritten )
