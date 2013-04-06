@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Text;
@@ -15,6 +16,58 @@ namespace Panda.Test.Integration
     [TestFixture]
     public class Specification : SpecificationBase
     {
+        /// <summary>
+        /// creates a disk at specified location with specified size
+        /// </summary>
+        [Test]
+        public void Req2_1_1_and_2()
+        {
+            // location
+            string vfsFileName = Path.Combine(typeof(Specification).Name, @"vfs.panda");
+
+            // capacity 10 MB
+            const uint cap = 10*1024*1024;
+
+            // remove the file if it exists
+            if (File.Exists(vfsFileName))
+                File.Delete(vfsFileName);
+
+            // create the virtual file system on the harddisk
+            var Disk2 = VirtualDisk.CreateNew(vfsFileName, cap);
+
+            // tear down
+            Disk2.Dispose();
+        }
+
+        /// <summary>
+        /// creates two virtual disks and shows that they are not the same
+        /// </summary>
+        [Test]
+        public void Req2_1_3()
+        {
+            // create a second disk
+            string vfsFileName = Path.Combine(typeof(Specification).Name, @"vfs.panda");
+            var Disk2 = VirtualDisk.CreateNew(vfsFileName, Capacity);
+
+            // remove the file if it exists
+            if (File.Exists(vfsFileName))
+                File.Delete(vfsFileName);
+
+            // create a file on both disks with different content
+            Disk.Root.CreateFile("peter.txt", Encoding.UTF8.GetBytes("test"));
+            Disk2.Root.CreateFile("peter.txt", Encoding.UTF8.GetBytes("test2"));
+
+            // check that the content can be read correctly
+            Assert.That((new StreamReader(((VirtualFile)Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(), Is.EqualTo("test"));
+            Assert.That((new StreamReader(((VirtualFile)Disk2.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(), Is.EqualTo("test2"));
+
+            // check that the content is not the same
+            Assert.That((new StreamReader(((VirtualFile)Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
+                Is.Not.EqualTo((new StreamReader(((VirtualFile)Disk2.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
+
+            Disk2.Dispose();
+        }
+
         [Test]
         public void CreateFile()
         {
