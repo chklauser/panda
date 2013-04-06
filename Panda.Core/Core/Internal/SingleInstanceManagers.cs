@@ -346,14 +346,9 @@ namespace Panda.Core.IO
 
 		#region IDisposable
 
-		public void Dispose()
+		protected override void Dispose(bool disposing)
 		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
+            base.Dispose(disposing);
 			if(disposing)
 			{
 				var old = _lock;
@@ -362,11 +357,6 @@ namespace Panda.Core.IO
 					old.Dispose();
 				}
 			}
-		}
-
-		~SingleInstanceRawBlockManager()
-		{
-			Dispose(false);
 		}
 
 		#endregion

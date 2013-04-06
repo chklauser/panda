@@ -7,7 +7,7 @@ using Panda.Core.Internal;
 
 namespace Panda.Core.IO
 {
-    public class RawBlockManager : IBlockManager
+    public class RawBlockManager : IBlockManager, IDisposable
     {
         // change the Initialize method when you add more meta fields!
         protected internal const int BreakFieldOffset = 4;
@@ -384,6 +384,26 @@ namespace Panda.Core.IO
             if (blockOffset.Offset >= Break.Offset)
                 throw new ArgumentOutOfRangeException("blockOffset", blockOffset, "Block offset points to location beyond allocation allocated space.");
             return new RawEmptyListBlock(Space, blockOffset, (uint)BlockSize);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private bool _disposed = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (!_disposed)
+                {
+                    _space.Dispose();
+                    _disposed = true;
+                }
+            }
         }
     }
 }

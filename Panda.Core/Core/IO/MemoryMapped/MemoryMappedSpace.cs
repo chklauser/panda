@@ -138,22 +138,25 @@ namespace Panda.Core.IO.MemoryMapped
             if (Interlocked.CompareExchange(ref _disposedFlag, 1, 0) != 0)
                 return;
 
+            var accessor = Accessor;
             if (disposing)
             {
-                if (_pointer != null)
+                accessor.Dispose();
+                MappedFile.Dispose();
+            }
+
+            if (_pointer != null)
+            {
+                // pointer must be released in a constrained execution region
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try
                 {
-                    // pointer must be released in a constrained execution region
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
-                    }
-                    finally
-                    {
-                        Accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-                    }
+                }
+                finally
+                {
+                    accessor.SafeMemoryMappedViewHandle.ReleasePointer();
                 }
             }
-            MappedFile.Dispose();
         }
 
         public bool IsDisposed

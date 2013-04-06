@@ -536,5 +536,7 @@ namespace Panda.Core.Internal
         {
             get { return _blockOffset; }
         }
+
+
     }
 }
