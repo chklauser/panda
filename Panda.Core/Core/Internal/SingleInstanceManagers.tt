@@ -14,7 +14,7 @@ using Panda.Core.Internal;
 
 <# 
 	Impl[] implementationClasses = new Impl[] {
-		new Impl { T = "Panda.Core.IO.RawBlockManager", CtorParams = "IRawPersistenceSpace persistenceSpace", CtorArgs = "persistenceSpace", ManagesEmptyBlocks = true },
+		new Impl { T = "Panda.Core.IO.RawBlockManager", CtorParams = "IRawPersistenceSpace persistenceSpace", CtorArgs = "persistenceSpace", ManagesEmptyBlocks = true, IsDisposable = true },
 		new Impl { T = "Panda.Test.InMemory.Blocks.MemBlockManager", CtorParams = "uint totalBlockCount, BlockOffset rootDirectoryBlockOffset, int metaBlockCapacity, int dataBlockCapacity", CtorArgs = "totalBlockCount, rootDirectoryBlockOffset, metaBlockCapacity, dataBlockCapacity"}
 	};
 	foreach(var impl in implementationClasses) {
@@ -398,6 +398,7 @@ namespace <#=TNs#>
 <# } else { #>
 		protected override void Dispose(bool disposing)
 		{
+            base.Dispose(disposing);
 			if(disposing)
 			{
 				var old = _lock;

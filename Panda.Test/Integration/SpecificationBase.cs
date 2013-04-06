@@ -29,13 +29,13 @@ namespace Panda.Test.Integration
         [TearDown]
         public virtual void TearDown()
         {
+            if (Disk != null)
+                Disk.Dispose();
+            if (_managedDisk != null && _managedDisk != Disk)
+                _managedDisk.Dispose();
+
             try
             {
-                if (Disk != null)
-                    Disk.Dispose();
-                if (_managedDisk != null && _managedDisk != Disk)
-                    _managedDisk.Dispose();
-
                 if (File.Exists(DiskFileName))
                 {
                     File.Delete(DiskFileName);
@@ -85,7 +85,6 @@ namespace Panda.Test.Integration
                     Disk.Dispose();
                     Disk = null;
                 }
-
 
                 var disposable = Disk as IDisposable;
 
