@@ -108,3 +108,4 @@ Report/*.backup
 Report/*.aux
 Report/*.log
 Report/report.pdf
+Report/*.synctex.gz
