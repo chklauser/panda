@@ -13,6 +13,7 @@ using Panda.Test.Unit;
 
 namespace Panda.Test.Integration
 {
+    // ReSharper disable InconsistentNaming
     [TestFixture]
     public class Specification : SpecificationBase
     {
@@ -25,18 +26,22 @@ namespace Panda.Test.Integration
             // location
             string vfsFileName = Path.Combine(typeof(Specification).Name, @"vfs.panda");
 
+            // remove the file if it exists (this is to deal with the case where an earlier test failed.
+            if (File.Exists(vfsFileName))
+                File.Delete(vfsFileName);
+
             // capacity 10 MB
             const uint cap = 10*1024*1024;
+
+            // create the virtual file system on the harddisk
+            using (var Disk2 = VirtualDisk.CreateNew(vfsFileName, cap))
+            {
+                Assert.That(Disk2.Capacity, Is.GreaterThanOrEqualTo(cap), "Disk2 capacity");
+            }
 
             // remove the file if it exists
             if (File.Exists(vfsFileName))
                 File.Delete(vfsFileName);
-
-            // create the virtual file system on the harddisk
-            var Disk2 = VirtualDisk.CreateNew(vfsFileName, cap);
-
-            // tear down
-            Disk2.Dispose();
         }
 
         /// <summary>
@@ -46,26 +51,38 @@ namespace Panda.Test.Integration
         public void Req2_1_3()
         {
             // create a second disk
-            string vfsFileName = Path.Combine(typeof(Specification).Name, @"vfs.panda");
-            var Disk2 = VirtualDisk.CreateNew(vfsFileName, Capacity);
+            var vfsFileName = Path.Combine(typeof(Specification).Name, @"vfs.panda");
 
-            // remove the file if it exists
-            if (File.Exists(vfsFileName))
+            // remove the file if it exists (this is to deal with the case where an earlier test failed.
+            if(File.Exists(vfsFileName))
                 File.Delete(vfsFileName);
 
-            // create a file on both disks with different content
-            Disk.Root.CreateFile("peter.txt", Encoding.UTF8.GetBytes("test"));
-            Disk2.Root.CreateFile("peter.txt", Encoding.UTF8.GetBytes("test2"));
+            using (var Disk2 = VirtualDisk.CreateNew(vfsFileName, Capacity))
+            {
 
-            // check that the content can be read correctly
-            Assert.That((new StreamReader(((VirtualFile)Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(), Is.EqualTo("test"));
-            Assert.That((new StreamReader(((VirtualFile)Disk2.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(), Is.EqualTo("test2"));
+                // create a file on both disks with different content
+                Disk.Root.CreateFile("peter.txt", Encoding.UTF8.GetBytes("test"));
+                Disk2.Root.CreateFile("peter.txt", Encoding.UTF8.GetBytes("test2"));
 
-            // check that the content is not the same
-            Assert.That((new StreamReader(((VirtualFile)Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
-                Is.Not.EqualTo((new StreamReader(((VirtualFile)Disk2.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
+                // check that the content can be read correctly
+                Assert.That(
+                    (new StreamReader(((VirtualFile) Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
+                    Is.EqualTo("test"));
+                Assert.That(
+                    (new StreamReader(((VirtualFile) Disk2.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd
+                        (), Is.EqualTo("test2"));
 
-            Disk2.Dispose();
+                // check that the content is not the same
+                Assert.That(
+                    (new StreamReader(((VirtualFile) Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
+                    Is.Not.EqualTo(
+                        (new StreamReader(((VirtualFile) Disk2.Root.Navigate("peter.txt")).Open(), Encoding.UTF8))
+                            .ReadToEnd()));
+
+            }
+
+            if (File.Exists(vfsFileName))
+                File.Delete(vfsFileName);
         }
 
         [Test]
