@@ -60,8 +60,11 @@ namespace Panda.Core.Internal
             // remove old DirectoryEntry
             tuple.Item2.DeleteEntry(tuple.Item1);
 
-            // add new DirectoryEntry
-            _parentDirectory.AddDirectoryEntryToCurrentDirectoryNode(newDe);
+            // add new DirectoryEntry (should have place in the same file block!)
+            if (!tuple.Item2.TryAddEntry(newDe))
+            {
+                throw new PandaException("Could not add new DirectoryEntry");
+            }
         }
 
         /// <summary>
