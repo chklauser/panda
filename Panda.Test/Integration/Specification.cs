@@ -229,6 +229,31 @@ namespace Panda.Test.Integration
                 File.Delete("peter_new.txt");
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        [Test]
+        public void Req2_1_10()
+        {
+            // directory size should be 0 in a new disk
+            Assert.That(Disk.Root.Size, Is.EqualTo(0));
+
+            // create a file with 43285 bytes in the root directory
+            Assert.That(Disk.Root.CreateFile("f", new byte[43285]), Is.AssignableTo<VirtualFile>());
+
+            // check size of root block
+            Assert.That(Disk.Root.Size, Is.EqualTo(43285));
+
+            // create a subdirectory
+            Assert.That(Disk.Root.CreateDirectory("q"), Is.AssignableTo<VirtualDirectory>());
+
+            // copy file into a subdirectory
+            Disk.Root.Navigate("f").Copy((VirtualDirectory)Disk.Root.Navigate("q"));
+
+            // check size of root block
+            Assert.That(Disk.Root.Size, Is.EqualTo(2*43285));
+        }
+
         [Test]
         public void CreateFile()
         {
