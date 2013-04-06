@@ -38,20 +38,53 @@ This document describes the design and implementation of the \emph{Panda Virtual
 
 \section{VFS Core}
 
-%TODO: Remove this text and replace it with actual content
-\emph{Give a short description (1-2 paragraphs) of what VFS Core is.}
+The VFS Core is the system part of the virtual file system. It manages directories and files as we are used to it in other systems like linux.\\
 
+We introduced a block system. Each block can be specified in one of 4 different types. To achieve code which can be good maintained we designed 3 layers. These block types and layers are described in the Design section.
 
 \subsection{Requirements}
 
 % TODO: Remove this text and replace it with actual content
 \emph{Describe which requirements (and possibly bonus requirements) you have implemented in this part. Give a quick description (1-2 sentences) of each requirement. List the software elements (classes and or functions) that are mainly involved in implementing each requirement.}
 
+\begin{enumerate}
+	\item \emph{The virtual disk must be stored in a single file in the working directory in the host file system.}\\
+		TODO
+	\item \emph{VFS must support the creation of a new disk with the specified maximum size at the specified
+location in the host file system.}\\
+		TODO
+	\item \emph{VFS must support several virtual disks in the host file system.}\\
+		TODO
+	\item \emph{VFS must support disposing of the virtual disk.}\\
+		TODO
+	\item \emph{VFS must support creating/deleting/renaming directories and files.}\\
+		TODO
+	\item \emph{VFS must support navigation: listing of files and folders, and going to a location expressed by a
+concrete path.}\\
+		TODO
+	\item \emph{VFS must support moving/copying directories and files, including hierarchy.}\\
+		TODO
+	\item \emph{VFS must support importing files and directories from the host file system.}\\
+		TODO
+	\item \emph{VFS must support exporting files and directories to the host file system.}\\
+		TODO
+	\item \emph{VFS must support querying of free/occupied space in the virtual disk.}\\
+		TODO
+	\item \textbf{Bonus Basic:} \emph{Elastic disk: Virtual disk can dynamically grow or shrink, depending on its occupied space.}\\
+		The intern data structure can already grow and shrink dynamically.
+	\item \textbf{Bonus Advanced:} \emph{Large data: This means, that VFS core can store \& operate amount of data, that can't fit to PC
+RAM ( typically, more than 4Gb).}\\
+		To fullfill this taks we decided to work with a block structure.
+\end{enumerate}
 
 \subsection{Design}
 
 % TODO: Remove this text and replace it with actual content
 \emph{Give an overview of the design of this part and describe in general terms how the implementation works. You can mention design patterns used, class diagrams, definition of custom file formats, network protocols, or anything else that helps understand the implementation.}
+
+\subsection{Specification}
+
+This section lists the detailed specification of the virtual file system.
 
 \subsubsection{General Remarks}
 
@@ -79,8 +112,6 @@ Offset 	&Length	&C\# d-t	&Description\\\hline
 16	&4	&UInt32	&“break” in number of blocks, see empty space management.\\
 20	&B\_S -20	&UInt32	&Empty (initialized with 0)\\\hline
 \end{tabular}
-
-
 
 Normal blocks are everywhere but at address 0.
 
