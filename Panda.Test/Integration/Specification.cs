@@ -68,6 +68,61 @@ namespace Panda.Test.Integration
             Disk2.Dispose();
         }
 
+        /// <summary>
+        /// disposes a virtual disk
+        /// </summary>
+        [Test]
+        public void Req2_1_4()
+        {
+            Disk.Dispose();
+        }
+
+        /// <summary>
+        /// creates, deletes, renames directories and files
+        /// </summary>
+        [Test]
+        public void Req2_1_5()
+        {
+            // create a file
+            Assert.That(Disk.Root.CreateFile("peter.txt", Encoding.UTF8.GetBytes("test")), Is.AssignableTo<VirtualFile>());
+
+            // check that the file exists and is a file
+            Assert.That(Disk.Root.Navigate("peter.txt"), Is.AssignableTo<VirtualFile>());
+
+            // rename the file
+            Disk.Root.Navigate("peter.txt").Rename("pan.txt");
+
+            // check that the file still exists and is a file
+            Assert.That(Disk.Root.Navigate("pan.txt"), Is.AssignableTo<VirtualFile>());
+
+            // delete the file
+            Disk.Root.Navigate("pan.txt").Delete();
+
+            // check that the file is deleted
+            Assert.That(Disk.Root, Is.All.Null);
+
+            // create a directory
+            Assert.That(Disk.Root.CreateDirectory("dir"), Is.AssignableTo<VirtualDirectory>());
+
+            // create a subdirectory
+            Assert.That(((VirtualDirectory)Disk.Root.Navigate("dir")).CreateDirectory("asdf"), Is.AssignableTo<VirtualDirectory>());
+
+            // create a file in the subdirectory
+            Assert.That(((VirtualDirectory)Disk.Root.Navigate("dir/asdf")).CreateFile("peter.txt", Encoding.UTF8.GetBytes("test")), Is.AssignableTo<VirtualFile>());
+
+            // rename a directory
+            ((VirtualDirectory)Disk.Root.Navigate("dir/asdf")).Rename("aeou");
+
+            // check that the file still exists in the rename directory
+            Assert.That(Disk.Root.Navigate("dir/aeou/peter.txt"), Is.AssignableTo<VirtualFile>());
+
+            // delete the subdirectory
+            ((VirtualDirectory)Disk.Root.Navigate("dir/aeou")).Delete();
+
+            // check if the directory is empty
+            Assert.That(Disk.Root.Navigate("dir"), Is.All.Null);
+        }
+
         [Test]
         public void CreateFile()
         {
