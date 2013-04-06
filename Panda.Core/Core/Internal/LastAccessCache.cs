@@ -45,7 +45,10 @@ namespace Panda.Core.Internal
         {
             LinkedListNode<TValue> node;
             if (_pointerTable.TryGetValue(reference.CacheKey, out node))
+            {
                 _accessOrder.Remove(node);
+                _pointerTable.Remove(reference.CacheKey);
+            }
         }
 
         public int EstimateSize()
@@ -71,6 +74,7 @@ namespace Panda.Core.Internal
             foreach (var n in _accessOrder.Take(Capacity))
                 buf[i++] = n;
 
+            _pointerTable.Clear();
             _accessOrder.Clear();
             _accessOrder.AddRange(buf);
             _pointerTable.Clear();

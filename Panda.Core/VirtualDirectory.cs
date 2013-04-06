@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using System;
+using Panda.Core;
 
 namespace Panda
 {
@@ -123,8 +124,9 @@ namespace Panda
         /// Retrieve a file system node based on a relative path. Returns null if any part of the path does not exist.
         /// </summary>
         /// <param name="path">A relative path.</param>
-        /// <returns>The virtual node pointed to by the path, or null if any part of the path does not exist.</returns>
-        [CanBeNull]
+        /// <returns>The virtual node pointed to by the path.</returns>
+        /// <exception cref="PathNotFoundException"></exception>
+        [NotNull]
         public abstract VirtualNode Navigate(string path);
 
         /// <summary>
