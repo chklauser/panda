@@ -13,7 +13,7 @@
 
 \title{
 Project Report \\ 
-Group Panda \\
+Group Pandas \\
 \vspace{5mm}
 \large Java and C\# in depth, Spring 2013
 }
@@ -31,7 +31,7 @@ Roger Walt
 
 \section{Introduction}
 
-This document describes the design and implementation of the \emph{Panda Virtual File System} of group \emph{Panda}. The project is part of the course \emph{Java and C\# in depth} at ETH Zurich. The following sections describe each project phase, listing the requirements that were implemented and the design decisions taken. The last section describes a use case of using the \emph{Panda Virtual File System}.
+This document describes the design and implementation of the \emph{Panda Virtual File System} of group \emph{Pandas}. The project is part of the course \emph{Java and C\# in depth} at ETH Zurich. The following sections describe each project phase, listing the requirements that were implemented and the design decisions taken. The last section describes a use case of using the \emph{Panda Virtual File System}.
 
 % PART I: VFS CORE
 % --------------------------------------
@@ -44,36 +44,38 @@ We introduced a block system. Each block can be specified in one of 4 different 
 
 \subsection{Requirements}
 
+Each requirement which is listed is also implemented. The software elements which are involved can be found in the testmethod\newline Panda.Test/Integration/Specification.cs. The testclass is noted to each requirement.
+
 \begin{enumerate}
 	\item \emph{The virtual disk must be stored in a single file in the working directory in the host file system.}\\
-		TODO\\
-		Testmethod: xyz
+		The whole VFS is stored in the instance disk which is created at the beginning.\\
+		Testclass: Req2\_1\_1\_and\_2
 	\item \emph{VFS must support the creation of a new disk with the specified maximum size at the specified
 location in the host file system.}\\
-		TODO\\
-		Testmethod: xyz
+		Possible since we can create a VFS.\\
+		Testclass: Req2\_1\_1\_and\_2
 	\item \emph{VFS must support several virtual disks in the host file system.}\\
-		TODO\\
-		Testmethod: xyz
+		We can create n different disks with different files.\\
+		Testclass: Req2\_1\_3
 	\item \emph{VFS must support disposing of the virtual disk.}\\
-		TODO\\
-		Testmethod: xyz
+		Possible with Dispose()\\
+		Testclass: Req2\_1\_4
 	\item \emph{VFS must support creating/deleting/renaming directories and files.}\\
-		TODO\\
-		Testmethod: xyz
+		Files support all these methods after they are initialized.\\
+		Testclass: Req2\_1\_5
 	\item \emph{VFS must support navigation: listing of files and folders, and going to a location expressed by a
 concrete path.}\\
-		TODO\\
-		Testmethod: xyz
+		Since files and folders inherit from nodes we can store them in an list and loop trough them. With navigate() we can go to a concrete path.\\
+		Testclass: Req2\_1\_6
 	\item \emph{VFS must support moving/copying directories and files, including hierarchy.}\\
-		TODO\\
-		Testmethod: xyz
+		move() and copy() are implemented.\\
+		Testclass: Req2\_1\_7
 	\item \emph{VFS must support importing files and directories from the host file system.}\\
-		TODO\\
-		Testmethod: xyz
+		import() is implemented and reads from the system.io.stream\\
+		Testclass: Req2\_1\_8
 	\item \emph{VFS must support exporting files and directories to the host file system.}\\
-		TODO\\
-		Testmethod: xyz
+		import() is implemented and writes to the system.io.stream\\
+		Testclass: Req2\_1\_9
 	\item \emph{VFS must support querying of free/occupied space in the virtual disk.}\\
 		TODO\\
 		Testmethod: xyz
@@ -94,7 +96,7 @@ The VFS Core is divided in 3 layers. Each of it accesses the layer below and ens
 
 \subsubsection{I/O layer}
 
-On this level we store the raw data.
+On this level we store the raw data. The methods related to this abstraction level are stored in Panda.Core/Core/IO.
 
 \subsubsection{Block layer}
 
@@ -106,7 +108,9 @@ With the blockManager we can allocate new blocks get data out blocks or access t
 
 This is the most abstract level. Here we implemented the functionality of the VFS which are based on the requirements. It communicates with the Block layer via the blockManager.\\
 
-The methods related to this abstraction level are stored in \newline Panda.Core/Core/Internal.
+The most important Classes are the VirtualDirectory.cs and VirtualFile.cs which inherit from VirtualNode.cs. With the node concept we realize the fact that a directory and file have many things in commen (they can be renamed, deleted, etc. ). Due to the integration of an enumerator we can acces a list of nodes very efficient.\\
+
+The methods related to this abstraction level are stored in Panda.Core and  Panda.Core/Core/Internal.
 
 \subsection{Specification}
 
