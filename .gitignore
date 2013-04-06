@@ -107,4 +107,3 @@ pip-log.txt
 Report/*.backup
 Report/*.aux
 Report/*.log
-Report/report.pdf
