@@ -139,10 +139,12 @@ namespace Panda.Core.Internal
         {
             return Task.Run( () =>
                 {
-                    var fs = File.Create(path);
-                    using (var stream = this.Open())
+                    using (var fs = File.Create(path))
                     {
-                        stream.CopyTo(fs);
+                        using (var stream = this.Open())
+                        {
+                            stream.CopyTo(fs);
+                        }
                     }
                 }   
             );
