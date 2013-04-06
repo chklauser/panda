@@ -436,7 +436,18 @@ namespace Panda.Core.Internal
 
         public override long Size
         {
-            get { throw new NotImplementedException(); }
+            get
+            {
+                long size = 0;
+
+                // go trough all directoryEntries (also from ContinationBlocks) and invoke Size(), done by enumerator:
+                foreach (var node in this)
+                {
+                    size += node.Size;
+                }
+
+                return size;
+            }
         }
 
         public override bool IsRoot
