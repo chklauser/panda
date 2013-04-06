@@ -208,22 +208,37 @@ namespace Panda.Test.Integration
         [Test]
         public void Req2_1_8_and_9()
         {
+            const string oldFileName = "peter.txt";
+            const string newFileName = "peter_new.txt";
+
+            if(File.Exists(oldFileName))
+                File.Delete(oldFileName);
+            
+            if (File.Exists(newFileName))
+                File.Delete(newFileName);
+
             // create a file
-            Assert.That(Disk.Root.CreateFile("peter.txt", Encoding.UTF8.GetBytes("test0mat")), Is.AssignableTo<VirtualFile>());
+            Assert.That(Disk.Root.CreateFile(oldFileName, Encoding.UTF8.GetBytes("test0mat")), Is.AssignableTo<VirtualFile>());
 
             // export the file
-            ((VirtualFile)Disk.Root.Navigate("peter.txt")).Export(@"peter.txt");
+            ((VirtualFile)Disk.Root.Navigate(oldFileName)).Export(@"peter.txt");
 
             // move file on host filesytem
-            File.Move("peter.txt", "peter_new.txt");
+            File.Move(oldFileName, newFileName);
 
             // import the file
-            Disk.Root.Import("peter_new.txt");
+            Disk.Root.Import(newFileName);
 
             // compare the file contents
             Assert.That(
-                (new StreamReader(((VirtualFile)Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
-                Is.EqualTo((new StreamReader(((VirtualFile)Disk.Root.Navigate("peter_new.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
+                (new StreamReader(((VirtualFile)Disk.Root.Navigate(oldFileName)).Open(), Encoding.UTF8)).ReadToEnd(),
+                Is.EqualTo((new StreamReader(((VirtualFile)Disk.Root.Navigate(newFileName)).Open(), Encoding.UTF8)).ReadToEnd()));
+
+            if (File.Exists(oldFileName))
+                File.Delete(oldFileName);
+
+            if (File.Exists(newFileName))
+                File.Delete(newFileName);
         }
 
         [Test]
