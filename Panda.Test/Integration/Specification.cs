@@ -85,6 +85,77 @@ namespace Panda.Test.Integration
                 File.Delete(vfsFileName);
         }
 
+        /// <summary>
+        /// disposes a virtual disk
+        /// </summary>
+        [Test]
+        public void Req2_1_4()
+        {
+            Disk.Dispose();
+        }
+
+        /// <summary>
+        /// creates, deletes, renames directories and files
+        /// </summary>
+        [Test]
+        public void Req2_1_5()
+        {
+            // create a file
+            Assert.That(Disk.Root.CreateFile("peter.txt", Encoding.UTF8.GetBytes("test")), Is.AssignableTo<VirtualFile>());
+
+            // check that the file exists and is a file
+            Assert.That(Disk.Root.Navigate("peter.txt"), Is.AssignableTo<VirtualFile>());
+
+            // delete the file
+            Disk.Root.Navigate("peter.txt").Delete();
+
+            // check that the file is deleted
+            Assert.That(Disk.Root, Is.All.Null);
+
+            // create a directory
+            Assert.That(Disk.Root.CreateDirectory("dir"), Is.AssignableTo<VirtualDirectory>());
+
+            // create a subdirectory
+            Assert.That(((VirtualDirectory)Disk.Root.Navigate("dir")).CreateDirectory("asdf"), Is.AssignableTo<VirtualDirectory>());
+
+            // create a file in the subdirectory
+            Assert.That(((VirtualDirectory)Disk.Root.Navigate("dir/asdf")).CreateFile("peter.txt", Encoding.UTF8.GetBytes("test")), Is.AssignableTo<VirtualFile>());
+
+            // delete the subdirectory
+            ((VirtualDirectory)Disk.Root.Navigate("dir/asdf")).Delete();
+
+            // check if the directory is empty
+            Assert.That(Disk.Root.Navigate("dir"), Is.All.Null);
+        }
+
+        /// <summary>
+        /// creates, lists, and navigates
+        /// </summary>
+        [Test]
+        public void Req2_1_6()
+        {
+            // create two directories
+            Assert.That(Disk.Root.CreateDirectory("a"), Is.AssignableTo<VirtualDirectory>());
+            Assert.That(Disk.Root.CreateDirectory("b"), Is.AssignableTo<VirtualDirectory>());
+
+            // list the directories
+            Assert.That(Disk.Root.Count, Is.EqualTo(2));
+
+            // create some files in one of it
+            Assert.That(((VirtualDirectory)Disk.Root.Navigate("a")).CreateFile("x", Encoding.UTF8.GetBytes("test")), Is.AssignableTo<VirtualFile>());
+            Assert.That(((VirtualDirectory)Disk.Root.Navigate("a")).CreateFile("y", Encoding.UTF8.GetBytes("test")), Is.AssignableTo<VirtualFile>());
+            Assert.That(((VirtualDirectory)Disk.Root.Navigate("a")).CreateFile("z", Encoding.UTF8.GetBytes("test")), Is.AssignableTo<VirtualFile>());
+
+            // list the files
+            Assert.That(((VirtualDirectory)Disk.Root.Navigate("a")).Count, Is.EqualTo(3));
+
+            // navigate with absolute path
+            Assert.That(Disk.Root.Navigate("/a/x"), Is.AssignableTo<VirtualFile>());
+
+            // navigate with relative path
+            Assert.That(((VirtualDirectory)Disk.Root.Navigate("a")).Navigate("x"), Is.AssignableTo<VirtualFile>());
+        }
+
         [Test]
         public void CreateFile()
         {

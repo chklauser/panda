@@ -131,5 +131,15 @@ namespace Panda.Test.Unit
             
             Assert.That((new StreamReader(((VirtualFile) Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(), Is.EqualTo("test"));
         }
+
+        [Test]
+        public void RenameTest()
+        {
+            CreateMemDisk();
+
+            Disk.Root.CreateFile("peter.txt", Encoding.UTF8.GetBytes("test"));
+            ((VirtualFile) Disk.Root.Navigate("peter.txt")).Rename("pan.txt");
+            Assert.That(Disk.Root.Navigate("pan.txt"), Is.AssignableTo<VirtualFile>());
+        }
     }
 }
