@@ -202,6 +202,30 @@ namespace Panda.Test.Integration
                 Is.EqualTo((new StreamReader(((VirtualFile) Disk.Root.Navigate("/b/a/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
         }
 
+        /// <summary>
+        /// imports files and directories from host filesystem
+        /// </summary>
+        [Test]
+        public void Req2_1_8_and_9()
+        {
+            // create a file
+            Assert.That(Disk.Root.CreateFile("peter.txt", Encoding.UTF8.GetBytes("test0mat")), Is.AssignableTo<VirtualFile>());
+
+            // export the file
+            ((VirtualFile)Disk.Root.Navigate("peter.txt")).Export(@"peter.txt");
+
+            // move file on host filesytem
+            File.Move("peter.txt", "peter_new.txt");
+
+            // import the file
+            Disk.Root.Import("peter_new.txt");
+
+            // compare the file contents
+            Assert.That(
+                (new StreamReader(((VirtualFile)Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
+                Is.EqualTo((new StreamReader(((VirtualFile)Disk.Root.Navigate("peter_new.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
+        }
+
         [Test]
         public void CreateFile()
         {
