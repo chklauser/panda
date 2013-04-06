@@ -77,14 +77,12 @@ concrete path.}\\
 		import() is implemented and writes to the system.io.stream\\
 		Testclass: Req2\_1\_9
 	\item \emph{VFS must support querying of free/occupied space in the virtual disk.}\\
-		TODO\\
-		Testmethod: xyz
+		Size is implemented as an Field of diretory and file. To get the occupied space just ask root.\\
+		Testclass: Req2\_1\_10
 	\item \textbf{Bonus Basic:} \emph{Elastic disk: Virtual disk can dynamically grow or shrink, depending on its occupied space.}\\
-		The intern data structure can already grow and shrink dynamically.\\
-		Testmethod: xyz
+		The intern data structure can already grow and shrink dynamically since we work with blocks.
 	\item \textbf{Bonus Advanced:} \emph{Large data: This means, that VFS core can store \& operate amount of data, that can't fit to PC RAM ( typically, more than 4Gb).}\\
-		To fullfill this taks we decided to work with a block structure.\\
-		Testmethod: xyz
+		To fullfill this taks we decided to work with a block structure. This implies automaticaly that we can sotre more than 4Gb.\\
 \end{enumerate}
 
 \subsection{Design}
@@ -141,7 +139,7 @@ Offset 	&Length	&C\# d-t	&Description\\\hline
 12	&4	&UInt32	&Address of empty page block. Must never be 0\\
 16	&4	&UInt32	&“break” in number of blocks, see empty space management.\\
 20	&B\_S -20	&UInt32	&Empty (initialized with 0)\\\hline
-\end{tabular}
+\end{tabular}\\
 
 Normal blocks are everywhere but at address 0.
 
