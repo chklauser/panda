@@ -38,51 +38,51 @@ This document describes the design and implementation of the \emph{Panda Virtual
 
 \section{VFS Core}
 
-The VFS Core is the system part of the virtual file system. It manages directories and files as we are used to it in other systems like linux.\\
+The VFS Core is the system part of the virtual file system. It manages directories and files as we are used to it in other systems like Linux.\\
 
-We introduced a block system. Each block can be specified in one of 4 different types. To achieve code which can be good maintained we designed 3 layers. These block types are described in the Specification section and the layers are in the Design section.
+We introduced a block system. Each block can be one of four types. To achieve maintainable code we designed three layers. These block types are described in the Specification section and the layers in the Design section.
 
 \subsection{Requirements}
 
-Each requirement which is listed is also implemented. The software elements which are involved can be found in the testmethod\newline Panda.Test/Integration/Specification.cs. The testclass is noted to each requirement.
+Each requirement which is listed is also implemented. The software elements which are involved can be found in the test class\newline Panda.Test/Integration/Specification.cs. The test method is noted to each requirement.
 
 \begin{enumerate}
 	\item \emph{The virtual disk must be stored in a single file in the working directory in the host file system.}\\
 		The whole VFS is stored in the instance disk which is created at the beginning.\\
-		Testclass: Req2\_1\_1\_and\_2
+		Test method: Req2\_1\_1\_and\_2
 	\item \emph{VFS must support the creation of a new disk with the specified maximum size at the specified
 location in the host file system.}\\
 		Possible since we can create a VFS.\\
-		Testclass: Req2\_1\_1\_and\_2
+		Test method: Req2\_1\_1\_and\_2
 	\item \emph{VFS must support several virtual disks in the host file system.}\\
 		We can create n different disks with different files.\\
-		Testclass: Req2\_1\_3
+		Test method: Req2\_1\_3
 	\item \emph{VFS must support disposing of the virtual disk.}\\
-		Possible with Dispose()\\
-		Testclass: Req2\_1\_4
+		Possible with Dispose().\\
+		Test method: Req2\_1\_4
 	\item \emph{VFS must support creating/deleting/renaming directories and files.}\\
-		Files support all these methods after they are initialized.\\
-		Testclass: Req2\_1\_5
+		Files support all these methods after they are created.\\
+		Test method: Req2\_1\_5
 	\item \emph{VFS must support navigation: listing of files and folders, and going to a location expressed by a
 concrete path.}\\
-		Since files and folders inherit from nodes we can store them in an list and loop trough them. With navigate() we can go to a concrete path.\\
-		Testclass: Req2\_1\_6
+		Since files and folders inherit from nodes they are stored in an list and we can loop trough them. With navigate() we can go to a concrete path, absolute or relative.\\
+		Test method: Req2\_1\_6
 	\item \emph{VFS must support moving/copying directories and files, including hierarchy.}\\
 		move() and copy() are implemented.\\
-		Testclass: Req2\_1\_7
+		Test method: Req2\_1\_7
 	\item \emph{VFS must support importing files and directories from the host file system.}\\
-		import() is implemented and reads from the system.io.stream\\
-		Testclass: Req2\_1\_8\_and\_9
+		import() is implemented and reads from the System.IO.Stream.\\
+		Test method: Req2\_1\_8\_and\_9
 	\item \emph{VFS must support exporting files and directories to the host file system.}\\
-		import() is implemented and writes to the system.io.stream\\
-		Testclass: Req2\_1\_8\_and\_9
+		import() is implemented and writes to System.IO.Stream.\\
+		Test method: Req2\_1\_8\_and\_9
 	\item \emph{VFS must support querying of free/occupied space in the virtual disk.}\\
-		Size is implemented as an Field of diretory and file. To get the occupied space just ask root.\\
-		Testclass: Req2\_1\_10
+		Size is implemented as field of directories and files. To get the occupied space just ask root.\\
+		Test method: Req2\_1\_10
 	\item \textbf{Bonus Basic:} \emph{Elastic disk: Virtual disk can dynamically grow or shrink, depending on its occupied space.}\\
-		The intern data structure can already grow and shrink dynamically since we work with blocks.
+		The internal data structure can already grow and shrink dynamically since we work with blocks.
 	\item \textbf{Bonus Advanced:} \emph{Large data: This means, that VFS core can store \& operate amount of data, that can't fit to PC RAM ( typically, more than 4Gb).}\\
-		To fullfill this taks we decided to work with a block structure. This implies automaticaly that we can sotre more than 4Gb.\\
+		To fulfill this taks we decided to work with a block structure. This implies automaticaly that we can store more than 4Gb.\\
 \end{enumerate}
 
 \subsection{Design}
@@ -90,23 +90,23 @@ concrete path.}\\
 % TODO: Remove this text and replace it with actual content
 \emph{Give an overview of the design of this part and describe in general terms how the implementation works. You can mention design patterns used, class diagrams, definition of custom file formats, network protocols, or anything else that helps understand the implementation.}\\
 
-The VFS Core is divided in 3 layers. Each of it accesses the layer below and ensures good maintenance and readability.
+The VFS Core is divided in three layers. Each of it accesses the layer below and ensures good maintenanceability and readability.
 
 \subsubsection{I/O layer}
 
-On this level we store the raw data. The methods related to this abstraction level are stored in Panda.Core/Core/IO.
+On this level we store raw data. The methods related to this abstraction level are stored in Panda.Core/Core/IO.
 
 \subsubsection{Block layer}
 
-We have abstract blocks of uniform size. They are specified in the section Specification. The class blockManager manages the acces to these blocks. It communicates with the I/O layer.\\
+We have abstract blocks of uniform size. They are specified in the section Specification. The class BlockManager manages the access to these blocks. It communicates with the I/O layer.\\
 
-With the blockManager we can allocate new blocks get data out blocks or access the blockOffset which contains block relevant data. The methods related to this abstraction level are stored in Panda.Core/Core/Blocks.
+With the BlockManager we can allocate new blocks, get data out blocks or access the blockOffset which contains block relevant data. The methods related to this abstraction level are stored in Panda.Core/Core/Blocks.
 
 \subsubsection{Filesystem layer}
 
-This is the most abstract level. Here we implemented the functionality of the VFS which are based on the requirements. It communicates with the Block layer via the blockManager.\\
+This is the most abstract level. Here we implemented the functionality of the VFS which are based on the requirements. It communicates with the Block layer via the BlockManager.\\
 
-The most important Classes are the VirtualDirectory.cs and VirtualFile.cs which inherit from VirtualNode.cs. With the node concept we realize the fact that a directory and file have many things in commen (they can be renamed, deleted, etc. ). Due to the integration of an enumerator we can acces a list of nodes very efficient.\\
+The most important Classes are the VirtualDirectory.cs and VirtualFile.cs which inherit from VirtualNode.cs. With the node concept we realize the fact that a directory and file have many things in commen (they can be renamed, deleted, etc.). Due to the integration of an enumerator we can access a list of nodes very efficiently.\\
 
 The methods related to this abstraction level are stored in Panda.Core and  Panda.Core/Core/Internal.
 
