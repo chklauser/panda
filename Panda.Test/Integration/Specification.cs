@@ -224,6 +224,9 @@ namespace Panda.Test.Integration
             Assert.That(
                 (new StreamReader(((VirtualFile)Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
                 Is.EqualTo((new StreamReader(((VirtualFile)Disk.Root.Navigate("peter_new.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
+
+            if (File.Exists("peter_new.txt"))
+                File.Delete("peter_new.txt");
         }
 
         [Test]
