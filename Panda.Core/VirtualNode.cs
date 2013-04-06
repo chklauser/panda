@@ -66,7 +66,7 @@ namespace Panda
         public virtual void Export(string path)
         {
             // Optional: provide a more efficient synchronous implementation
-            ExportAsync(path).RunSynchronously();
+            ExportAsync(path).Wait();
         }
     }
 }

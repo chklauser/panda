@@ -144,6 +144,11 @@ namespace Panda.Core.Blocks
         uint TotalBlockCount { get; }
 
         /// <summary>
+        /// Number of blocks that are availabel for allocation.
+        /// </summary>
+        uint TotalFreeBlockCount { get; }
+
+        /// <summary>
         /// Offset of the <see cref="IDirectoryBlock"/> of the root directory.
         /// </summary>
         BlockOffset RootDirectoryBlockOffset { get; }

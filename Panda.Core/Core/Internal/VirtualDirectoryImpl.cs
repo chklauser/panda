@@ -8,7 +8,7 @@ using Panda.Core.Blocks;
 
 namespace Panda.Core.Internal
 {
-    class VirtualDirectoryImpl : VirtualDirectory
+    class VirtualDirectoryImpl : VirtualDirectory, ICacheKeyed<BlockOffset>
     {
         private readonly VirtualDiskImpl _disk;
         private readonly BlockOffset _blockOffset;
@@ -32,7 +32,7 @@ namespace Panda.Core.Internal
             if (PathUtil.isAbsolutePath(path))
             {
                 // absolute path given, call Navigate on root DirectoryNode with the same path, but without /
-                return _disk.Root.Navigate(path.Substring(1, path.Length));
+                return _disk.Root.Navigate(path.Substring(1, path.Length-1));
             }
             else
             {
@@ -69,7 +69,7 @@ namespace Panda.Core.Internal
                 {
                     // node found
                     // try to interpret the found node as directory
-                    VirtualDirectoryImpl childDirectory = retNode as VirtualDirectoryImpl;
+                    var childDirectory = retNode as VirtualDirectoryImpl;
                     if (childDirectory != null)
                     {
                         // node is a directory
@@ -78,7 +78,7 @@ namespace Panda.Core.Internal
                     else
                     {
                         // node must be a file
-                        VirtualFileImpl childFile = retNode as VirtualFileImpl;
+                        var childFile = retNode as VirtualFileImpl;
                         if (childFile != null)
                         {
                             // node is a file, so the path must now be empty, otherwise the path is invalid
@@ -115,11 +115,11 @@ namespace Panda.Core.Internal
                 // return this node
                 if (de.IsDirectory)
                 {
-                    yield return new VirtualDirectoryImpl(_disk, de.BlockOffset, this, de.Name);
+                    yield return _disk.GetDirectory(this, de);
                 }
                 else
                 {
-                    yield return new VirtualFileImpl(_disk, de.BlockOffset, this, de.Name);
+                    yield return _disk.GetFile(this, de);
                 }
             }
 
@@ -134,11 +134,11 @@ namespace Panda.Core.Internal
                     // return the corresponding VirtualNode
                     if (de.IsDirectory)
                     {
-                        yield return new VirtualDirectoryImpl(_disk, de.BlockOffset, this, de.Name);
+                        yield return _disk.GetDirectory(this,de);
                     }
                     else
                     {
-                        yield return new VirtualFileImpl(_disk, de.BlockOffset, this, de.Name);
+                        yield return _disk.GetFile(this, de);
                     }
                 }
             } 
@@ -281,7 +281,7 @@ namespace Panda.Core.Internal
             // add DirectoryEntry referencing this new Block to this DirectoryBlock or a DirectoryContinuationBlock of it
             AddDirectoryEntryToCurrentDirectoryNode(de);
 
-            return new VirtualDirectoryImpl(_disk, db.Offset, this, name);
+            return _disk.GetDirectory(this, de);
         }
 
         /// <summary>
@@ -424,7 +424,7 @@ namespace Panda.Core.Internal
                         fb.Size = fileSize;
 
                         // return VirtualFile
-                        return (VirtualFile) new VirtualFileImpl(_disk, fb.Offset, this, name);
+                        return (VirtualFile) _disk.GetFile(this, de);
                     }
                 );
         }
@@ -490,6 +490,9 @@ namespace Panda.Core.Internal
             {
                  node.Delete();
             }
+
+            // Notify the disk of this deletion. Necessary to keep the cache consistent
+            _disk.OnDelete(this);
         }
 
         public override void Move(VirtualDirectory destination, string newName)
@@ -527,6 +530,11 @@ namespace Panda.Core.Internal
             {
                 node.Copy(newDir);
             }
+        }
+
+        public BlockOffset CacheKey
+        {
+            get { return _blockOffset; }
         }
     }
 }

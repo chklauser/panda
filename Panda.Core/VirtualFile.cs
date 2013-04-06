@@ -7,5 +7,10 @@ namespace Panda
     public abstract class VirtualFile : VirtualNode
     {
         public abstract Stream Open();
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

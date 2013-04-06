@@ -53,7 +53,6 @@ namespace Panda.Test.Unit
             Assert.That(dir.Name, Is.EqualTo("d"), "directory name");
             Assert.That(dir.IsRoot, Is.False, "/d is not root");
             Assert.That(dir.ParentDirectory, Is.SameAs(Disk.Root), "/d should be child of /");
-            Assert.That(dir.Size, Is.EqualTo(0), "directory should report size 0");
 
             // and so on and so forth.
         }
@@ -65,8 +64,6 @@ namespace Panda.Test.Unit
             // (With a capacity of just 256 blocks, it's rather small)
             CreateMemDisk();
 
-            var emptySize = Disk.Root.Size;
-
             var vf = Disk.Root.CreateFile("f", new byte[0]);
             Assert.That(Disk.Root.Contains("f"), Is.True, "Root should contain 'f'");
             Assert.That(Disk.Root.Navigate("f"), Is.SameAs(vf), "Navigating to /f should be the same as the file returned from CreateFile.");
@@ -74,7 +71,6 @@ namespace Panda.Test.Unit
             Assert.That(vf.FullName, Is.EqualTo("/f"), "File full name does not match.");
             Assert.That(vf.ParentDirectory, Is.SameAs(Disk.Root), "/f should be child of /");
             Assert.That(vf.Size, Is.EqualTo(0), "File size");
-            Assert.That(Disk.Root.Size, Is.EqualTo(emptySize), "reported root directory size.");
 
             // "read" the empty file
             var str = vf.Open();

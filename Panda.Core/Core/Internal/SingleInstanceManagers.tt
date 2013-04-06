@@ -257,6 +257,7 @@ namespace <#=TNs#>
                 if (_existingBlocks.TryGetValue(blockOffset, out weakBlock) && weakBlock.TryGetTarget(out block))
                 {
                     ReferenceCache.EvictEarly(block);
+                    _existingBlocks.Remove(blockOffset);
                 }
                 _handleGc();
             }

@@ -314,6 +314,11 @@ namespace Panda.Core.IO
             }
         }
 
+        public uint TotalFreeBlockCount
+        {
+            get { return (uint) (GetEmptyListBlock(EmptyListOffset).TotalFreeBlockCount + TotalBlockCount - Break.Offset); }
+        }
+
         public unsafe BlockOffset RootDirectoryBlockOffset
         {
             get

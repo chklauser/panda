@@ -233,6 +233,7 @@ namespace Panda.Core.IO
                 if (_existingBlocks.TryGetValue(blockOffset, out weakBlock) && weakBlock.TryGetTarget(out block))
                 {
                     ReferenceCache.EvictEarly(block);
+                    _existingBlocks.Remove(blockOffset);
                 }
                 _handleGc();
             }
@@ -584,6 +585,7 @@ namespace Panda.Test.InMemory.Blocks
                 if (_existingBlocks.TryGetValue(blockOffset, out weakBlock) && weakBlock.TryGetTarget(out block))
                 {
                     ReferenceCache.EvictEarly(block);
+                    _existingBlocks.Remove(blockOffset);
                 }
                 _handleGc();
             }

@@ -43,6 +43,7 @@
     <Compile Include="Core\Blocks\IFileContinuationBlock.cs" />
     <Compile Include="Core\DontTouchRootException.cs" />
     <Compile Include="Core\IllegalNodeNameException.cs" />
+    <Compile Include="Core\Internal\SingleInstanceVirtualDiskImpl.cs" />
     <Compile Include="Core\Internal\VirtualFileOpenStream.cs" />
     <Compile Include="Core\Internal\SingleInstanceManagers.cs">
       <AutoGen>True</AutoGen>

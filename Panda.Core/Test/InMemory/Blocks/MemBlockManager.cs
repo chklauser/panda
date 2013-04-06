@@ -202,6 +202,12 @@ namespace Panda.Test.InMemory.Blocks
         }
 
         public uint TotalBlockCount { get; private set; }
+
+        public uint TotalFreeBlockCount
+        {
+            get { return (uint) (TotalBlockCount - _blocks.Count); }
+        }
+
         public BlockOffset RootDirectoryBlockOffset { get; private set; }
 
         public int DataBlockSize

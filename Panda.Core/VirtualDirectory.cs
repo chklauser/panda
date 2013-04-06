@@ -51,7 +51,6 @@ namespace Panda
         {
             // Optional: provide a more efficient synchronous implementation
             var importTask = ImportAsync(path);
-            importTask.RunSynchronously();
             return importTask.Result;
         }
 
@@ -67,7 +66,6 @@ namespace Panda
         public virtual VirtualFile CreateFile([NotNull] string name, [NotNull] Stream dataSource)
         {
             var task = CreateFileAsync(name, dataSource);
-            task.RunSynchronously();
             return task.Result;
         }
 
@@ -205,5 +203,10 @@ namespace Panda
         }
 
         #endregion
+
+        public override string ToString()
+        {
+            return String.Format("{0}/", Name);
+        }
     }
 }

@@ -63,7 +63,7 @@ namespace Panda
         private static VirtualDisk _wrapVirtualDisk(IRawPersistenceSpace space)
         {
             var blockManager = SingleInstanceRawBlockManager.Create(space);
-            return new VirtualDiskImpl(blockManager, new AscendingOffsetLockingPolicy());
+            return SingleInstanceVirtualDiskImpl.Create(blockManager, new AscendingOffsetLockingPolicy());
         }
 
         /// <summary>

@@ -30,6 +30,12 @@ namespace Panda.Core.IO
             return new DirectoryEntryEnumerator(ptr,end);
         }
 
+        private static unsafe int _constantDirectoryEntrySize
+        {
+            get { return sizeof (byte) + sizeof (DirectoryEntryFlags) + sizeof (BlockOffset); }
+        }
+
+
         private unsafe class DirectoryEntryEnumerator : IEnumerator<DirectoryEntry>
         {
             #region Disposal (not used, but inherited from IEnumerator`1)
@@ -70,8 +76,7 @@ namespace Panda.Core.IO
 
             public bool MoveNext()
             {
-                var constantDirectoryEntrySize = sizeof (byte) + sizeof (DirectoryEntryFlags) + sizeof (BlockOffset);
-                if (_ptr + constantDirectoryEntrySize >= _end)
+                if (_ptr + _constantDirectoryEntrySize >= _end)
                     return false;
 
                 byte nameLen = *_ptr;
@@ -85,11 +90,11 @@ namespace Panda.Core.IO
 
                 // Check if the directory entry stays within the bounds of the block
                 // If this condition is violated, the disk is probably corrupt.
-                var nextPtr = _ptr + constantDirectoryEntrySize + nameLen;
+                var nextPtr = _ptr + _constantDirectoryEntrySize + nameLen;
                 if (nextPtr > _end)
                     throw new PandaException("Invalid directory entry. Name length exceeds block boundaries.");
 
-                Marshal.Copy((IntPtr) (_ptr + constantDirectoryEntrySize), _buffer, 0, nameLen);
+                Marshal.Copy((IntPtr) (_ptr + _constantDirectoryEntrySize), _buffer, 0, nameLen);
                 Current = new DirectoryEntry(TextEncoding.GetString(_buffer, 0, nameLen), offset, flags);
                 _ptr = nextPtr;
                 return true;
@@ -155,16 +160,16 @@ namespace Panda.Core.IO
                 buffer[index + 1] = (byte) entry.Flags;
                 
                 var theOffset = entry.BlockOffset;
-                Marshal.Copy((IntPtr)(&theOffset),buffer,index+2,sizeof(BlockOffset));
+                Marshal.Copy((IntPtr)(&theOffset),buffer,index+_constantDirectoryEntrySize-sizeof(BlockOffset),sizeof(BlockOffset));
                 
-                var entryLen = index + 2 + encoded.Length;
+                var entryLen = _constantDirectoryEntrySize + encoded.Length;
                 if (buffer.Length - entryLen <= 0)
                 {
                     // Not enough space for this entry, aborting the write.
                     return false;
                 }
 
-                Array.Copy(encoded,0,buffer,index+2+sizeof(BlockOffset),encoded.Length);
+                Array.Copy(encoded,0,buffer,index+_constantDirectoryEntrySize,encoded.Length);
 
                 index += entryLen;
             }

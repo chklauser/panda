@@ -120,6 +120,7 @@ namespace Panda.Core.Internal
                 // the client asked for.
 
                 var bytesLeftInBlock = _disk.BlockManager.DataBlockSize - _currentOffsetIntoDataBlock;
+                Debug.Assert(bytesLeftInBlock > 0);
 
                 // limit effective count by 1) bytes left in current data block and 2) bytes left in (logical) file
                 var effectiveCount = Math.Min(bytesLeftInBlock, count);
@@ -139,7 +140,7 @@ namespace Panda.Core.Internal
                     Debug.Assert(_currentOffsetIntoDataBlock == _disk.BlockManager.DataBlockSize);
                     // we have read to the end of this data block, mark it as read by forgetting about it
                     // it has already been removed from the queue/buffer
-                    _currentFileBlock = null;
+                    _currentDataBlock = null;
                 }
                 return effectiveCount;
             }

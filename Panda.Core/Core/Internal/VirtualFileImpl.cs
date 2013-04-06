@@ -5,7 +5,7 @@ using Panda.Core.Blocks;
 
 namespace Panda.Core.Internal
 {
-    class VirtualFileImpl : VirtualFile
+    class VirtualFileImpl : VirtualFile, ICacheKeyed<BlockOffset>
     {
         private readonly VirtualDiskImpl _disk;
         private readonly BlockOffset _blockOffset;
@@ -99,6 +99,9 @@ namespace Panda.Core.Internal
             {
                 _disk.BlockManager.FreeBlock(de);
             }
+
+            // Notify disk of this deletion, this is necessary to keep the cache up to date
+            _disk.OnDelete(this);
         }
 
         public override void Move(VirtualDirectory destination, string newName)
@@ -146,6 +149,11 @@ namespace Panda.Core.Internal
         private void _copy(VirtualDirectoryImpl destination)
         {
             destination.CreateFile(this.Name, this.Open());
+        }
+
+        public BlockOffset CacheKey
+        {
+            get { return _blockOffset; }
         }
     }
 }

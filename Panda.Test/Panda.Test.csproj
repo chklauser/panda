@@ -49,7 +49,6 @@
     <Compile Include="Unit\RawBlockManagerMappedTests.cs" />
     <Compile Include="Unit\RawBlockManagerMemTests.cs" />
     <Compile Include="Unit\RawBlockManagerTestsBase.cs" />
-    <Compile Include="VirtualDiskManagement.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
