@@ -155,7 +155,7 @@ namespace Panda.Core.Internal
             IDirectoryContinuationBlock currentDirectoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
             foreach (var de in currentDirectoryBlock)
             {
-                if (blockOffset == _blockOffset)
+                if (blockOffset == de.BlockOffset)
                 {
                     return Tuple.Create<DirectoryEntry, IDirectoryContinuationBlock, IDirectoryContinuationBlock>(de, currentDirectoryBlock, null);
                 }
