@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.11 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2011.6.25)  5 APR 2013 17:29
+This is pdfTeX, Version 3.1415926-1.40.11 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2011.6.25)  6 APR 2013 10:18
 entering extended mode
 **panda_report.tex
 (C:\Users\Sander\Documents\GitHub\panda\Report\panda_report.tex
@@ -61,24 +61,131 @@ File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
 (Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 59.
 
-Underfull \hbox (badness 10000) in paragraph at lines 68--69
+Underfull \hbox (badness 10000) in paragraph at lines 71--72
 
  []
 
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 70.
+(Font)              <12> on input line 73.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 70.
+(Font)              <8> on input line 73.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 70.
+(Font)              <6> on input line 73.
+Missing character: There is no ‚ in font cmr12!
+Missing character: There is no Ä in font cmr12!
+Missing character: There is no ú in font cmr12!
+Missing character: There is no ‚ in font cmr12!
+Missing character: There is no Ä in font cmr12!
+Missing character: There is no ù in font cmr12!
 
-Underfull \hbox (badness 1052) in paragraph at lines 74--75
-[]\OT1/cmr/m/n/12 Address of root di-rec-tory
+Overfull \hbox (2.83147pt too wide) in paragraph at lines 73--82
+[][] 
+ []
+
+[2]
+Overfull \hbox (6.45839pt too wide) in paragraph at lines 93--94
+[]\OT1/cmr/m/n/12 Empty space block (ex-actly one block, with op-tional con-tin
+-u-a-tion blocks) 
  []
 
 
-Underfull \hbox (badness 7362) in paragraph at lines 75--76
-[]\OT1/cmr/m/n/12 Address of empty page
+Underfull \hbox (badness 10000) in paragraph at lines 96--97
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 98--99
+
+ []
+
+
+Overfull \hbox (2.83147pt too wide) in paragraph at lines 100--105
+[][] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 100--105
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 108--109
+
+ []
+
+
+Overfull \hbox (2.83147pt too wide) in paragraph at lines 110--117
+[][] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--117
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 118--119
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--121
+
+ []
+
+
+Underfull \hbox (badness 1275) in paragraph at lines 124--125
+[]\OT1/cmr/m/n/12 File size in bytes (to man-age files
+ []
+
+
+Overfull \hbox (2.83147pt too wide) in paragraph at lines 122--128
+[][] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 122--128
+
+ []
+
+[3]
+Underfull \hbox (badness 10000) in paragraph at lines 131--132
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 135--136
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 137--138
+
+ []
+
+
+Underfull \hbox (badness 4531) in paragraph at lines 142--143
+[]\OT1/cmr/m/n/12 Arbitrary num-ber of ad-dresses to
+ []
+
+
+Overfull \hbox (29.91403pt too wide) in paragraph at lines 143--143
+[]\OT1/cmr/m/n/12 BLOCK[]SIZE
+ []
+
+
+Underfull \hbox (badness 3769) in paragraph at lines 143--143
+[]\OT1/cmr/m/n/12 Link to empty space con-tin-u-a-tion
+ []
+
+
+Overfull \hbox (2.83147pt too wide) in paragraph at lines 139--145
+[][] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 139--145
+
  []
 
 Missing character: There is no ‚ in font cmr12!
@@ -87,49 +194,57 @@ Missing character: There is no ú in font cmr12!
 Missing character: There is no ‚ in font cmr12!
 Missing character: There is no Ä in font cmr12!
 Missing character: There is no ù in font cmr12!
-
-Underfull \hbox (badness 1052) in paragraph at lines 76--77
-\OT1/cmr/m/n/12 see empty space man-age-
- []
-
-
-Overfull \hbox (42.146pt too wide) in paragraph at lines 70--79
-[][] 
- []
-
-[2] [3]
-Underfull \hbox (badness 10000) in paragraph at lines 153--154
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 153--154
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 153--154
+Missing character: There is no ‚ in font cmr12!
+Missing character: There is no Ä in font cmr12!
+Missing character: There is no ú in font cmr12!
+Missing character: There is no ‚ in font cmr12!
+Missing character: There is no Ä in font cmr12!
+Missing character: There is no ù in font cmr12!
+Missing character: There is no ‚ in font cmr12!
+Missing character: There is no Ä in font cmr12!
+Missing character: There is no ú in font cmr12!
+Missing character: There is no ‚ in font cmr12!
+Missing character: There is no Ä in font cmr12!
+Missing character: There is no ù in font cmr12!
+Missing character: There is no ‚ in font cmr12!
+Missing character: There is no Ä in font cmr12!
+Missing character: There is no ú in font cmr12!
+Missing character: There is no ‚ in font cmr12!
+Missing character: There is no Ä in font cmr12!
+Missing character: There is no ù in font cmr12!
+[4] [5]
+Underfull \hbox (badness 10000) in paragraph at lines 221--222
 
  []
 
-[4] (C:\Users\Sander\Documents\GitHub\panda\Report\panda_report.aux) ) 
+
+Underfull \hbox (badness 10000) in paragraph at lines 221--222
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 221--222
+
+ []
+
+[6] (C:\Users\Sander\Documents\GitHub\panda\Report\panda_report.aux) ) 
 Here is how much of TeX's memory you used:
  285 strings out of 494053
  3750 string characters out of 3148600
- 53862 words of memory out of 3000000
+ 57862 words of memory out of 3000000
  3640 multiletter control sequences out of 15000+200000
  9155 words of font info for 32 fonts, out of 3000000 for 9000
  715 hyphenation exceptions out of 8191
- 22i,9n,19p,445b,198s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 22i,9n,19p,792b,198s stack positions out of 5000i,500n,10000p,200000b,50000s
 <C:/Progr
 am Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Program Files
 /MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Program Files/MiKTeX 2
 .9/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Program Files/MiKTeX 2.9/fonts/
 type1/public/amsfonts/cm/cmsy10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/pu
 blic/amsfonts/cm/cmti12.pfb>
-Output written on panda_report.pdf (4 pages, 80744 bytes).
+Output written on panda_report.pdf (6 pages, 85834 bytes).
 PDF statistics:
- 35 PDF objects out of 1000 (max. 8388607)
+ 41 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

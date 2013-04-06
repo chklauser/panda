@@ -61,23 +61,91 @@ This document describes the design and implementation of the \emph{Panda Virtual
 	\item All addresses are in number of blocks from 0 and of length 4 bytes.
 	\item Only single links to blocks (not more than one hard-link) are allowed. This means that one file or directory can only be in one directory.
 	\item Block address 0 is illegal, it means absence of a block.
+	\item B\_S := BLOCK\_SIZE \& d-t := data-type
+	\item Offsets are absolute
+	\item Strings are encoded in UTF-8
 \end{itemize}
 
 \subsubsection{Metadata}
 
 Metadata of the whole VFS starts at address 0.\\
 
-\begin{tabular}{|c|c|c|p{5cm}|}\hline
-Offset (absolute)	&Length	&C\# data-type	&Description\\\hline
+\begin{tabular}{|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{7cm}|}\hline
+Offset 	&Length	&C\# d-t	&Description\\\hline
 0	&4	&UInt32	&Number of blocks in entire VFS\\
 4	&4	&UInt32	&BLOCK\_SIZE in bytes\\
 8	&4	&UInt32	&Address of root directory node\\
 12	&4	&UInt32	&Address of empty page block. Must never be 0\\
 16	&4	&UInt32	&“break” in number of blocks, see empty space management.\\
-20	&Blocksize -20	&UInt32	&Empty (initialized with 0)\\\hline
+20	&B\_S -20	&UInt32	&Empty (initialized with 0)\\\hline
 \end{tabular}
 
-\subsubsection{Blocks}
+
+
+Normal blocks are everywhere but at address 0.
+
+\paragraph{Block Types}
+
+\begin{itemize}
+	\item Directory blocks (many different blocks, with optional continuation blocks)
+	\item File blocks (many different blocks, with optional continuation blocks)
+	\item Data blocks (many different blocks)
+	\item Empty space block (exactly one block, with optional continuation blocks)
+\end{itemize}
+
+\subparagraph{Directory blocks} \mbox{} \\
+
+Contain file / directory names of current directory and their block addresses.\\
+
+\begin{tabular}{|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{7cm}|}\hline
+Offset 	&Length	&C\# d-t	&Description\\\hline
+0	&?	&-	&Arbitrary number of directory entries\\
+B\_S - 4	&4	&UInt32	&Link to directory continuation block. 0 here marks absence of continuation blocks.\\\hline
+\end{tabular} \\
+
+Directory continuation blocks look the same as directory blocks and can link to other directory continuation blocks.
+
+\subparagraph{Directory entry} \mbox{} \\
+
+\begin{tabular}{|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{7cm}|}\hline
+Offset 	&Length	&C\# d-t	&Description\\\hline
+0	&1	&UInt8	&If first bit (the least significant) set (== 1), following address points to directory. Else to file.\\
+2	&1	&UInt8	&Number of bytes in file name. 0 here marks end of directory block.\\
+3	&X	&String	&File / directory name\\
+X	&X + 4	&UInt32	&Address to file / directory block\\\hline
+\end{tabular} \\
+
+\subparagraph{File blocks} \mbox{} \\
+
+Contain addresses to data blocks.\\
+
+\begin{tabular}{|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{7cm}|}\hline
+Offset 	&Length	&C\# d-t	&Description\\\hline
+0	&8	&UInt64	&File size in bytes (to manage files smaller than block size)\\
+8	&?	&UInt32	&Arbitrary number of addresses to data blocks\\
+B\_S - 4	&4	&UInt32	&Link to file continuation block. 0 here marks absence of continuation blocks.\\\hline
+\end{tabular} \\
+
+File continuation blocks have file size 0 and can link to other file continuation blocks.
+
+\subparagraph{File blocks} \mbox{} \\
+
+Contain only plain binary data.
+
+\subparagraph{Empty space block} \mbox{} \\
+
+Contains addresses to empty blocks.\\
+
+\begin{tabular}{|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{7cm}|}\hline
+Offset 	&Length	&C\# d-t	&Description\\\hline
+0	&4	&UInt32	&Number of empty blocks in number of blocks\\
+4	&?	&UInt32	&Arbitrary number of addresses to empty blocks\\
+BLOCK\_SIZE ? 4	&4	&UInt32	&Link to empty space continuation block. 0 here marks absence of continuation blocks.\\\hline
+\end{tabular} \\
+
+\subsubsection{Empty space management}
+
+The VFS is designed to maintain an index of unused blocks. The addresses of the unused blocks are stored in the empty space block. Its address is stored in the VFS meta-data. This empty space block may also have empty space continuation blocks. But not every address to an empty block in the whole VFS can be stored in this empty space block. Instead, only addresses of empty blocks up to a maximum address, which is called “break”, is stored in this block. If there are no empty blocks left, the “break” must be increased by 1, and the new empty block addresses must be added to the empty space block. If the block next to “break” is freed, decrease the “break”, otherwise the address of this block to the empty space block or its last continuation block.
 
 % PART II: VFS Browser
 % --------------------------------------
