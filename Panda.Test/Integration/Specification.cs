@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Text;
@@ -15,42 +13,8 @@ using Panda.Test.Unit;
 namespace Panda.Test.Integration
 {
     [TestFixture]
-    public class Specification : IDisposable
+    public class Specification : SpecificationBase
     {
-        public static readonly string DiskFileBaseName = typeof(Specification).Name;
-        public string DiskFileName;
-        public static int Count = 0;
-
-        public VirtualDisk Disk;
-        public uint Capacity = 10*1024*1024;
-
-        [SetUp]
-        public void SetUp()
-        {
-            Directory.CreateDirectory(DiskFileBaseName);
-            DiskFileName = Path.Combine(DiskFileBaseName, Count + ".panda");
-            if (File.Exists(DiskFileName))
-                File.Delete(DiskFileName);
-            Count++;
-            Disk = VirtualDisk.CreateNew(DiskFileName,Capacity);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            try
-            {
-                if (File.Exists(DiskFileName))
-                {
-                    File.Delete(DiskFileName);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-        }
-
         [Test]
         public void CreateFile()
         {
@@ -123,7 +87,7 @@ namespace Panda.Test.Integration
         [Test]
         public void CreateFileLong()
         {
-            var data = _generateData();
+            var data = GenerateData();
 
             var vf = Disk.Root.CreateFile("f", data);
             Assert.That(Disk.Root.Contains("f"), Is.True, "Root should contain 'f'");
@@ -175,70 +139,14 @@ namespace Panda.Test.Integration
             var rbmFile = (VirtualFile) rbmAny;
             Debug.Assert(rbmFile != null);
             Assert.That(rbmFile.Size, Is.GreaterThanOrEqualTo(VirtualFileSystem.DefaultBlockSize));
-            var contents = _readToEnd(rbmFile);
+            var contents = ReadToEnd(rbmFile);
             Assert.That(contents.Length,Is.GreaterThanOrEqualTo(VirtualFileSystem.DefaultBlockSize));
             Assert.That(contents, Is.StringContaining("destinationRemainingLength"));
 
             Assert.That(rbmAny.FullName, Is.EqualTo("/Core/IO/RawBlockManager.cs".Replace('/',VirtualFileSystem.SeparatorChar)));
         }
 
-        private static string _readToEnd(VirtualFile file)
-        {
-            using (var fs = file.Open())
-            {
-                var reader = new StreamReader(fs, Encoding.UTF8, true, (int) VirtualFileSystem.DefaultBlockSize, true);
-                return reader.ReadToEnd();
-            }
-        }
-
-        private static string _generateData()
-        {
-            var dataSrc = Enumerable.Repeat("Hello World", 500);
-            var dataBuilder = new StringBuilder((int) VirtualFileSystem.DefaultBlockSize);
-            var i = 0;
-            foreach (var src in dataSrc)
-            {
-                dataBuilder.Append(src);
-                dataBuilder.Append(i++);
-            }
-            var data = dataBuilder.ToString();
-            return data;
-        }
-
         #region Disposal
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (Disk != null)
-                {
-                    Disk.Dispose();
-                    Disk = null;
-                }
-
-
-                var disposable = Disk as IDisposable;
-
-                if (disposable != null)
-                {
-                    disposable.Dispose();
-                }
-
-                Disk = null;
-            }
-        }
-
-        ~Specification()
-        {
-            Dispose(false);
-        }
 
         #endregion
     }
