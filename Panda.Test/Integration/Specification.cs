@@ -156,6 +156,52 @@ namespace Panda.Test.Integration
             Assert.That(((VirtualDirectory)Disk.Root.Navigate("a")).Navigate("x"), Is.AssignableTo<VirtualFile>());
         }
 
+        /// <summary>
+        /// moves, copies around files and directories
+        /// </summary>
+        [Test]
+        public void Req2_1_7()
+        {
+            // create directory
+            Assert.That(Disk.Root.CreateDirectory("a"), Is.AssignableTo<VirtualDirectory>());
+
+            // create a file in directory
+            Assert.That(((VirtualDirectory)Disk.Root.Navigate("a")).CreateFile("peter.txt", Encoding.UTF8.GetBytes("test")), Is.AssignableTo<VirtualFile>());
+
+            // create another directroy
+            Assert.That(Disk.Root.CreateDirectory("b"), Is.AssignableTo<VirtualDirectory>());
+
+            // move file into other directory
+            ((VirtualFile) Disk.Root.Navigate("/a/peter.txt")).Move((VirtualDirectory)Disk.Root.Navigate("b"));
+
+            // check if file was moved
+            Assert.That(Disk.Root.Navigate("/b/peter.txt"), Is.AssignableTo<VirtualFile>());
+            Assert.That(((VirtualDirectory)Disk.Root.Navigate("/a")).Count, Is.EqualTo(0));
+
+            // copy file to original directory
+            ((VirtualFile) Disk.Root.Navigate("/b/peter.txt")).Copy((VirtualDirectory)Disk.Root.Navigate("a"));
+            
+            // check if both files have the same content
+            Assert.That(
+                (new StreamReader(((VirtualFile) Disk.Root.Navigate("/b/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
+                Is.EqualTo((new StreamReader(((VirtualFile) Disk.Root.Navigate("/a/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
+
+            // move directory into other directory
+            ((VirtualDirectory)Disk.Root.Navigate("a")).Move((VirtualDirectory)Disk.Root.Navigate("b"));
+
+            // check if directory was moved
+            Assert.That(Disk.Root.Navigate("/b/a"),Is.AssignableTo<VirtualDirectory>());
+            Assert.That(Disk.Root.Count, Is.EqualTo(1));
+
+            // copy directory to root
+            ((VirtualDirectory)Disk.Root.Navigate("/b/a")).Copy((VirtualDirectory)Disk.Root);
+
+            // check if file was copied too
+            Assert.That(
+                (new StreamReader(((VirtualFile) Disk.Root.Navigate("/a/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
+                Is.EqualTo((new StreamReader(((VirtualFile) Disk.Root.Navigate("/b/a/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
+        }
+
         [Test]
         public void CreateFile()
         {
