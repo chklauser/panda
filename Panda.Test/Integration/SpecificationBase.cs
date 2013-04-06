@@ -12,6 +12,7 @@ namespace Panda.Test.Integration
         public string DiskFileName;
         public static int Count = 0;
         public VirtualDisk Disk;
+        private VirtualDisk _managedDisk;
         public uint Capacity = 10*1024*1024;
 
         [SetUp]
@@ -22,7 +23,7 @@ namespace Panda.Test.Integration
             if (File.Exists(DiskFileName))
                 File.Delete(DiskFileName);
             Count++;
-            Disk = VirtualDisk.CreateNew(DiskFileName,Capacity);
+            Disk = _managedDisk = VirtualDisk.CreateNew(DiskFileName,Capacity);
         }
 
         [TearDown]
@@ -30,6 +31,11 @@ namespace Panda.Test.Integration
         {
             try
             {
+                if (Disk != null)
+                    Disk.Dispose();
+                if (_managedDisk != null && _managedDisk != Disk)
+                    _managedDisk.Dispose();
+
                 if (File.Exists(DiskFileName))
                 {
                     File.Delete(DiskFileName);
