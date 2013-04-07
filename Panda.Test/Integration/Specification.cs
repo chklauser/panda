@@ -361,7 +361,7 @@ namespace Panda.Test.Integration
                 vd.CreateDirectory(name);
             }
 
-            Assert.That(Disk.Root.ContentNames,Is.EquivalentTo(expectedNames));
+            Assert.That(vd.ContentNames,Is.EquivalentTo(expectedNames));
         }
 
         /// <summary>
