@@ -78,19 +78,6 @@ namespace Panda.Core.IO
             }
         }
 
-        protected void TrackNewBlock(IBlock block)
-        {
-            _lock.Wait();
-            try
-            {
-                _trackNewBlock(block);
-            }
-            finally
-            {
-                _lock.Release();
-            }
-        }
-
         private uint _gcCounter;
 
         private void _handleGc()
@@ -212,7 +199,7 @@ namespace Panda.Core.IO
 			try
 			{
 				_handleGc();
-				TrackNewBlock(block);
+				_trackNewBlock(block);
 				return block;
 			}
 			finally
@@ -432,19 +419,6 @@ namespace Panda.Test.InMemory.Blocks
             else
             {
                 _existingBlocks[block.Offset] = new WeakReference<IBlock>(block);
-            }
-        }
-
-        protected void TrackNewBlock(IBlock block)
-        {
-            _lock.Wait();
-            try
-            {
-                _trackNewBlock(block);
-            }
-            finally
-            {
-                _lock.Release();
             }
         }
 

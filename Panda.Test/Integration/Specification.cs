@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
@@ -321,13 +323,14 @@ namespace Panda.Test.Integration
         public void CreateLargeFile()
         {
             // create large file
-            Assert.That(Disk.Root.CreateFile("f", new byte[6*1024*1024]), Is.AssignableTo<VirtualFile>());
+            const int largeFileLength = 6*1024*1024;
+            Assert.That(Disk.Root.CreateFile("f", new byte[largeFileLength]), Is.AssignableTo<VirtualFile>());
 
             // open the large file
             var stream = ((VirtualFile) Disk.Root.Navigate("f")).Open();
 
             // check if reported file size is the same
-            Assert.That(Disk.Root.Navigate("f").Size, Is.EqualTo(6 * 1024 * 1024));
+            Assert.That(Disk.Root.Navigate("f").Size, Is.EqualTo(largeFileLength));
 
             // read it into a byte array
             var memoryStream = new MemoryStream();
@@ -335,10 +338,11 @@ namespace Panda.Test.Integration
             byte[] result = memoryStream.ToArray();
 
             // check if length of result is the same
-            Assert.That(result.Length, Is.EqualTo(6 * 1024 * 1024));
+            Assert.That(result.Length, Is.EqualTo(largeFileLength));
 
             // check if its all zero
-            Assert.That(result, Is.All.EqualTo(0));
+            for (var i = 0; i < largeFileLength; i++ )
+                Assert.That(result[i], Is.EqualTo(0),"byte at index " + i + ", total length is " + largeFileLength);
         }
 
         /// <summary>
@@ -349,10 +353,15 @@ namespace Panda.Test.Integration
         {
             var vd = Disk.Root.CreateDirectory("f");
             // create many directories with up to 255 chars in name
+            var expectedNames = new List<String>();
             for (uint i = 0; i < 1000; ++i)
             {
-                vd.CreateDirectory(new string('a', 200) + i.ToString());
+                var name = new string('a', 200) + i.ToString(CultureInfo.InvariantCulture);
+                expectedNames.Add(name);
+                vd.CreateDirectory(name);
             }
+
+            Assert.That(Disk.Root.ContentNames,Is.EquivalentTo(expectedNames));
         }
 
         /// <summary>
@@ -362,7 +371,7 @@ namespace Panda.Test.Integration
         public void CheckEmptyList()
         {
             Assert.That(Disk.Root.CreateFile("f", new byte[6 * 1024 * 1024]), Is.AssignableTo<VirtualFile>());
-            ((VirtualFile)Disk.Root.Navigate("f")).Delete();
+            Disk.Root.Navigate("f").Delete();
             Assert.That(Disk.Root.CreateFile("f", new byte[6 * 1024 * 1024]), Is.AssignableTo<VirtualFile>());
         }
 

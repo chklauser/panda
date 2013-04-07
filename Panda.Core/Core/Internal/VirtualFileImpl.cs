@@ -86,15 +86,19 @@ namespace Panda.Core.Internal
             // delete directoryEntry of current Block
             _parentDirectory.DeleteDirectoryEntry(_blockOffset);
 
-            // gather all ContinuationBlocks:
-            var toDeleteBlocks = new List<BlockOffset> {_blockOffset};
+            // gather all ContinuationBlocks (including the offset of the head file block)
+            var toDeleteBlocks = new List<BlockOffset>
+                {
+                    // initializes the list to contain the head file block offset
+                    _blockOffset
+                };
             var fileBlock = _disk.BlockManager.GetFileBlock(_blockOffset);
-            var continuationBlock = fileBlock.ContinuationBlockOffset;
-            while (continuationBlock.HasValue)
+            var continuationBlockOffset = fileBlock.ContinuationBlockOffset;
+            while (continuationBlockOffset.HasValue)
             {
-                toDeleteBlocks.Add(continuationBlock.Value);
-                var fileContinuationBlock = _disk.BlockManager.GetFileContinuationBlock(continuationBlock.Value);
-                continuationBlock = fileContinuationBlock.ContinuationBlockOffset;
+                toDeleteBlocks.Add(continuationBlockOffset.Value);
+                var fileContinuationBlock = _disk.BlockManager.GetFileContinuationBlock(continuationBlockOffset.Value);
+                continuationBlockOffset = fileContinuationBlock.ContinuationBlockOffset;
                 foreach (var offset in fileContinuationBlock)
                 {
                     _disk.BlockManager.FreeBlock(offset);
@@ -105,7 +109,7 @@ namespace Panda.Core.Internal
                 _disk.BlockManager.FreeBlock(offset);
             }
 
-            // delete block and all ContinuationBlocks:
+            // delete file block and all ContinuationBlocks:
             foreach (var de in toDeleteBlocks)
             {
                 _disk.BlockManager.FreeBlock(de);
