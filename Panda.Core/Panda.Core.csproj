@@ -56,6 +56,7 @@
     <Compile Include="Core\IO\RawEmptyListBlock.cs" />
     <Compile Include="Core\IO\RawFileBlock.cs" />
     <Compile Include="Core\IO\RawOffsetListBlock.cs" />
+    <Compile Include="Core\PathAlreadyExistsException.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Test\InMemory\Blocks\MemBlock.cs" />
     <Compile Include="Test\InMemory\Blocks\MemBlockManager.cs" />

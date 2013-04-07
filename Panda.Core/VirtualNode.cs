@@ -1,11 +1,13 @@
-﻿using System.IO;
+﻿using System.ComponentModel;
+using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 
 namespace Panda
 {
     [PublicAPI]
-    public abstract class VirtualNode
+    public abstract class VirtualNode : INotifyPropertyChanged
     {
         #region Meta information
 
@@ -67,6 +69,15 @@ namespace Panda
         {
             // Optional: provide a more efficient synchronous implementation
             ExportAsync(path).Wait();
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            var handler = PropertyChanged;
+            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

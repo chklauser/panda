@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using Panda.Core;
 using Panda.Core.Blocks;
 using Panda.Core.IO;
 using Panda.Core.IO.MemoryMapped;
@@ -122,10 +123,57 @@ namespace Panda.Test.Integration
             Assert.That(((VirtualDirectory)Disk.Root.Navigate("dir/asdf")).CreateFile("peter.txt", Encoding.UTF8.GetBytes("test")), Is.AssignableTo<VirtualFile>());
 
             // delete the subdirectory
-            ((VirtualDirectory)Disk.Root.Navigate("dir/asdf")).Delete();
+            Disk.Root.Navigate("dir/asdf").Delete();
 
             // check if the directory is empty
             Assert.That(Disk.Root.Navigate("dir"), Is.All.Null);
+        }
+
+        [Test]
+        public void RenameFile()
+        {
+            const string data = "Hello World";
+            var peter = Disk.Root.CreateFile("peter.txt", data);
+
+            var sizeOrig = peter.Size;
+            const string newName = "bob.txt";
+            peter.Rename(newName);
+
+            Assert.That(Disk.Root.ContentNames,Is.EquivalentTo(new[]{newName}));
+            Assert.That(peter.Name,Is.EqualTo(newName));
+            Assert.That(peter.FullName,Is.EqualTo(VirtualFileSystem.SeparatorChar + newName));
+
+            Assert.That(peter.Size,Is.EqualTo(sizeOrig),"Size stays the same");
+            Assert.That(ReadToEnd(peter),Is.EqualTo(data));
+        }
+
+        [Test]
+        public void RenameDirectory()
+        {
+            const string data = "Hello World";
+            var dir = Disk.Root.CreateDirectory("dir");
+            var peter = dir.CreateFile("peter.txt", data);
+
+            const string newName = "dori";
+            dir.Rename(newName);
+
+            Assert.That(Disk.Root.ContentNames, Is.EquivalentTo(new[] { newName }));
+            Assert.That(dir.Name, Is.EqualTo(newName));
+            Assert.That(dir.FullName, Is.EqualTo(VirtualFileSystem.SeparatorChar + newName));
+
+            Assert.That(ReadToEnd(peter), Is.EqualTo(data));
+            Assert.That(peter.FullName,Is.StringStarting(dir.FullName));
+        }
+
+        [Test,ExpectedException(typeof(PathAlreadyExistsException))]
+        public void RenameFileConflict()
+        {
+            const string data = "Hello World";
+            const string newName = "bob.txt";
+            var peter = Disk.Root.CreateFile("peter.txt", data);
+            Disk.Root.CreateFile("bob.txt", data);
+            
+            peter.Rename(newName);
         }
 
         /// <summary>
