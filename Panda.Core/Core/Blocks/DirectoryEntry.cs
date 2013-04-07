@@ -69,6 +69,13 @@ namespace Panda.Core.Blocks
                 return (_name.GetHashCode()*397) ^ _blockOffset.GetHashCode();
             }
         }
+
+        public override string ToString()
+        {
+            const string fileFormat = "{0} at {1}";
+            const string dirFormat = "{0}/ at {1}";
+            return string.Format(IsDirectory ? dirFormat : fileFormat, _name, _blockOffset);
+        }
     }
 
     [Flags]

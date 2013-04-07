@@ -65,7 +65,7 @@ namespace Panda.Core.IO
             get
             {
                 // The number of offsets that fit into the block minus total offset count and continuation offset
-                return (int) (BlockSize/sizeof (BlockOffset) - 2);
+                return (int) (BlockSize/sizeof (BlockOffset) - MetaDataPrefixUInt32Count - sizeof(BlockOffset));
             }
         }
 

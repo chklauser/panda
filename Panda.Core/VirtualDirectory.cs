@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,7 @@ using Panda.Core;
 namespace Panda
 {
     [PublicAPI]
-    public abstract class VirtualDirectory : VirtualNode, IReadOnlyCollection<VirtualNode>, IReadOnlyDictionary<string,VirtualNode>
+    public abstract class VirtualDirectory : VirtualNode, IReadOnlyCollection<VirtualNode>, IReadOnlyDictionary<string,VirtualNode>, INotifyCollectionChanged
     {
         /// <summary>
         /// To enable iteration over VirtualDirectory.
@@ -194,7 +195,7 @@ namespace Panda
             get { return ContentNames; }
         }
 
-        protected virtual IEnumerable<string> ContentNames
+        public virtual IEnumerable<string> ContentNames
         {
             get { return this.Select<VirtualNode, string>(x => x.Name); }
         }
@@ -209,6 +210,17 @@ namespace Panda
         public override string ToString()
         {
             return String.Format("{0}/", Name);
+        }
+
+        public event NotifyCollectionChangedEventHandler CollectionChanged;
+
+        protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
+        {
+            var handler = CollectionChanged;
+            if (handler != null)
+            {
+                handler(this, e);
+            }
         }
     }
 }

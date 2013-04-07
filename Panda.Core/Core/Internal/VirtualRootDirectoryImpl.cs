@@ -33,5 +33,10 @@ namespace Panda.Core.Internal
         {
             throw new DontTouchRootException("Root directory cannot be moved.");
         }
+
+        public override void Delete()
+        {
+            throw new DontTouchRootException("Root directory cannot be deleted.");
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,8 +13,8 @@ namespace Panda.Core.Internal
     {
         private readonly VirtualDiskImpl _disk;
         private readonly BlockOffset _blockOffset;
-        private readonly string _name;
-        private readonly VirtualDirectoryImpl _parentDirectory;
+        private string _name;
+        private VirtualDirectoryImpl _parentDirectory;
 
         public VirtualDirectoryImpl(VirtualDiskImpl disk, BlockOffset blockOffset, VirtualDirectoryImpl parentDirectory, string name)
         {
@@ -253,11 +254,7 @@ namespace Panda.Core.Internal
 
         public override Task ExportAsync(string path)
         {
-            return Task.Run(
-                () =>
-                {
-                    _export(path);
-                });
+            return Task.Run(() => _export(path));
         }
 
         private void _export(string path)
@@ -272,6 +269,9 @@ namespace Panda.Core.Internal
 
         public override VirtualDirectory CreateDirectory(string name)
         {
+            if (Contains(name))
+                throw new PathAlreadyExistsException("A file or directory with the name " + name + " already exists. Cannot create directory " + name + ".");
+
             // create new DirectoryBlock
             IDirectoryBlock db = _disk.BlockManager.AllocateDirectoryBlock();
 
@@ -279,16 +279,20 @@ namespace Panda.Core.Internal
             DirectoryEntry de = new DirectoryEntry(name, db.Offset, DirectoryEntryFlags.Directory);
 
             // add DirectoryEntry referencing this new Block to this DirectoryBlock or a DirectoryContinuationBlock of it
-            AddDirectoryEntryToCurrentDirectoryNode(de);
+            AddDirectoryEntry(de);
 
-            return _disk.GetDirectory(this, de);
+            var dir = _disk.GetDirectory(this, de);
+
+            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add,dir));
+
+            return dir;
         }
 
         /// <summary>
         /// Adds a DirectoryEntry to this DirectoryBlock or a DirectoryContinuationBlock
         /// </summary>
         /// <param name="de">DirectoryEntry to add</param>
-        public void AddDirectoryEntryToCurrentDirectoryNode(DirectoryEntry de)
+        internal void AddDirectoryEntry(DirectoryEntry de)
         {
             bool nodeAdded = false;
 
@@ -328,6 +332,8 @@ namespace Panda.Core.Internal
                     throw new PandaException("DirectoryEntry could not be added to a fresh, new DirectoryContinuationBlock.");
                 }
             }
+
+            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add,_disk.GetNode(this,de)));
         }
 
         public override Task<VirtualFile> CreateFileAsync(string name, Stream dataSource)
@@ -338,95 +344,95 @@ namespace Panda.Core.Internal
                 throw new PandaException("Stream not readable.");
             }
             return Task.Run(
-                () =>
-                    {
-                        // check file name
-                        VirtualFileSystem.CheckNodeName(name);
+                () => _createFile(name, dataSource));
+        }
 
-                        // is there already a file with this name -> throw an error!
-                        foreach (var node in this)
-                        {
-                            if (name == node.Name)
-                            {
-                                throw new PandaException("There is already a node with this name!");
-                            }
-                        }
+        private VirtualFile _createFile(string name, Stream dataSource)
+        {
+            // check file name
+            VirtualFileSystem.CheckNodeName(name);
 
-                        // create new FileBlock
-                        var fb = _disk.BlockManager.AllocateFileBlock();
+            // is there already a file with this name -> throw an error!
+            if (Contains(name))
+                throw new PathAlreadyExistsException("A file or directory with the name " + name + " already exists. Cannot create file " + _name + ".");
 
-                        // create a new DirectoryEntry and add address to FileBlock to it
-                        var de = new DirectoryEntry(name, fb.Offset, DirectoryEntryFlags.None);
+            // create new FileBlock
+            var fb = _disk.BlockManager.AllocateFileBlock();
 
-                        // create buffer with size of a data block
-                        var buffer = new byte[_disk.BlockManager.DataBlockSize];
+            // create a new DirectoryEntry and add address to FileBlock to it
+            var de = new DirectoryEntry(name, fb.Offset, DirectoryEntryFlags.None);
 
-                        // keep track of file size
-                        long fileSize = 0;
-                        
-                        // and of how many bytes read
-                        int bytesRead;
+            // create buffer with size of a data block
+            var buffer = new byte[_disk.BlockManager.DataBlockSize];
 
-                        // and use a list of block offsets to data blocks
-                        var dataBlocks = new Queue<BlockOffset>();
+            // keep track of file size
+            long fileSize = 0;
 
-                        // and a current dataBlock offset
+            // and of how many bytes read
+            int bytesRead;
 
-                        // read entire data blocks from stream
-                        while ((bytesRead = dataSource.Read(buffer, 0, buffer.Length)) > 0)
-                        {
-                            // sum up file size
-                            fileSize += bytesRead;
+            // and use a list of block offsets to data blocks
+            var dataBlocks = new Queue<BlockOffset>();
 
-                            // create new data block
-                            var dataBlockOffset = _disk.BlockManager.AllocateDataBlock();
+            // and a current dataBlock offset
 
-                            // write data into data block
-                            _disk.BlockManager.WriteDataBlock(dataBlockOffset, buffer);
+            // read entire data blocks from stream
+            while ((bytesRead = dataSource.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                // sum up file size
+                fileSize += bytesRead;
 
-                            // add address of current data block to array
-                            dataBlocks.Enqueue(dataBlockOffset);
-                        }
+                // create new data block
+                var dataBlockOffset = _disk.BlockManager.AllocateDataBlock();
+
+                // write data into data block
+                _disk.BlockManager.WriteDataBlock(dataBlockOffset, buffer);
+
+                // add address of current data block to array
+                dataBlocks.Enqueue(dataBlockOffset);
+            }
 
 
-                        // write all the data offset blocks into the files blocks
+            // write all the data offset blocks into the files blocks
 
-                            // keep track of the current fileblock
-                            IFileContinuationBlock currentFileBlock = fb;
+            // keep track of the current fileblock
+            IFileContinuationBlock currentFileBlock = fb;
 
-                            while (dataBlocks.Count > 0)
-                            {
-                                var remainingCapacity = currentFileBlock.ListCapacity - currentFileBlock.Count;
+            while (dataBlocks.Count > 0)
+            {
+                var remainingCapacity = currentFileBlock.ListCapacity - currentFileBlock.Count;
 
-                                // Allocate the next file continuation block if necessary
-                                if (remainingCapacity == 0)
-                                {
-                                    var nextBlock = _disk.BlockManager.AllocateFileContinuationBlock();
-                                    currentFileBlock.ContinuationBlockOffset = nextBlock.Offset;
-                                    currentFileBlock = nextBlock;
-                                }
+                // Allocate the next file continuation block if necessary
+                if (remainingCapacity == 0)
+                {
+                    var nextBlock = _disk.BlockManager.AllocateFileContinuationBlock();
+                    currentFileBlock.ContinuationBlockOffset = nextBlock.Offset;
+                    currentFileBlock = nextBlock;
+                }
 
-                                // Take as many offsets as fit into the current block
-                                var draft = new List<BlockOffset>(remainingCapacity);
-                                while (draft.Count < remainingCapacity && dataBlocks.Count > 0)
-                                    draft.Add(dataBlocks.Dequeue());
+                // Take as many offsets as fit into the current block
+                var draft = new List<BlockOffset>(remainingCapacity);
+                while (draft.Count < remainingCapacity && dataBlocks.Count > 0)
+                    draft.Add(dataBlocks.Dequeue());
 
-                                // Write offsets
-                                currentFileBlock.ReplaceOffsets(currentFileBlock.Append(draft).ToArray());
-                            }
+                // Write offsets
+                currentFileBlock.ReplaceOffsets(currentFileBlock.Append(draft).ToArray());
+            }
 
-                        // add DirectoryEntry to this DirectoryBlock or a DirectoryContinuationBlock of it
-                        AddDirectoryEntryToCurrentDirectoryNode(de);
+            // add DirectoryEntry to this DirectoryBlock or a DirectoryContinuationBlock of it
+            AddDirectoryEntry(de);
 
-                        // don't close the stream
+            // don't close the stream
 
-                        // write file size
-                        fb.Size = fileSize;
+            // write file size
+            fb.Size = fileSize;
 
-                        // return VirtualFile
-                        return (VirtualFile) _disk.GetFile(this, de);
-                    }
-                );
+            // return VirtualFile
+            var file = _disk.GetFile(this, de);
+
+            // No need to notify collection changed, since AddDirectoryEntry already handled this
+
+            return file;
         }
 
         public override string Name
@@ -465,17 +471,24 @@ namespace Panda.Core.Internal
             // check directory name
             VirtualFileSystem.CheckNodeName(newName);
 
+            if (_parentDirectory.Contains(newName))
+                throw new PathAlreadyExistsException("A file or directory with the name " + newName + " already exists. Cannot rename " + _name + ".");
+
             // search DirectoryEntry of this directory in the parent directory
             var tuple = _parentDirectory.FindDirectoryEntry(_blockOffset);
 
             // create new DirectoryEntry for this directory with the new name, other stuff remains unchanged
             var newDe = new DirectoryEntry(newName, tuple.Item1.BlockOffset, tuple.Item1.Flags);
 
+            // add new DirectoryEntry
+            _parentDirectory.AddDirectoryEntry(newDe);
+            
             // remove old DirectoryEntry
             tuple.Item2.DeleteEntry(tuple.Item1);
 
-            // add new DirectoryEntry
-            _parentDirectory.AddDirectoryEntryToCurrentDirectoryNode(newDe);
+            _name = newName;
+            OnPropertyChanged("Name");
+            OnPropertyChanged("FullName");
         }
 
         /// <summary>
@@ -485,16 +498,7 @@ namespace Panda.Core.Internal
         public override void Delete()
         {
             // first delete the directoryEntry in the parent, so it can't be found:
-            var tupel = _parentDirectory.FindDirectoryEntry(_blockOffset);
-            tupel.Item2.DeleteEntry(tupel.Item1);
-
-            // if Item2 (parent Block) is empty we link Item3 (previous Block of parent Block) to the following Block of parent Block
-            // Item3 can't be null && there must be an ContinuationBlockOffset for Item2
-            if (tupel.Item2.Count == 0 && tupel.Item3 != null && tupel.Item2.ContinuationBlockOffset != null)
-            {
-                tupel.Item3.ContinuationBlockOffset = tupel.Item2.ContinuationBlockOffset;
-                _disk.BlockManager.FreeBlock(tupel.Item2.Offset);
-            }
+            _parentDirectory.DeleteDirectoryEntry(_blockOffset);
 
             // go trough all directoryEntries (also from ContinationBlocks) and invoke Delete(), done by enumerator:
             foreach (var node in this)
@@ -506,9 +510,40 @@ namespace Panda.Core.Internal
             _disk.OnDelete(this);
         }
 
+        internal DirectoryEntry DeleteDirectoryEntry(BlockOffset offset)
+        {
+            return DeleteDirectoryEntry(FindDirectoryEntry(offset));
+        }
+
+        internal DirectoryEntry DeleteDirectoryEntry(Tuple<DirectoryEntry, IDirectoryContinuationBlock, IDirectoryContinuationBlock> tuple)
+        {
+            var containingBlock = tuple.Item2;
+            var optPrecedingBlock = tuple.Item3;
+            var entryToDelete = tuple.Item1;
+            
+            var oldEntry = _disk.GetNode(this, entryToDelete);
+            containingBlock.DeleteEntry(entryToDelete);
+
+            // if containing block is now is empty we link preceding block to the following Block of containing block
+            // There must be a preceding block* and a continuation block after the containing block
+            //      * preceding block == null means that there is no preceding block
+            if (containingBlock.Count == 0 && optPrecedingBlock != null && containingBlock.ContinuationBlockOffset != null)
+            {
+                optPrecedingBlock.ContinuationBlockOffset = containingBlock.ContinuationBlockOffset;
+                _disk.BlockManager.FreeBlock(containingBlock.Offset);
+            }
+
+            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove,oldEntry));
+
+            return entryToDelete;
+        }
+
         public override void Move(VirtualDirectory destination, string newName)
         {
-            _move((VirtualDirectoryImpl) destination, newName);
+            if(destination == _parentDirectory)
+                Rename(newName);
+            else
+                _move((VirtualDirectoryImpl) destination, newName);
         }
 
         private void _move(VirtualDirectoryImpl destination, string newName)
@@ -516,17 +551,24 @@ namespace Panda.Core.Internal
             // check directory name
             VirtualFileSystem.CheckNodeName(newName);
 
+            if (destination.Contains(newName))
+                throw new PathAlreadyExistsException("A file or directory with the name " + newName + " already exists in " + destination.FullName + ". Cannot move " + FullName + ".");
+
             // search DirectoryEntry of this directory in the parent directory
-            var tuple = _parentDirectory.FindDirectoryEntry(_blockOffset);
+            var oldDe = _parentDirectory.DeleteDirectoryEntry(_blockOffset);
 
             // create new DirectoryEntry for this directory with the new name, other stuff remains unchanged
-            var newDe = new DirectoryEntry(newName, tuple.Item1.BlockOffset, tuple.Item1.Flags);
-
-            // remove old DirectoryEntry
-            tuple.Item2.DeleteEntry(tuple.Item1);
+            var newDe = new DirectoryEntry(newName, oldDe.BlockOffset, oldDe.Flags);
 
             // add new DirectoryEntry in the new destination directory
-            destination.AddDirectoryEntryToCurrentDirectoryNode(newDe);
+            destination.AddDirectoryEntry(newDe);
+
+            _name = newName;
+            _parentDirectory = destination;
+
+            OnPropertyChanged("Name");
+            OnPropertyChanged("FullName");
+            OnPropertyChanged("ParentDirectory");
         }
 
         public override void Copy(VirtualDirectory destination)
@@ -537,7 +579,7 @@ namespace Panda.Core.Internal
         private void _copy(VirtualDirectoryImpl destination)
         {
             var newDir = destination.CreateDirectory(Name);
-            foreach (VirtualNode node in this)
+            foreach (var node in this)
             {
                 node.Copy(newDir);
             }

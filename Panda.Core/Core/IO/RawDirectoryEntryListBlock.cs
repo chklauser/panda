@@ -163,7 +163,7 @@ namespace Panda.Core.IO
                 Marshal.Copy((IntPtr)(&theOffset),buffer,index+_constantDirectoryEntrySize-sizeof(BlockOffset),sizeof(BlockOffset));
                 
                 var entryLen = _constantDirectoryEntrySize + encoded.Length;
-                if (buffer.Length - entryLen <= 0)
+                if (buffer.Length - index - entryLen <= 0)
                 {
                     // Not enough space for this entry, aborting the write.
                     return false;

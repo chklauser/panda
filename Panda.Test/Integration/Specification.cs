@@ -1,11 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using Panda.Core;
 using Panda.Core.Blocks;
 using Panda.Core.IO;
 using Panda.Core.IO.MemoryMapped;
@@ -122,10 +125,57 @@ namespace Panda.Test.Integration
             Assert.That(((VirtualDirectory)Disk.Root.Navigate("dir/asdf")).CreateFile("peter.txt", Encoding.UTF8.GetBytes("test")), Is.AssignableTo<VirtualFile>());
 
             // delete the subdirectory
-            ((VirtualDirectory)Disk.Root.Navigate("dir/asdf")).Delete();
+            Disk.Root.Navigate("dir/asdf").Delete();
 
             // check if the directory is empty
             Assert.That(Disk.Root.Navigate("dir"), Is.All.Null);
+        }
+
+        [Test]
+        public void RenameFile()
+        {
+            const string data = "Hello World";
+            var peter = Disk.Root.CreateFile("peter.txt", data);
+
+            var sizeOrig = peter.Size;
+            const string newName = "bob.txt";
+            peter.Rename(newName);
+
+            Assert.That(Disk.Root.ContentNames,Is.EquivalentTo(new[]{newName}));
+            Assert.That(peter.Name,Is.EqualTo(newName));
+            Assert.That(peter.FullName,Is.EqualTo(VirtualFileSystem.SeparatorChar + newName));
+
+            Assert.That(peter.Size,Is.EqualTo(sizeOrig),"Size stays the same");
+            Assert.That(ReadToEnd(peter),Is.EqualTo(data));
+        }
+
+        [Test]
+        public void RenameDirectory()
+        {
+            const string data = "Hello World";
+            var dir = Disk.Root.CreateDirectory("dir");
+            var peter = dir.CreateFile("peter.txt", data);
+
+            const string newName = "dori";
+            dir.Rename(newName);
+
+            Assert.That(Disk.Root.ContentNames, Is.EquivalentTo(new[] { newName }));
+            Assert.That(dir.Name, Is.EqualTo(newName));
+            Assert.That(dir.FullName, Is.EqualTo(VirtualFileSystem.SeparatorChar + newName));
+
+            Assert.That(ReadToEnd(peter), Is.EqualTo(data));
+            Assert.That(peter.FullName,Is.StringStarting(dir.FullName));
+        }
+
+        [Test,ExpectedException(typeof(PathAlreadyExistsException))]
+        public void RenameFileConflict()
+        {
+            const string data = "Hello World";
+            const string newName = "bob.txt";
+            var peter = Disk.Root.CreateFile("peter.txt", data);
+            Disk.Root.CreateFile("bob.txt", data);
+            
+            peter.Rename(newName);
         }
 
         /// <summary>
@@ -242,7 +292,7 @@ namespace Panda.Test.Integration
         }
 
         /// <summary>
-        /// 
+        /// checks if size methods are correct
         /// </summary>
         [Test]
         public void Req2_1_10()
@@ -264,6 +314,65 @@ namespace Panda.Test.Integration
 
             // check size of root block
             Assert.That(Disk.Root.Size, Is.EqualTo(2*43285));
+        }
+
+        /// <summary>
+        /// creates a large file, s.t. file continuation blocks are needed
+        /// </summary>
+        [Test]
+        public void CreateLargeFile()
+        {
+            // create large file
+            const int largeFileLength = 6*1024*1024;
+            Assert.That(Disk.Root.CreateFile("f", new byte[largeFileLength]), Is.AssignableTo<VirtualFile>());
+
+            // open the large file
+            var stream = ((VirtualFile) Disk.Root.Navigate("f")).Open();
+
+            // check if reported file size is the same
+            Assert.That(Disk.Root.Navigate("f").Size, Is.EqualTo(largeFileLength));
+
+            // read it into a byte array
+            var memoryStream = new MemoryStream();
+            stream.CopyTo(memoryStream);
+            byte[] result = memoryStream.ToArray();
+
+            // check if length of result is the same
+            Assert.That(result.Length, Is.EqualTo(largeFileLength));
+
+            // check if its all zero
+            for (var i = 0; i < largeFileLength; i++ )
+                Assert.That(result[i], Is.EqualTo(0),"byte at index " + i + ", total length is " + largeFileLength);
+        }
+
+        /// <summary>
+        /// creates a large directory, s.t. directory continuation blocks are needed
+        /// </summary>
+        [Test]
+        public void CreateLargeDirectory()
+        {
+            var vd = Disk.Root.CreateDirectory("f");
+            // create many directories with up to 255 chars in name
+            var expectedNames = new List<String>();
+            for (uint i = 0; i < 1000; ++i)
+            {
+                var name = new string('a', 200) + i.ToString(CultureInfo.InvariantCulture);
+                expectedNames.Add(name);
+                vd.CreateDirectory(name);
+            }
+
+            Assert.That(vd.ContentNames,Is.EquivalentTo(expectedNames));
+        }
+
+        /// <summary>
+        /// checks if empty blocks implementation is correct
+        /// </summary>
+        [Test]
+        public void CheckEmptyList()
+        {
+            Assert.That(Disk.Root.CreateFile("f", new byte[6 * 1024 * 1024]), Is.AssignableTo<VirtualFile>());
+            Disk.Root.Navigate("f").Delete();
+            Assert.That(Disk.Root.CreateFile("f", new byte[6 * 1024 * 1024]), Is.AssignableTo<VirtualFile>());
         }
 
         [Test]

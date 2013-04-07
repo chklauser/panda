@@ -100,19 +100,6 @@ namespace <#=TNs#>
             }
         }
 
-        protected void TrackNewBlock(IBlock block)
-        {
-            _lock.Wait();
-            try
-            {
-                _trackNewBlock(block);
-            }
-            finally
-            {
-                _lock.Release();
-            }
-        }
-
         private uint _gcCounter;
 
         private void _handleGc()
@@ -235,7 +222,7 @@ namespace <#=TNs#>
 			try
 			{
 				_handleGc();
-				TrackNewBlock(block);
+				_trackNewBlock(block);
 				return block;
 			}
 			finally

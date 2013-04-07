@@ -75,5 +75,17 @@ namespace Panda.Core.Internal
         protected internal virtual void OnDelete(ICacheKeyed<BlockOffset> node)
         {
         }
+
+        internal VirtualNode GetNode(VirtualDirectoryImpl parentDirectory, DirectoryEntry de)
+        {
+            if (de.IsDirectory)
+            {
+                return GetDirectory(parentDirectory, de);
+            }
+            else
+            {
+                return GetFile(parentDirectory, de);
+            }
+        }
     }
 }

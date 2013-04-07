@@ -9,8 +9,8 @@ namespace Panda.Core.Internal
     {
         private readonly VirtualDiskImpl _disk;
         private readonly BlockOffset _blockOffset;
-        private readonly VirtualDirectoryImpl _parentDirectory;
-        private readonly string _name;
+        private VirtualDirectoryImpl _parentDirectory;
+        private string _name;
 
 
         public VirtualFileImpl(VirtualDiskImpl disk, BlockOffset blockOffset, VirtualDirectoryImpl parentDirectory, string name)
@@ -51,20 +51,29 @@ namespace Panda.Core.Internal
             // check file name
             VirtualFileSystem.CheckNodeName(newName);
 
+            if(_parentDirectory.Contains(newName))
+                throw new PathAlreadyExistsException("A file or directory with the name " + newName + " already exists. Cannot rename " + _name + ".");
+
             // search DirectoryEntry of this directory in the parent directory
             var tuple = _parentDirectory.FindDirectoryEntry(_blockOffset);
 
             // create new DirectoryEntry for this directory with the new name, other stuff remains unchanged
             var newDe = new DirectoryEntry(newName, tuple.Item1.BlockOffset, tuple.Item1.Flags);
 
+            // Have the parent add this node. Ideally, we'd put the new entry just where the old one was
+            //  but as the new name can be longer than the old one, it might not necessarily fit.
+            // We decided not to handle the special case where it does fit and just re-add it to the directory
+            _parentDirectory.AddDirectoryEntry(newDe);
+
+            _name = newName;
+            OnPropertyChanged("Name");
+            OnPropertyChanged("FullName");
+
             // remove old DirectoryEntry
             tuple.Item2.DeleteEntry(tuple.Item1);
 
-            // add new DirectoryEntry (should have place in the same file block!)
-            if (!tuple.Item2.TryAddEntry(newDe))
-            {
-                throw new PandaException("Could not add new DirectoryEntry");
-            }
+            // Note how we do not notify the parent directory that its collection changed
+            // as the set of entries is still the same (though the order could have changed)
         }
 
         /// <summary>
@@ -75,18 +84,21 @@ namespace Panda.Core.Internal
         public override void Delete()
         {
             // delete directoryEntry of current Block
-            var tupel = _parentDirectory.FindDirectoryEntry(_blockOffset);
-            tupel.Item2.DeleteEntry(tupel.Item1);
+            _parentDirectory.DeleteDirectoryEntry(_blockOffset);
 
-            // gather all ContinuationBlocks:
-            var toDeleteBlocks = new List<BlockOffset> {_blockOffset};
+            // gather all ContinuationBlocks (including the offset of the head file block)
+            var toDeleteBlocks = new List<BlockOffset>
+                {
+                    // initializes the list to contain the head file block offset
+                    _blockOffset
+                };
             var fileBlock = _disk.BlockManager.GetFileBlock(_blockOffset);
-            var continuationBlock = fileBlock.ContinuationBlockOffset;
-            while (continuationBlock.HasValue)
+            var continuationBlockOffset = fileBlock.ContinuationBlockOffset;
+            while (continuationBlockOffset.HasValue)
             {
-                toDeleteBlocks.Add(continuationBlock.Value);
-                var fileContinuationBlock = _disk.BlockManager.GetFileContinuationBlock(continuationBlock.Value);
-                continuationBlock = fileContinuationBlock.ContinuationBlockOffset;
+                toDeleteBlocks.Add(continuationBlockOffset.Value);
+                var fileContinuationBlock = _disk.BlockManager.GetFileContinuationBlock(continuationBlockOffset.Value);
+                continuationBlockOffset = fileContinuationBlock.ContinuationBlockOffset;
                 foreach (var offset in fileContinuationBlock)
                 {
                     _disk.BlockManager.FreeBlock(offset);
@@ -97,7 +109,7 @@ namespace Panda.Core.Internal
                 _disk.BlockManager.FreeBlock(offset);
             }
 
-            // delete block and all ContinuationBlocks:
+            // delete file block and all ContinuationBlocks:
             foreach (var de in toDeleteBlocks)
             {
                 _disk.BlockManager.FreeBlock(de);
@@ -109,7 +121,12 @@ namespace Panda.Core.Internal
 
         public override void Move(VirtualDirectory destination, string newName)
         {
-            _move((VirtualDirectoryImpl) destination, newName);
+            // The code path for rename is a bit simpler (less rewriting)
+            //  we'll use rename as an optimization for "degenerate" same-directory move operations.
+            if (destination == _parentDirectory)
+                Rename(newName);
+            else
+                _move((VirtualDirectoryImpl) destination, newName);
         }
 
         private void _move(VirtualDirectoryImpl destination, string newName)
@@ -117,17 +134,24 @@ namespace Panda.Core.Internal
             // check directory name
             VirtualFileSystem.CheckNodeName(newName);
 
+            if (destination.Contains(newName))
+                throw new PathAlreadyExistsException("A file or directory with the name " + newName + " in " + destination.FullName + " already exists. Cannot move " + FullName + ".");
+
             // search DirectoryEntry of this directory in the parent directory
-            var tuple = _parentDirectory.FindDirectoryEntry(_blockOffset);
+            var oldDe = _parentDirectory.DeleteDirectoryEntry(_blockOffset);
 
             // create new DirectoryEntry for this directory with the new name, other stuff remains unchanged
-            var newDe = new DirectoryEntry(newName, tuple.Item1.BlockOffset, tuple.Item1.Flags);
-
-            // remove old DirectoryEntry
-            tuple.Item2.DeleteEntry(tuple.Item1);
+            var newDe = new DirectoryEntry(newName, oldDe.BlockOffset, oldDe.Flags);
 
             // add new DirectoryEntry in the new destination directory
-            destination.AddDirectoryEntryToCurrentDirectoryNode(newDe);
+            destination.AddDirectoryEntry(newDe);
+
+            _name = newName;
+            _parentDirectory = destination;
+
+            OnPropertyChanged("Name");
+            OnPropertyChanged("ParentDirectory");
+            OnPropertyChanged("FullName");
         }
 
         public override void Copy(VirtualDirectory destination)
@@ -153,7 +177,7 @@ namespace Panda.Core.Internal
 
         private void _copy(VirtualDirectoryImpl destination)
         {
-            destination.CreateFile(this.Name, this.Open());
+            destination.CreateFile(Name, Open());
         }
 
         public BlockOffset CacheKey
