@@ -1,5 +1,6 @@
 \documentclass[a4paper,12pt]{article}
 
+% !TeX program = pdfLaTeX
 
 % add more packages if necessary
 \usepackage{xspace}
@@ -38,83 +39,132 @@ This document describes the design and implementation of the \emph{Panda Virtual
 
 \section{VFS Core}
 
-The VFS Core is the system part of the virtual file system. It manages directories and files as we are used to it in other systems like Linux.\\
+The VFS Core (assembly Panda.Core) is the actual implementation of the virtual file system. It is a library that manages directories and files within virtual as we are used to it from other file systems. Clients are presented with a simple API that models the virtual file system as a hierarchical structure. Implementation details are well hidden and the libraries design lends itself to isolated testing of its individual components.
 
-We introduced a block system. Each block can be one of four types. To achieve maintainable code we designed three layers. These block types are described in the Specification section and the layers in the Design section.
+\subsection{Design}
 
-\subsection{Requirements}
+%\emph{Give an overview of the design of this part and describe in general terms how the implementation works. You can mention design patterns used, class diagrams, definition of custom file formats, network protocols, or anything else that helps understand the implementation.}\\
 
-Each requirement which is listed is also implemented. The software elements which are involved can be found in the test class\newline Panda.Test/Integration/Specification.cs. The test method is noted to each requirement.
+The VFS Core is divided in three layers. 
+This makes the library easier to understand and maintain, as the individual layers need not concern themselves with the entire complexity of virtual file systems as a whole.
+
+We chose to simplify storage management by dividing the available space in a virtual disk into evenly sized \emph{blocks}. 
+One of our layers, the block API, is exclusively task with the reading and writing of these blocks to and from ``raw'' storage space. 
+The boundaries of the block layer define the two other layers: the file system layer, implemented on top of the block API, and the I/O layer, which manages the actual storage (reading/writing from the host file system)
+
+\subsubsection{I/O layer}
+
+On this level we store raw data. Implementations of the I/O layer implement the \texttt{IPersistenceSpace} and \texttt{IRawPersistenceSpace} interfaces in the \texttt{Panda.Core.IO} namespace. 
+Our main implementation uses \emph{memory mapped files} to read from and write to the disk.
+From the perspective of the block layer, a \emph{storage space} is simply a large block of main memory that gets ``magically'' persisted to disk.
+The I/O abstraction is not perfect, as it hands out raw (unsafe) pointers and therefore must be backed by contiguous memory.
+
+For debugging and unit testing purposes, we also implemented a persistence space that is not backed by a file on disk.
+This has proven useful as we did not have to deal with the creation and clean up of temporary files.
+
+\subsubsection{Block layer}
+
+The purpose of the block layer is to present a structured view of the raw storage space below. 
+It divides the underlying space into evenly sized block (block size can be configured per disk), which it uses to store both file system meta information as well as the actual file contents themselves.
+
+Blocks are addressed by their index (how many blocks come before them) as opposed to their absolute byte offset.
+This addressing has the advantage that it is independent of the underlying block size. 
+
+The block layer is exposed via the interface \texttt{Panda.Core.Blocks.IBlockManager}.
+Implementations of this interface hand out instances of \texttt{Panda.Core.Blocks.IBlock} (or derived interfaces), which are each responsible for a single block of the virtual disk.
+
+Given such an \texttt{IBlock}, the user can read/write fields of the block in a safe manner. 
+Pointer arithmetic and serialization/deserialization of data is handled by the block layer and thus completely hidden from upper layers.
+
+Generally, the block layer only manipulates a single block at a time.
+Operations that span multiple blocks need to be coordinated on a higher level.
+The one exception to this rule is empty space management.
+Block managers are expected to keep track of empty blocks (blocks that are ready for allocation) and they generally use blocks themselves to store this information. 
+
+As with the I/O layer, we created two implementations of the block layer.
+Our actual virtual disks use the \texttt{Panda.Core.IO.RawBlockManager}, which is backed by a \texttt{IRawPersistenceSpace} (in memory or based on a memory mapped file).
+That implementation persists blocks into the unmanaged memory provided by the raw block manager.
+
+The second implementation, \texttt{Panda.Test.InMemory.Blocks}, simply models blocks as a collection plain old C\# objects.
+Again, this second implementation proved very useful, because we were able to test the implementation of the upper layer before our \texttt{RawBlockManager} was ready for prime time.
+
+\subsubsection{Filesystem layer}
+
+This is the most abstract level. 
+Here we implement the most of the actual functionality of the file system in terms of the block API.
+
+This layer needs to worry about how the many different blocks relate to one another.
+For instance, if the block that is backing a large directory has not enough room for another directory entry, the file system is responsible for allocating an overflow or ``continuation'' block and spill the new entry there.
+
+When implementing the file system API, we chose to follow the composite pattern. 
+We have \texttt{VirtualFile} as the leaf and \texttt{VirtualDirectory} as the inner node of our virtual directory tree (both inherit from \texttt{VirtualNode}).
+Common operations like move, rename, delete are of course available on the \texttt{VirtualNode}-level.
+
+The API that users of the Core consume is located in the \texttt{Panda} namespace whereas our implementation can be found in the \texttt{Panda.Core.Internal} namespace. 
+
+The entire system is wired up (instantiating persistence spaces, supplying them to block managers and injecting those into virtual disk implementations) by a pair of factory methods in \texttt{VirtualDisk}.
+
+\section{Requirements}
+
+Each requirement which is listed is also implemented. The software elements which are involved can be found in the test class \hbox{Panda.Test/Integration/Specification.cs}. The test method is noted to each requirement.
 
 \begin{enumerate}
 	\item \emph{The virtual disk must be stored in a single file in the working directory in the host file system.}\\
 		The whole VFS is stored in the instance disk which is created at the beginning.\\
+		While our system defaults to creating disks in the process's working directory, it is not limited to that directory.
+		 All information about a virtual disk is stored as part of that virtual disk. As a consequence, we also do not have a central list of existing virtual disks. \\
+		The actual storage is handled by \texttt{Panda.Core.IO.MemoryMapped.}\\\texttt{MemoryMappedFileSpace} whereas the file format is implemented by \texttt{Panda.Core.IO. RawBlockManager}.\\
 		Test method: Req2\_1\_1\_and\_2
 	\item \emph{VFS must support the creation of a new disk with the specified maximum size at the specified
 location in the host file system.}\\
 		Possible since we can create a VFS.\\
+		Our implementation currently stores the maximum disk capacity as part of the disk, but also pre-allocates the virtual disk file to that size. 
 		Test method: Req2\_1\_1\_and\_2
 	\item \emph{VFS must support several virtual disks in the host file system.}\\
-		We can create n different disks with different files.\\
+		We can create any number of different disks each with its own file.\\
+		Disks are completely isolated from one another. Exchanging files and directories means exporting from one disk and importing into the other. \\
 		Test method: Req2\_1\_3
 	\item \emph{VFS must support disposing of the virtual disk.}\\
 		Possible with Dispose().\\
 		Test method: Req2\_1\_4
 	\item \emph{VFS must support creating/deleting/renaming directories and files.}\\
-		Files support all these methods after they are created.\\
+		Files and directories support all these methods after they are created.\\
+		See \texttt{VirtualFileImpl} and \texttt{VirtualDirectoryImpl}.\\
 		Test method: Req2\_1\_5
 	\item \emph{VFS must support navigation: listing of files and folders, and going to a location expressed by a
 concrete path.}\\
-		Since files and folders inherit from nodes they are stored in an list and we can loop trough them. With navigate() we can go to a concrete path, absolute or relative.\\
+		Since files and folders inherit from nodes they are stored in an list and we can loop trough them. With the method \texttt{Navigate()} on \texttt{VirtualDirectory} (implemented in \texttt{VirtualDirectoryImpl}) we can go to any concrete path, absolute or relative.\\
 		Test method: Req2\_1\_6
 	\item \emph{VFS must support moving/copying directories and files, including hierarchy.}\\
-		move() and copy() are implemented.\\
+		\texttt{Move()} and \texttt{Copy()} are implemented as methods on \texttt{VirtualNode}.\\
 		Test method: Req2\_1\_7
 	\item \emph{VFS must support importing files and directories from the host file system.}\\
-		import() is implemented and reads from the System.IO.Stream.\\
+		\texttt{Import()} is implemented on \texttt{VirtualDirectoryImpl}. It imports host directories recursively and uses our \texttt{System.IO.Stream}-based\\\texttt{CreateFile} method to import files.\\
 		Test method: Req2\_1\_8\_and\_9
 	\item \emph{VFS must support exporting files and directories to the host file system.}\\
-		import() is implemented and writes to System.IO.Stream.\\
+		\texttt{Export()} is implemented as a method on \texttt{VirtualNode} and works recursively for virtual directories and via our own (read-only) \texttt{Stream} for virtual files.\\
 		Test method: Req2\_1\_8\_and\_9
 	\item \emph{VFS must support querying of free/occupied space in the virtual disk.}\\
-		Size is implemented as field of directories and files. To get the occupied space just ask root.\\
+		Size is implemented as by recursively querying the individual directories. To get the occupied space just ask root.\\
 		Test method: Req2\_1\_10
 	\item \textbf{Bonus Basic:} \emph{Elastic disk: Virtual disk can dynamically grow or shrink, depending on its occupied space.}\\
-		The internal data structure can already grow and shrink dynamically since we work with blocks.
+		The internal data structure can already grow and shrink dynamically. 
+Section \ref{sct:empty} discusses how keep track of how much space our file system actually needs.
+However, at this time, the space on disk is pre-allocated to the capacity that the user specified and our disk refuses to grow beyond that size.
 	\item \textbf{Bonus Advanced:} \emph{Large data: This means, that VFS core can store \& operate amount of data, that can't fit to PC RAM ( typically, more than 4Gb).}\\
-		To fulfill this taks we decided to work with a block structure. This implies automaticaly that we can store more than 4Gb.\\
+		We use the operating system's virtual memory mechanism to get the relevant pieces of our file system in memory. 
+We were careful not to hold on to data structures (blocks, virtual nodes) but instead re-create them whenever required.
+That way, our file system implementation only uses as much RAM as the user wielding it.
+
+We do, however, require a 64bit virtual address space to operate on large files. 
+While it would be technically possible to map just parts of a large file into the much smaller 32bit address space, we chose not implement re-mapping.
 \end{enumerate}
 
-\subsection{Design}
+\section{Implementation details}\label{sct:impl}
 
-% TODO: Remove this text and replace it with actual content
-\emph{Give an overview of the design of this part and describe in general terms how the implementation works. You can mention design patterns used, class diagrams, definition of custom file formats, network protocols, or anything else that helps understand the implementation.}\\
+This section lists the detailed specification of the block system of the virtual file system.
 
-The VFS Core is divided in three layers. Each of it accesses the layer below and ensures good maintenanceability and readability.
-
-\subsubsection{I/O layer}
-
-On this level we store raw data. The methods related to this abstraction level are stored in Panda.Core/Core/IO.
-
-\subsubsection{Block layer}
-
-We have abstract blocks of uniform size. They are specified in the section Specification. The class BlockManager manages the access to these blocks. It communicates with the I/O layer.\\
-
-With the BlockManager we can allocate new blocks, get data out blocks or access the blockOffset which contains block relevant data. The methods related to this abstraction level are stored in Panda.Core/Core/Blocks.
-
-\subsubsection{Filesystem layer}
-
-This is the most abstract level. Here we implemented the functionality of the VFS which are based on the requirements. It communicates with the Block layer via the BlockManager.\\
-
-The most important Classes are the VirtualDirectory.cs and VirtualFile.cs which inherit from VirtualNode.cs. With the node concept we realize the fact that a directory and file have many things in commen (they can be renamed, deleted, etc.). Due to the integration of an enumerator we can access a list of nodes very efficiently.\\
-
-The methods related to this abstraction level are stored in Panda.Core and  Panda.Core/Core/Internal.
-
-\subsection{Specification}
-
-This section lists the detailed specification of the blocksystem of the virtual file system.
-
-\subsubsection{General Remarks}
+\subsection{General Remarks}
 
 \begin{itemize}
 	\item Offsets \& lengths in bytes.
@@ -127,7 +177,7 @@ This section lists the detailed specification of the blocksystem of the virtual 
 	\item Strings are encoded in UTF-8
 \end{itemize}
 
-\subsubsection{Metadata}
+\subsection{Metadata}
 
 Metadata of the whole VFS starts at address 0.\\
 
@@ -202,7 +252,7 @@ Offset 	&Length	&C\# d-t	&Description\\\hline
 B\_S - 4	&4	&UInt32	&Link to empty space continuation block. 0 here marks absence of continuation blocks.\\\hline
 \end{tabular} \\
 
-\subsubsection{Empty space management}
+\subsection{Empty space management}\label{sct:empty}
 
 The VFS is designed to maintain an index of unused blocks. The addresses of the unused blocks are stored in the empty space block. Its address is stored in the VFS meta-data. This empty space block may also have empty space continuation blocks. But not every address to an empty block in the whole VFS can be stored in this empty space block. Instead, only addresses of empty blocks up to a maximum address, which is called “break”, is stored in this block. If there are no empty blocks left, the “break” must be increased by 1, and the new empty block addresses must be added to the empty space block. If the block next to “break” is freed, decrease the “break”, otherwise the address of this block to the empty space block or its last continuation block.
 
