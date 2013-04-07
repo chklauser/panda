@@ -1,19 +1,90 @@
 ﻿<Window x:Class="Panda.UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" Height="350" Width="525">
-    <StackPanel Orientation="Vertical">
-        <Menu>
+        xmlns:core="clr-namespace:Panda;assembly=Panda.Core"
+        xmlns:model="clr-namespace:Panda.UI.ViewModel" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
+        Title="MainWindow" Height="350" Width="525" d:DataContext="{d:DesignInstance Type=model:BrowserViewModel}">
+    <Window.CommandBindings>
+        <CommandBinding Command="Open" Executed="ExecuteOpenDisk" CanExecute="CanOpenDisk"/>
+        <CommandBinding Command="New" Executed="ExecuteNewDisk" CanExecute="CanNewDisk" />
+        <CommandBinding Command="Close" Executed="ExecuteCloseBrowser" CanExecute="CanCloseBrowser" />
+        <CommandBinding Command="ApplicationCommands.Delete" Executed="ExecuteDeleteNode" CanExecute="CanDeleteNode" />
+        <CommandBinding Command="Copy" Executed="ExecuteCopy" CanExecute="CanCopy" />
+        <CommandBinding Command="Cut" Executed="ExecuteCut" CanExecute="CanCut" />
+        <CommandBinding Command="Paste" Executed="ExecutePaste" CanExecute="CanPaste" />
+        <CommandBinding Command="model:Commands.NewDirectory" Executed="ExecuteNewDirectory" CanExecute="CanNewDirectory"/>
+        <CommandBinding Command="model:Commands.DeleteDisk" Executed="ExecuteDeleteDisk" CanExecute="CanDeleteDisk" />
+        <CommandBinding Command="model:Commands.CloseDisk" Executed="ExecuteCloseDisk" CanExecute="CanCloseDisk" />
+        <CommandBinding Command="model:Commands.Rename" Executed="ExecuteRename" CanExecute="CanRename" />
+        <CommandBinding Command="model:Commands.Export" Executed="ExecuteExport" CanExecute="CanExport" />
+        <CommandBinding Command="model:Commands.Import" Executed="ExecuteImport" CanExecute="CanImport" />
+    </Window.CommandBindings>
+    <Window.Resources>
+        <HierarchicalDataTemplate DataType = "{x:Type model:DiskViewModel}"
+                                  ItemsSource = "{Binding Path=Disk.Root}">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel.ContextMenu>
+                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext,
+                       RelativeSource={RelativeSource Self}}" Name="diskCtxMenu">
+                        <MenuItem Command="model:Commands.CloseDisk"  CommandParameter="{Binding}" />
+                        <MenuItem Command="model:Commands.NewDirectory" CommandParameter="{Binding}" />
+                        <MenuItem Command="model:Commands.Import" CommandParameter="{Binding}"/>
+                        <MenuItem Command="model:Commands.Export" CommandParameter="{Binding}"/>
+                    </ContextMenu>
+                </StackPanel.ContextMenu>
+                <TextBlock Text="{Binding Path=Name}"/>
+            </StackPanel>
+        </HierarchicalDataTemplate>
+        <HierarchicalDataTemplate DataType="{x:Type core:VirtualDirectory}" ItemsSource="{Binding}">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel.ContextMenu>
+                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext,
+                       RelativeSource={RelativeSource Self}}" Name="diskCtxMenu">
+                        <MenuItem Command="model:Commands.NewDirectory" CommandParameter="{Binding}" />
+                        <MenuItem Command="model:Commands.Import" CommandParameter="{Binding}"/>
+                        <MenuItem Command="model:Commands.Export" CommandParameter="{Binding}"/>
+                        <MenuItem Command="Copy" CommandParameter="{Binding}"/>
+                        <MenuItem Command="Cut" CommandParameter="{Binding}"/>
+                        <MenuItem Command="ApplicationCommands.Delete" CommandParameter="{Binding}"/>
+                        <MenuItem Command="model:Commands.Rename" CommandParameter="{Binding}" />
+                    </ContextMenu>
+                </StackPanel.ContextMenu>
+                <TextBlock Text="{Binding Path=Name}"/>
+            </StackPanel>
+        </HierarchicalDataTemplate>
+        <DataTemplate DataType="{x:Type core:VirtualFile}">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel.ContextMenu>
+                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext,
+                       RelativeSource={RelativeSource Self}}" Name="diskCtxMenu">
+                        <MenuItem Command="model:Commands.Export" CommandParameter="{Binding}"/>
+                        <MenuItem Command="Copy" CommandParameter="{Binding}"/>
+                        <MenuItem Command="Cut" CommandParameter="{Binding}"/>
+                        <MenuItem Command="ApplicationCommands.Delete" CommandParameter="{Binding}"/>
+                        <MenuItem Command="model:Commands.Rename" CommandParameter="{Binding}" />
+                    </ContextMenu>
+                </StackPanel.ContextMenu>
+                <TextBlock Text="{Binding Path=Name}" />
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
             <MenuItem Header="File">
-                <MenuItem Header="_Open..."></MenuItem>
-                <MenuItem Header="E_xit"/>
+                <MenuItem Header="_New Disk…" Command="New" />
+                <MenuItem Header="_Open Disk…" Command="Open" />
+                <MenuItem Header="E_xit" Command="Close"/>
             </MenuItem>
         </Menu>
-        <TreeView>
-            
-        </TreeView>
-        <StatusBar>
-            
+        <StatusBar DockPanel.Dock="Bottom">
+            <TextBlock Text="{Binding Path=StatusText}" />
         </StatusBar>
-    </StackPanel>
+        <TreeView ItemsSource="{Binding Path=OpenDisks}" Name="DiskTree">
+            <TreeView.InputBindings>
+                <KeyBinding Key="Delete" Command="ApplicationCommands.Delete" CommandParameter="{Binding ElementName=DiskTree, Path=SelectedValue}" />
+                <KeyBinding Key="N" Modifiers="Control" Command="model:Commands.NewDirectory" CommandParameter="{Binding ElementName=DiskTree, Path=SelectedValue}" />
+            </TreeView.InputBindings>
+        </TreeView>
+    </DockPanel>
 </Window>

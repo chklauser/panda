@@ -150,16 +150,18 @@ namespace Panda.Core.Internal
         /// </summary>
         /// <param name="blockOffset">BlockOffset of VirtualNode to find in the DirectoryEntries.</param>
         /// <returns>Tuple of DirectoryEntry and DirectoryContinuationBlock.</returns>
-        public Tuple<DirectoryEntry, IDirectoryContinuationBlock, IDirectoryContinuationBlock> FindDirectoryEntry(BlockOffset blockOffset)
+        public Tuple<DirectoryEntry, IDirectoryContinuationBlock, IDirectoryContinuationBlock, int> FindDirectoryEntry(BlockOffset blockOffset)
         {
             // first currentDirectoryBlock
             IDirectoryContinuationBlock currentDirectoryBlock = _disk.BlockManager.GetDirectoryBlock(_blockOffset);
+            var entryIndex = 0;
             foreach (var de in currentDirectoryBlock)
             {
                 if (blockOffset == de.BlockOffset)
                 {
-                    return Tuple.Create<DirectoryEntry, IDirectoryContinuationBlock, IDirectoryContinuationBlock>(de, currentDirectoryBlock, null);
+                    return Tuple.Create(de, currentDirectoryBlock,(IDirectoryContinuationBlock) null,entryIndex);
                 }
+                entryIndex++;
             }
 
             IDirectoryContinuationBlock previousDirectoryBlock = currentDirectoryBlock;
@@ -172,11 +174,12 @@ namespace Panda.Core.Internal
                 {
                     if (blockOffset == de.BlockOffset)
                     {
-                        return Tuple.Create(de, currentDirectoryBlock, previousDirectoryBlock);
+                        return Tuple.Create(de, currentDirectoryBlock, previousDirectoryBlock,entryIndex);
                     }
                 }
 
                 previousDirectoryBlock = currentDirectoryBlock;
+                entryIndex++;
             }
 
             // DirectoryEntry not found!
@@ -283,7 +286,7 @@ namespace Panda.Core.Internal
 
             var dir = _disk.GetDirectory(this, de);
 
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add,dir));
+            // No need to NotifyCollectionChanged here, AddDirectoryEntry already did that
 
             return dir;
         }
@@ -515,11 +518,12 @@ namespace Panda.Core.Internal
             return DeleteDirectoryEntry(FindDirectoryEntry(offset));
         }
 
-        internal DirectoryEntry DeleteDirectoryEntry(Tuple<DirectoryEntry, IDirectoryContinuationBlock, IDirectoryContinuationBlock> tuple)
+        internal DirectoryEntry DeleteDirectoryEntry(Tuple<DirectoryEntry, IDirectoryContinuationBlock, IDirectoryContinuationBlock, int> tuple)
         {
             var containingBlock = tuple.Item2;
             var optPrecedingBlock = tuple.Item3;
             var entryToDelete = tuple.Item1;
+            var oldEntryIndex = tuple.Item4;
             
             var oldEntry = _disk.GetNode(this, entryToDelete);
             containingBlock.DeleteEntry(entryToDelete);
@@ -532,8 +536,8 @@ namespace Panda.Core.Internal
                 optPrecedingBlock.ContinuationBlockOffset = containingBlock.ContinuationBlockOffset;
                 _disk.BlockManager.FreeBlock(containingBlock.Offset);
             }
-
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove,oldEntry));
+            
+            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove,oldEntry,oldEntryIndex));
 
             return entryToDelete;
         }
