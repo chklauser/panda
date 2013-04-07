@@ -1,5 +1,6 @@
 \documentclass[a4paper,12pt]{article}
 
+% !TeX program = pdfLaTeX
 
 % add more packages if necessary
 \usepackage{xspace}
@@ -95,15 +96,13 @@ Here we implement the most of the actual functionality of the file system in ter
 This layer needs to worry about how the many different blocks relate to one another.
 For instance, if the block that is backing a large directory has not enough room for another directory entry, the file system is responsible for allocating an overflow or ``continuation'' block and spill the new entry there.
 
-The most important Classes are the VirtualDirectory.cs and VirtualFile.cs which inherit from VirtualNode.cs. With the node concept we realize the fact that a directory and file have many things in commen (they can be renamed, deleted, etc.). Due to the integration of an enumerator we can access a list of nodes very efficiently.\\
+When implementing the file system API, we chose to follow the composite pattern. 
+We have \texttt{VirtualFile} as the leaf and \texttt{VirtualDirectory} as the inner node of our virtual directory tree (both inherit from \texttt{VirtualNode}).
+Common operations like move, rename, delete are of course available on the \texttt{VirtualNode}-level.
 
-The methods related to this abstraction level are stored in Panda.Core and  Panda.Core/Core/Internal.
+The API that users of the Core consume is located in the \texttt{Panda} namespace whereas our implementation can be found in the \texttt{Panda.Core.Internal} namespace. 
 
-
-
-
-
-
+The entire system is wired up (instantiating persistence spaces, supplying them to block managers and injecting those into virtual disk implementations) by a pair of factory methods in \texttt{VirtualDisk}.
 
 \section{Requirements}
 
@@ -112,47 +111,60 @@ Each requirement which is listed is also implemented. The software elements whic
 \begin{enumerate}
 	\item \emph{The virtual disk must be stored in a single file in the working directory in the host file system.}\\
 		The whole VFS is stored in the instance disk which is created at the beginning.\\
+		While our system defaults to creating disks in the process's working directory, it is not limited to that directory.
+		 All information about a virtual disk is stored as part of that virtual disk. As a consequence, we also do not have a central list of existing virtual disks. \\
+		The actual storage is handled by \texttt{Panda.Core.IO.MemoryMapped.}\\\texttt{MemoryMappedFileSpace} whereas the file format is implemented by \texttt{Panda.Core.IO. RawBlockManager}.\\
 		Test method: Req2\_1\_1\_and\_2
 	\item \emph{VFS must support the creation of a new disk with the specified maximum size at the specified
 location in the host file system.}\\
 		Possible since we can create a VFS.\\
+		Our implementation currently stores the maximum disk capacity as part of the disk, but also pre-allocates the virtual disk file to that size. 
 		Test method: Req2\_1\_1\_and\_2
 	\item \emph{VFS must support several virtual disks in the host file system.}\\
-		We can create n different disks with different files.\\
+		We can create any number of different disks each with its own file.\\
+		Disks are completely isolated from one another. Exchanging files and directories means exporting from one disk and importing into the other. \\
 		Test method: Req2\_1\_3
 	\item \emph{VFS must support disposing of the virtual disk.}\\
 		Possible with Dispose().\\
 		Test method: Req2\_1\_4
 	\item \emph{VFS must support creating/deleting/renaming directories and files.}\\
-		Files support all these methods after they are created.\\
+		Files and directories support all these methods after they are created.\\
+		See \texttt{VirtualFileImpl} and \texttt{VirtualDirectoryImpl}.\\
 		Test method: Req2\_1\_5
 	\item \emph{VFS must support navigation: listing of files and folders, and going to a location expressed by a
 concrete path.}\\
-		Since files and folders inherit from nodes they are stored in an list and we can loop trough them. With navigate() we can go to a concrete path, absolute or relative.\\
+		Since files and folders inherit from nodes they are stored in an list and we can loop trough them. With the method \texttt{Navigate()} on \texttt{VirtualDirectory} (implemented in \texttt{VirtualDirectoryImpl}) we can go to any concrete path, absolute or relative.\\
 		Test method: Req2\_1\_6
 	\item \emph{VFS must support moving/copying directories and files, including hierarchy.}\\
-		move() and copy() are implemented.\\
+		\texttt{Move()} and \texttt{Copy()} are implemented as methods on \texttt{VirtualNode}.\\
 		Test method: Req2\_1\_7
 	\item \emph{VFS must support importing files and directories from the host file system.}\\
-		import() is implemented and reads from the System.IO.Stream.\\
+		\texttt{Import()} is implemented on \texttt{VirtualDirectoryImpl}. It imports host directories recursively and uses our \texttt{System.IO.Stream}-based\\\texttt{CreateFile} method to import files.\\
 		Test method: Req2\_1\_8\_and\_9
 	\item \emph{VFS must support exporting files and directories to the host file system.}\\
-		import() is implemented and writes to System.IO.Stream.\\
+		\texttt{Export()} is implemented as a method on \texttt{VirtualNode} and works recursively for virtual directories and via our own (read-only) \texttt{Stream} for virtual files.\\
 		Test method: Req2\_1\_8\_and\_9
 	\item \emph{VFS must support querying of free/occupied space in the virtual disk.}\\
-		Size is implemented as field of directories and files. To get the occupied space just ask root.\\
+		Size is implemented as by recursively querying the individual directories. To get the occupied space just ask root.\\
 		Test method: Req2\_1\_10
 	\item \textbf{Bonus Basic:} \emph{Elastic disk: Virtual disk can dynamically grow or shrink, depending on its occupied space.}\\
-		The internal data structure can already grow and shrink dynamically since we work with blocks.
+		The internal data structure can already grow and shrink dynamically. 
+Section \ref{sct:empty} discusses how keep track of how much space our file system actually needs.
+However, at this time, the space on disk is pre-allocated to the capacity that the user specified and our disk refuses to grow beyond that size.
 	\item \textbf{Bonus Advanced:} \emph{Large data: This means, that VFS core can store \& operate amount of data, that can't fit to PC RAM ( typically, more than 4Gb).}\\
-		To fulfill this taks we decided to work with a block structure. This implies automaticaly that we can store more than 4Gb.\\
+		We use the operating system's virtual memory mechanism to get the relevant pieces of our file system in memory. 
+We were careful not to hold on to data structures (blocks, virtual nodes) but instead re-create them whenever required.
+That way, our file system implementation only uses as much RAM as the user wielding it.
+
+We do, however, require a 64bit virtual address space to operate on large files. 
+While it would be technically possible to map just parts of a large file into the much smaller 32bit address space, we chose not implement re-mapping.
 \end{enumerate}
 
 \section{Implementation details}\label{sct:impl}
 
 This section lists the detailed specification of the block system of the virtual file system.
 
-\subsubsection{General Remarks}
+\subsection{General Remarks}
 
 \begin{itemize}
 	\item Offsets \& lengths in bytes.
@@ -165,7 +177,7 @@ This section lists the detailed specification of the block system of the virtual
 	\item Strings are encoded in UTF-8
 \end{itemize}
 
-\subsubsection{Metadata}
+\subsection{Metadata}
 
 Metadata of the whole VFS starts at address 0.\\
 
@@ -240,7 +252,7 @@ Offset 	&Length	&C\# d-t	&Description\\\hline
 B\_S - 4	&4	&UInt32	&Link to empty space continuation block. 0 here marks absence of continuation blocks.\\\hline
 \end{tabular} \\
 
-\subsubsection{Empty space management}
+\subsection{Empty space management}\label{sct:empty}
 
 The VFS is designed to maintain an index of unused blocks. The addresses of the unused blocks are stored in the empty space block. Its address is stored in the VFS meta-data. This empty space block may also have empty space continuation blocks. But not every address to an empty block in the whole VFS can be stored in this empty space block. Instead, only addresses of empty blocks up to a maximum address, which is called “break”, is stored in this block. If there are no empty blocks left, the “break” must be increased by 1, and the new empty block addresses must be added to the empty space block. If the block next to “break” is freed, decrease the “break”, otherwise the address of this block to the empty space block or its last continuation block.
 
