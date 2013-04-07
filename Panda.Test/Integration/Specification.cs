@@ -290,7 +290,7 @@ namespace Panda.Test.Integration
         }
 
         /// <summary>
-        /// 
+        /// checks if size methods are correct
         /// </summary>
         [Test]
         public void Req2_1_10()
@@ -312,6 +312,58 @@ namespace Panda.Test.Integration
 
             // check size of root block
             Assert.That(Disk.Root.Size, Is.EqualTo(2*43285));
+        }
+
+        /// <summary>
+        /// creates a large file, s.t. file continuation blocks are needed
+        /// </summary>
+        [Test]
+        public void CreateLargeFile()
+        {
+            // create large file
+            Assert.That(Disk.Root.CreateFile("f", new byte[6*1024*1024]), Is.AssignableTo<VirtualFile>());
+
+            // open the large file
+            var stream = ((VirtualFile) Disk.Root.Navigate("f")).Open();
+
+            // check if reported file size is the same
+            Assert.That(Disk.Root.Navigate("f").Size, Is.EqualTo(6 * 1024 * 1024));
+
+            // read it into a byte array
+            var memoryStream = new MemoryStream();
+            stream.CopyTo(memoryStream);
+            byte[] result = memoryStream.ToArray();
+
+            // check if length of result is the same
+            Assert.That(result.Length, Is.EqualTo(6 * 1024 * 1024));
+
+            // check if its all zero
+            Assert.That(result, Is.All.EqualTo(0));
+        }
+
+        /// <summary>
+        /// creates a large directory, s.t. directory continuation blocks are needed
+        /// </summary>
+        [Test]
+        public void CreateLargeDirectory()
+        {
+            var vd = Disk.Root.CreateDirectory("f");
+            // create many directories with up to 255 chars in name
+            for (uint i = 0; i < 1000; ++i)
+            {
+                vd.CreateDirectory(new string('a', 200) + i.ToString());
+            }
+        }
+
+        /// <summary>
+        /// checks if empty blocks implementation is correct
+        /// </summary>
+        [Test]
+        public void CheckEmptyList()
+        {
+            Assert.That(Disk.Root.CreateFile("f", new byte[6 * 1024 * 1024]), Is.AssignableTo<VirtualFile>());
+            ((VirtualFile)Disk.Root.Navigate("f")).Delete();
+            Assert.That(Disk.Root.CreateFile("f", new byte[6 * 1024 * 1024]), Is.AssignableTo<VirtualFile>());
         }
 
         [Test]
