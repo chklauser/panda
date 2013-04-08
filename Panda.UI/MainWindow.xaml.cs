@@ -168,12 +168,29 @@ namespace Panda.UI
 
         protected void ExecuteRename(object sender, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            var bla = DiskTree.SelectedItem as VirtualNode;
+            if (bla != null)
+            {
+                // Instantiate the dialog box
+                var dlg = new RenameDialog(bla.Name);
+
+                // Configure the dialog box
+                dlg.Owner = this;
+
+                // Open the dialog box modally 
+                dlg.ShowDialog();
+
+                if (dlg.DialogResult == true)
+                {
+                    // dialog was not cancelled
+                    bla.Rename(dlg.NewNodeName);
+                }
+            }
         }
 
         protected void CanRename(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = false;
+            e.CanExecute = e.Parameter is VirtualNode;
         }
 
         protected void ExecuteExport(object sender, ExecutedRoutedEventArgs e)
@@ -304,6 +321,11 @@ namespace Panda.UI
             var n = e.Parameter as VirtualNode;
             e.CanExecute = n != null && !n.IsRoot;
             e.Handled = true;
+        }
+
+        private void UIElement_OnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -54,7 +54,7 @@
             </StackPanel>
         </HierarchicalDataTemplate>
         <DataTemplate DataType="{x:Type core:VirtualFile}">
-            <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal" MouseDown="UIElement_OnMouseDown">
                 <StackPanel.ContextMenu>
                     <ContextMenu DataContext="{Binding PlacementTarget.DataContext,
                        RelativeSource={RelativeSource Self}}" Name="diskCtxMenu">
