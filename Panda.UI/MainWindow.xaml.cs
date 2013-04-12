@@ -102,7 +102,19 @@ namespace Panda.UI
             if (!result.Value)
                 return;
 
-            // TODO Ask user for desired capacity here (display another dialog)
+            var strCapacity = Microsoft.VisualBasic.Interaction.InputBox("Capacity in MB?", "New Disk", "10", -1, -1);
+            int intCapacity = strCapacity as int;
+            if (intCapacity == null)
+            {
+                do
+                {
+                    MessageBox.Show(
+                        "Illegal name. Please don't use " + VirtualFileSystem.SeparatorChar + " in node names.",
+                        "Illegal name", MessageBoxButton.OK, MessageBoxImage.Error);
+                    strCapacity = Microsoft.VisualBasic.Interaction.InputBox("Capacity in MB?", "New Disk", "10", -1, -1);
+                    intCapacity = strCapacity as Integer;
+                } while (intCapacity == null);
+            }
 
             var fileName = nfd.FileName;
             if(File.Exists(fileName))
