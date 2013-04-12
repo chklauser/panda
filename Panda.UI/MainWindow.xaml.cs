@@ -168,23 +168,31 @@ namespace Panda.UI
 
         protected void ExecuteRename(object sender, ExecutedRoutedEventArgs e)
         {
-            var bla = DiskTree.SelectedItem as VirtualNode;
-            if (bla != null)
+            var n = DiskTree.SelectedItem as VirtualNode;
+            if (!(n != null && !n.IsRoot))
+                return;
+
+            VirtualDirectory parent = n.ParentDirectory;
+            Debug.Assert(parent != null);
+
+            // Instantiate the dialog box
+            var dlg = new RenameDialog(n.Name) {Owner = this};
+
+            // Configure the dialog box
+
+            // Open the dialog box modally 
+            dlg.ShowDialog();
+
+            if (dlg.DialogResult == true)
             {
-                // Instantiate the dialog box
-                var dlg = new RenameDialog(bla.Name);
+                // dialog was not cancelled
 
-                // Configure the dialog box
-                dlg.Owner = this;
-
-                // Open the dialog box modally 
-                dlg.ShowDialog();
-
-                if (dlg.DialogResult == true)
-                {
-                    // dialog was not cancelled
-                    bla.Rename(dlg.NewNodeName);
-                }
+                var nextText = String.Format("Renamed {0} from directory {1}.", n.Name, parent.Name);
+                n.Rename(dlg.NewNodeName);
+                ViewModel.StatusText = nextText;
+                var ui = e.OriginalSource as UIElement;
+                if (ui != null && ui.Focusable)
+                    ui.Focus();
             }
         }
 
