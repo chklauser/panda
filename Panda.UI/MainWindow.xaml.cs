@@ -175,24 +175,20 @@ namespace Panda.UI
             VirtualDirectory parent = n.ParentDirectory;
             Debug.Assert(parent != null);
 
-            // Instantiate the dialog box
-            var dlg = new RenameDialog(n.Name) {Owner = this};
+            var newName = Microsoft.VisualBasic.Interaction.InputBox("New name?", "Rename", n.Name, -1, -1);
 
-            // Configure the dialog box
-
-            // Open the dialog box modally 
-            dlg.ShowDialog();
-
-            if (dlg.DialogResult == true)
+            if (VirtualFileSystem.IsLegalNodeName(newName))
             {
-                // dialog was not cancelled
-
                 var nextText = String.Format("Renamed {0} from directory {1}.", n.Name, parent.Name);
-                n.Rename(dlg.NewNodeName);
+                n.Rename(newName);
                 ViewModel.StatusText = nextText;
                 var ui = e.OriginalSource as UIElement;
                 if (ui != null && ui.Focusable)
                     ui.Focus();
+            }
+            else
+            {
+                MessageBox.Show("Illegal name. Please don't use " + VirtualFileSystem.SeparatorChar + " in node names.", "Illegal name", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
