@@ -16,7 +16,7 @@ namespace Panda.UI
     /// </summary>
     public partial class MainWindow
     {
-        protected const string FileSelectionFilter = "Panda Virtual Disks|*.panda|All files|*.*";
+        public const string FileSelectionFilter = "Panda Virtual Disks|*.panda|All files|*.*";
 
         public MainWindow()
         {
@@ -88,35 +88,12 @@ namespace Panda.UI
 
         protected void ExecuteNewDisk(object sender, ExecutedRoutedEventArgs e)
         {
-            var nfd = new SaveFileDialog
-                {
-                    CheckPathExists = true,
-                    DefaultExt = ".panda",
-                    OverwritePrompt = true,
-                    ValidateNames = true,
-                    InitialDirectory = Environment.CurrentDirectory,
-                    AddExtension = true,
-                    Filter = FileSelectionFilter
-                };
-            var result = nfd.ShowDialog(this);
-            if (!result.Value)
+            var dialog = new DiskCreationWindow();
+            var result = dialog.ShowDialog();
+            if (!(result ?? false))
                 return;
 
-            var strCapacity = Microsoft.VisualBasic.Interaction.InputBox("Capacity in MB?", "New Disk", "10", -1, -1);
-            int intCapacity = strCapacity as int;
-            if (intCapacity == null)
-            {
-                do
-                {
-                    MessageBox.Show(
-                        "Illegal name. Please don't use " + VirtualFileSystem.SeparatorChar + " in node names.",
-                        "Illegal name", MessageBoxButton.OK, MessageBoxImage.Error);
-                    strCapacity = Microsoft.VisualBasic.Interaction.InputBox("Capacity in MB?", "New Disk", "10", -1, -1);
-                    intCapacity = strCapacity as Integer;
-                } while (intCapacity == null);
-            }
-
-            var fileName = nfd.FileName;
+            var fileName = dialog.ViewModel.FileName;
             if(File.Exists(fileName))
                 File.Delete(fileName);
 
@@ -124,7 +101,7 @@ namespace Panda.UI
             try
             {
                 // we just use a dummy capacity here
-                vdisk = VirtualDisk.CreateNew(fileName,10*1024*1024);
+                vdisk = VirtualDisk.CreateNew(fileName,dialog.ViewModel.Capacity ?? 10L*1024*1024);
                 _registerDisk(fileName, vdisk);
             }
             catch
