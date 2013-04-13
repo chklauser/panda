@@ -54,8 +54,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Internal\CommandLabelConverter.cs" />
+    <Compile Include="Internal\InformationAmountConverter.cs" />
     <Compile Include="ViewModel\BrowserViewModel.cs" />
     <Compile Include="ViewModel\Commands.cs" />
+    <Compile Include="ViewModel\DiskCreationViewModel.cs" />
     <Compile Include="ViewModel\DiskViewModel.cs" />
     <Compile Include="DiskCreationWindow.xaml.cs">
       <DependentUpon>DiskCreationWindow.xaml</DependentUpon>

@@ -2,35 +2,67 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ui="clr-namespace:Panda.UI"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
-        Title="Create a new Disk" d:DataContext="{d:DesignInstance Type=ui:DiskCreationViewModel }" Width="300" Height="250">
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:internal="clr-namespace:Panda.UI.Internal" 
+        xmlns:model="clr-namespace:Panda.UI.ViewModel" 
+        mc:Ignorable="d"
+        Title="Create a new Disk" d:DataContext="{d:DesignInstance Type=model:DiskCreationViewModel }" 
+        d:DesignHeight="156" d:DesignWidth="469" SizeToContent="WidthAndHeight">
     <Window.CommandBindings>
-        <CommandBinding Command="ui:DiskCreationViewModel.Confirm" CanExecute="Confirm_CanExecute" Executed="Confirm_Execute" />
-        <CommandBinding Command="ui:DiskCreationViewModel.Cancel" CanExecute="Cancel_CanExecute" Executed="Cancel_Execute" />
-        <CommandBinding Command="ui:DiskCreationViewModel.Browse" CanExecute="Browse_CanExecute" Executed="Browse_Execute" />
+        <CommandBinding Command="model:DiskCreationViewModel.Confirm" CanExecute="Confirm_CanExecute" Executed="Confirm_Execute" />
+        <CommandBinding Command="model:DiskCreationViewModel.Cancel" CanExecute="Cancel_CanExecute" Executed="Cancel_Execute" />
+        <CommandBinding Command="model:DiskCreationViewModel.Browse" CanExecute="Browse_CanExecute" Executed="Browse_Execute" />
     </Window.CommandBindings>
     <Window.InputBindings>
-        <KeyBinding Key="Escape" Command="ui:DiskCreationViewModel.Cancel"/>
-        <KeyBinding Key="Enter" Command="ui:DiskCreationViewModel.Confirm"/>
+        <KeyBinding Key="Escape" Command="model:DiskCreationViewModel.Cancel"/>
+        <KeyBinding Key="Enter" Command="model:DiskCreationViewModel.Confirm"/>
     </Window.InputBindings>
+    <Window.Resources>
+        <internal:CommandLabelConverter x:Key="CommandLabelConverter" />
+        <internal:InformationAmountConverter x:Key="InformationAmountConverter" />
+    </Window.Resources>
     <Grid Margin="15">
+        <Grid.Resources>
+            <Style TargetType="Button">
+                <Setter Property="VerticalAlignment" Value="Top"></Setter>
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="MinHeight" Value="{Binding RelativeSource={RelativeSource Self},Path=FontSize}"></Setter>
+                <Setter Property="Margin" Value="0 0 10 0"></Setter>
+            </Style>
+            <Style TargetType="Label">
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="Margin" Value="0" />
+                <Setter Property="Padding" Value="0" />
+            </Style>
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="5"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" MinWidth="70"/>
             <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <Label Grid.Row="0" Grid.Column="0" Target="{Binding ElementName=CapacityTextBox}">_Capacity</Label>
-        <TextBox Grid.Row="0" Grid.Column="1" Name="CapacityTextBox" Text="{Binding Path=Capacity}" />
-        <Label Grid.Row="1" Grid.Column="0" Target="{Binding ElementName=FileNameTextBox}">_File name</Label>
-        <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="1">
-            <TextBox Name="FileNameTextBox" />
-            <Button Command="ui:DiskCreationViewModel.Browse"/>
-        </StackPanel>
-        <Button Grid.Row="2" Grid.Column="0" Command="ui:DiskCreationViewModel.Cancel" Width="250"  Height="50"/>
-        <Button Grid.Row="2" Grid.Column="1" Command="ui:DiskCreationViewModel.Confirm" Width="250" Height="50"/>
+        <TextBox Grid.Row="0" Grid.Column="1" Name="CapacityTextBox" Text="{Binding Path=Capacity, Converter={StaticResource InformationAmountConverter}}" Width="Auto" MinWidth="100" HorizontalAlignment="Left"/>
+        <Label Grid.Row="2" Grid.Column="0" Target="{Binding ElementName=FileNameTextBox}">_File name</Label>
+        <DockPanel Grid.Row="2" Grid.Column="1">
+            <Button DockPanel.Dock="Right" Command="model:DiskCreationViewModel.Browse" Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"/>
+            <TextBox Name="FileNameTextBox" Width="250" Text="{Binding Path=FileName, UpdateSourceTrigger=PropertyChanged}"/>
+        </DockPanel>
+        <Button Grid.Row="4" Grid.Column="0" Command="model:DiskCreationViewModel.Cancel" 
+                Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"
+                IsCancel="True"/>
+        <Button HorizontalAlignment="Right" Grid.Row="4" Grid.Column="1" Command="model:DiskCreationViewModel.Confirm"
+                Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"
+                Width="Auto"
+                Height="Auto"
+                IsDefault="True"/>
     </Grid>
 </Window>

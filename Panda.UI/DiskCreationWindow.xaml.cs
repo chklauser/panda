@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,8 +12,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using JetBrains.Annotations;
 using Microsoft.Win32;
+using Panda.UI.ViewModel;
 
 namespace Panda.UI
 {
@@ -38,6 +39,7 @@ namespace Panda.UI
             var capacity = ViewModel.Capacity;
             var fileName = ViewModel.FileName;
             e.CanExecute = fileName != null && !String.IsNullOrWhiteSpace(fileName) && capacity.HasValue && capacity.Value > 0;
+            Trace.WriteLine("Confirm_CanExecute=" + e.CanExecute);
         }
 
         private void Confirm_Execute(object sender, ExecutedRoutedEventArgs e)
@@ -82,40 +84,5 @@ namespace Panda.UI
 
             ViewModel.FileName = nfd.FileName;
         }
-    }
-
-    public class DiskCreationViewModel
-    {
-        public String FileName { get; set; }
-        public long? Capacity { get; set; }
-
-        public static RoutedUICommand Confirm
-        {
-            get { return _confirm; }
-        }
-
-        public static RoutedUICommand Cancel
-        {
-            get { return _cancel; }
-        }
-
-        public static RoutedUICommand Browse
-        {
-            get { return _browse; }
-        }
-
-        public DiskCreationViewModel()
-        {
-            Capacity = 10*1024*1024;
-        }
-
-        [NotNull] private static readonly RoutedUICommand _confirm = new RoutedUICommand("Create disk","Confirm",typeof(DiskCreationViewModel));
-
-        [NotNull]
-        private static readonly RoutedUICommand _cancel = new RoutedUICommand("Cancel","Cancel",typeof(DiskCreationViewModel));
-
-        [NotNull]
-        private static readonly RoutedUICommand _browse = new RoutedUICommand("Browse...","Browse",typeof(DiskCreationViewModel));
-
     }
 }
