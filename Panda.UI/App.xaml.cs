@@ -7,6 +7,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using JetBrains.Annotations;
+using Panda.Core.Internal;
 
 namespace Panda.UI
 {
@@ -32,6 +35,28 @@ namespace Panda.UI
                 LogicalTreeHelper.GetChildren(obj)
                     .OfType<DependencyObject>()
                     .All(IsValid);
+        }
+
+        [NotNull]
+        public static IEnumerable<DependencyObject> VisualChildren(DependencyObject visual)
+        {
+            var childrenCount = VisualTreeHelper.GetChildrenCount(visual);
+            for (var i = 0; i < childrenCount; i++)
+            {
+                yield return VisualTreeHelper.GetChild(visual, i);
+            }
+        }
+
+        [NotNull]
+        public static IEnumerable<DependencyObject> VisualDescendants(DependencyObject parent)
+        {
+            return VisualChildren(parent).Append(VisualChildren(parent).SelectMany(VisualDescendants));
+        }
+
+        [NotNull]
+        public static T FindVisualChild<T>(DependencyObject visual, object toFind) where T : FrameworkElement
+        {
+            return VisualDescendants(visual).OfType<T>().First(fe => ReferenceEquals(fe.DataContext, toFind));
         }
     }
 }

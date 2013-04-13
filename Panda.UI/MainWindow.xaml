@@ -51,7 +51,7 @@
                         <MenuItem Command="model:Commands.Rename" CommandParameter="{Binding}" />
                     </ContextMenu>
                 </StackPanel.ContextMenu>
-                <borgstrup:EditableTextBlock Text="{Binding Path=Name, Mode=OneWay}" Edited="RenameNode_OnLostFocus" />
+                <borgstrup:EditableTextBlock Text="{Binding Path=Name, Mode=OneWay}" Edited="RenameNode_Edited" />
             </StackPanel>
         </HierarchicalDataTemplate>
         <DataTemplate DataType="{x:Type core:VirtualFile}">

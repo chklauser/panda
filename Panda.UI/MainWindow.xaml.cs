@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Borgstrup.EditableTextBlock;
+using JetBrains.Annotations;
 using Microsoft.Win32;
 using Panda.Core.Internal;
 using Panda.UI.ViewModel;
@@ -160,31 +161,13 @@ namespace Panda.UI
             throw new NotImplementedException();
         }
 
-        private IEnumerable<DependencyObject> VisualChildren(DependencyObject visual)
-        {
-            var childrenCount = VisualTreeHelper.GetChildrenCount(visual);
-            for (var i = 0; i < childrenCount; i++)
-            {
-                yield return VisualTreeHelper.GetChild(visual, i);
-            }
-        }
-
-        private IEnumerable<DependencyObject> VisualDescendants(DependencyObject parent)
-        {
-            return VisualChildren(parent).Append(VisualChildren(parent).SelectMany(VisualDescendants));
-        }
-
-        private T FindVisualChild<T>(DependencyObject visual, object toFind) where T : FrameworkElement
-        {
-            return VisualDescendants(visual).OfType<T>().First(fe => ReferenceEquals(fe.DataContext, toFind));
-        }
-
- 
-
 
         protected void ExecuteRename(object sender, ExecutedRoutedEventArgs e)
         {
-            var containingStackPanel = FindVisualChild<StackPanel>(DiskTree, e.Parameter);
+            // In order to make the text block editable, we need to find the corresponding element in the tree view
+            // FindVisualChild only works if the element in question is currently visible (not part of a collapsed subtree)
+
+            var containingStackPanel = App.FindVisualChild<StackPanel>(DiskTree, e.Parameter);
             var txtBlock = LogicalTreeHelper.GetChildren(containingStackPanel).OfType<EditableTextBlock>().Single();
             txtBlock.IsInEditMode = true;
         }
@@ -329,7 +312,7 @@ namespace Panda.UI
             throw new NotImplementedException();
         }
 
-        private void RenameNode_OnLostFocus(object sender, EventArgs eventArgs)
+        private void RenameNode_Edited(object sender, EventArgs eventArgs)
         {
             var element = sender as EditableTextBlock;
             VirtualNode node;
