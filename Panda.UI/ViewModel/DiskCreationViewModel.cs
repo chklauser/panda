@@ -26,6 +26,8 @@ namespace Panda.UI.ViewModel
             get { return _capacity; }
             set
             {
+                if(value == null)
+                    throw new PandaException("Invalid capacity.");
                 if (value == _capacity) return;
                 _capacity = value;
                 OnPropertyChanged();

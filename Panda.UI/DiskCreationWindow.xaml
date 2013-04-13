@@ -50,7 +50,7 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <Label Grid.Row="0" Grid.Column="0" Target="{Binding ElementName=CapacityTextBox}">_Capacity</Label>
-        <TextBox Grid.Row="0" Grid.Column="1" Name="CapacityTextBox" Text="{Binding Path=Capacity, Converter={StaticResource InformationAmountConverter}}" Width="Auto" MinWidth="100" HorizontalAlignment="Left"/>
+        <TextBox Grid.Row="0" Grid.Column="1" Name="CapacityTextBox" Text="{Binding Path=Capacity, Converter={StaticResource InformationAmountConverter}, ValidatesOnExceptions=True}" Width="Auto" MinWidth="100" HorizontalAlignment="Left"/>
         <Label Grid.Row="2" Grid.Column="0" Target="{Binding ElementName=FileNameTextBox}">_File name</Label>
         <DockPanel Grid.Row="2" Grid.Column="1">
             <Button DockPanel.Dock="Right" Command="model:DiskCreationViewModel.Browse" Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"/>

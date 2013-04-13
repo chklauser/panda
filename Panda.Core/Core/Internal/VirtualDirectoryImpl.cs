@@ -487,7 +487,7 @@ namespace Panda.Core.Internal
             _parentDirectory.AddDirectoryEntry(newDe);
             
             // remove old DirectoryEntry
-            tuple.Item2.DeleteEntry(tuple.Item1);
+            _parentDirectory.DeleteDirectoryEntry(tuple);
 
             _name = newName;
             OnPropertyChanged("Name");

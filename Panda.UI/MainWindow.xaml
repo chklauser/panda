@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:core="clr-namespace:Panda;assembly=Panda.Core"
         xmlns:model="clr-namespace:Panda.UI.ViewModel" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:borgstrup="clr-namespace:Borgstrup.EditableTextBlock" mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525" d:DataContext="{d:DesignInstance Type=model:BrowserViewModel}">
     <Window.CommandBindings>
         <CommandBinding Command="Open" Executed="ExecuteOpenDisk" CanExecute="CanOpenDisk"/>
@@ -50,7 +51,7 @@
                         <MenuItem Command="model:Commands.Rename" CommandParameter="{Binding}" />
                     </ContextMenu>
                 </StackPanel.ContextMenu>
-                <TextBlock Text="{Binding Path=Name}"/>
+                <borgstrup:EditableTextBlock Text="{Binding Path=Name, Mode=OneWay}" Edited="RenameNode_OnLostFocus" />
             </StackPanel>
         </HierarchicalDataTemplate>
         <DataTemplate DataType="{x:Type core:VirtualFile}">

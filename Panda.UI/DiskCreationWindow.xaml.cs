@@ -18,7 +18,7 @@ using Panda.UI.ViewModel;
 namespace Panda.UI
 {
     /// <summary>
-    /// Interaction logic for Window1.xaml
+    /// Interaction logic for DiskCreationWindow.xaml
     /// </summary>
     public partial class DiskCreationWindow : Window
     {
@@ -38,7 +38,7 @@ namespace Panda.UI
         {
             var capacity = ViewModel.Capacity;
             var fileName = ViewModel.FileName;
-            e.CanExecute = fileName != null && !String.IsNullOrWhiteSpace(fileName) && capacity.HasValue && capacity.Value > 0;
+            e.CanExecute = App.IsValid(CapacityTextBox) && App.IsValid(FileNameTextBox) && fileName != null && !String.IsNullOrWhiteSpace(fileName) && capacity != null && capacity.Value > 0;
             Trace.WriteLine("Confirm_CanExecute=" + e.CanExecute);
         }
 

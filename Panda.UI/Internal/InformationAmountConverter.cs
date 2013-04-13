@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -39,7 +40,7 @@ namespace Panda.UI.Internal
         {
             // string to domain type
             if (value == null)
-                return DependencyProperty.UnsetValue;
+                return null;
 
             var raw = value.ToString();
 
@@ -52,14 +53,24 @@ namespace Panda.UI.Internal
                 actualMultiplier = _parseMultiplier(DecimalSuffixes, SiMultiplier, ref raw);
             }
 
-            var displayNumber = System.Convert.ToDouble(raw, culture);
+            double displayNumber;
+            try
+            {
+                displayNumber = System.Convert.ToDouble(raw, culture);
+            }
+            catch (FormatException e)
+            {
+                Trace.WriteLine("Conversion of raw value failed. " + e.Message);
+                return null;
+            }
+
             var exact = displayNumber*actualMultiplier;
             if (exact > Int64.MaxValue)
             {
                 exact = Int64.MaxValue;
             }
 
-            return (long) exact;
+            return (long?) exact;
         }
 
         private static int _parseMultiplier(IEnumerable<string> suffixes, int suffixMultiplier, ref string raw)
