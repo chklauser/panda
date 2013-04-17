@@ -30,9 +30,16 @@ namespace Panda.Test.Integration
         public virtual void TearDown()
         {
             if (Disk != null)
+            {
                 Disk.Dispose();
+            }
             if (_managedDisk != null && _managedDisk != Disk)
+            {
                 _managedDisk.Dispose();
+            }
+
+            Disk = null;
+            _managedDisk = null;
 
             try
             {
