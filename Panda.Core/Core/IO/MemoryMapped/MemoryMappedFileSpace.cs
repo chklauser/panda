@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Microsoft.Win32.SafeHandles;
 using Panda.Core.Internal;
 
 namespace Panda.Core.IO.MemoryMapped
@@ -15,15 +16,18 @@ namespace Panda.Core.IO.MemoryMapped
         [NotNull]
         private readonly String _path;
 
+        private uint _nonSparseSize;
+
         public MemoryMappedFileSpace([NotNull] string path)
             : base(_mapExistingFile(path))
         {
             _path = path;
         }
 
-        protected MemoryMappedFileSpace([NotNull] MemoryMappedFile mappedFile, [NotNull] string path) : base(mappedFile)
+        protected MemoryMappedFileSpace([NotNull] MemoryMappedFile mappedFile, [NotNull] string path, uint nonSparseSize) : base(mappedFile)
         {
             _path = path;
+            _nonSparseSize = nonSparseSize;
         }
 
         private static MemoryMappedFile _mapExistingFile(string path)
@@ -51,13 +55,13 @@ namespace Panda.Core.IO.MemoryMapped
         public static MemoryMappedFileSpace CreateNew(string path, uint blockSize, uint blockCapacity)
         {
             var capacity = blockSize * (long)blockCapacity;
+            var clCapa = (uint)Math.Min(UInt32.MaxValue, capacity);
             using (var file = new FileStream(path,FileMode.CreateNew,FileAccess.Write))
             {
                 var writer = new BinaryWriter(file, Encoding.UTF8, true);
                 writer.Write(blockCapacity);
                 writer.Write(blockSize);
 
-                var clCapa = (uint)Math.Min(UInt32.MaxValue, capacity);
                 var fullPath = Path.GetFullPath(path);
                 if (clCapa > 64*1024 - blockCapacity && SparseFile.VolumeSupportsSparseFiles(Path.GetPathRoot(fullPath)))
                 {
@@ -66,14 +70,42 @@ namespace Panda.Core.IO.MemoryMapped
                     SparseFile.SetSparseRange(file.SafeFileHandle, blockSize,clCapa-blockSize);
                 }
             }
-            return new MemoryMappedFileSpace(MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, capacity, MemoryMappedFileAccess.ReadWrite),path);
+            return new MemoryMappedFileSpace(MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, capacity, MemoryMappedFileAccess.ReadWrite),path,clCapa);
         }
 
-        public override unsafe void Resize(long newSize)
+        public override bool CanGrow
         {
-            // This method might use path if it is implemented
-            _path.Ignore();
-            throw new NotImplementedException("MemoryMappedFileSpace.Resize is not implemented.");
+            get { return true; }
+        }
+
+        public override bool CanShrink
+        {
+            get { return true; }
+        }
+
+        public override void Resize(long newSize)
+        {
+            var cappedNewSize = (uint)Math.Min(UInt32.MaxValue, newSize);
+
+            if (cappedNewSize > _nonSparseSize)
+            {
+                _nonSparseSize = cappedNewSize;
+            }
+            else if(_nonSparseSize - newSize > 64*1024)
+            {
+                // A sufficient amount of free space has accumulated beyond the break to 
+                // replace with a sparse region.
+                var wrappedFileHandle = new SafeFileHandle(MappedFile.SafeMemoryMappedFileHandle.DangerousGetHandle(), false);
+                SparseFile.SetSparseRange(wrappedFileHandle,cappedNewSize,_nonSparseSize-cappedNewSize);
+                _nonSparseSize = cappedNewSize;
+            }
+            else
+            {
+                // No change in size or not shrunk sufficiently, ignore this resize
+            }
+
+            
+            
         }
     }
 }

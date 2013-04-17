@@ -151,8 +151,17 @@ namespace Panda.Core.IO
             var emptyBlockCount = head.Count;
             if (emptyBlockCount == 0)
             {
-                newOffset = Break;
-                Break = (BlockOffset)(Break.Offset + 1);
+                if (Break.Offset < TotalBlockCount)
+                {
+                    newOffset = Break;
+                    Break = (BlockOffset) (Break.Offset + 1);
+                    if(Space.CanGrow)
+                        Space.Resize(Break.Offset*BlockSize);
+                }
+                else
+                {
+                    throw new OutofDiskSpaceException("Reached configured limit of " + TotalBlockCount + " allocated blocks.");
+                }
             }
             else
             {
@@ -207,19 +216,32 @@ namespace Panda.Core.IO
 
         public virtual void FreeBlock(BlockOffset blockOffset)
         {
-            var head = GetEmptyListBlock(EmptyListOffset);
-
-            // If we don't have enough space to add a new offset
-            // then prepend a new empty list block.
-            if (head.Count >= head.ListCapacity)
+            if (blockOffset.Offset + 1 == Break.Offset)
             {
-                var newHead = AllocateEmptyListBlock();
-                newHead.ContinuationBlockOffset = head.Offset;
-                EmptyListOffset = newHead.Offset;
-                head = newHead;
+                // The block to be free lies next to break,
+                // reduce break instead
+                Break = (BlockOffset) (Break.Offset - 1u);
+                if(Space.CanShrink)
+                    Space.Resize(Break.Offset*BlockSize);
             }
-            
-            head.Append(new[] {blockOffset});
+            else
+            {
+                // The block lies within our allocated space
+                // We need to track it in our empty space list.
+                var head = GetEmptyListBlock(EmptyListOffset);
+
+                // If we don't have enough space to add a new offset
+                // then prepend a new empty list block.
+                if (head.Count >= head.ListCapacity)
+                {
+                    var newHead = AllocateEmptyListBlock();
+                    newHead.ContinuationBlockOffset = head.Offset;
+                    EmptyListOffset = newHead.Offset;
+                    head = newHead;
+                }
+
+                head.Append(new[] { blockOffset }); 
+            }
         }
 
         public virtual IDirectoryBlock GetDirectoryBlock(BlockOffset blockOffset)

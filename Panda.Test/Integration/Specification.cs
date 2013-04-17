@@ -34,7 +34,7 @@ namespace Panda.Test.Integration
                 File.Delete(vfsFileName);
 
             // capacity 10 MB
-            const uint cap = 10*1024*1024;
+            const uint cap = 10 * 1024 * 1024;
 
             // create the virtual file system on the harddisk
             using (var Disk2 = VirtualDisk.CreateNew(vfsFileName, cap))
@@ -57,7 +57,7 @@ namespace Panda.Test.Integration
             var vfsFileName = Path.Combine(typeof(Specification).Name, @"vfs.panda");
 
             // remove the file if it exists (this is to deal with the case where an earlier test failed.
-            if(File.Exists(vfsFileName))
+            if (File.Exists(vfsFileName))
                 File.Delete(vfsFileName);
 
             using (var Disk2 = VirtualDisk.CreateNew(vfsFileName, Capacity))
@@ -69,17 +69,17 @@ namespace Panda.Test.Integration
 
                 // check that the content can be read correctly
                 Assert.That(
-                    (new StreamReader(((VirtualFile) Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
+                    (new StreamReader(((VirtualFile)Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
                     Is.EqualTo("test"));
                 Assert.That(
-                    (new StreamReader(((VirtualFile) Disk2.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd
+                    (new StreamReader(((VirtualFile)Disk2.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd
                         (), Is.EqualTo("test2"));
 
                 // check that the content is not the same
                 Assert.That(
-                    (new StreamReader(((VirtualFile) Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
+                    (new StreamReader(((VirtualFile)Disk.Root.Navigate("peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
                     Is.Not.EqualTo(
-                        (new StreamReader(((VirtualFile) Disk2.Root.Navigate("peter.txt")).Open(), Encoding.UTF8))
+                        (new StreamReader(((VirtualFile)Disk2.Root.Navigate("peter.txt")).Open(), Encoding.UTF8))
                             .ReadToEnd()));
 
             }
@@ -141,12 +141,12 @@ namespace Panda.Test.Integration
             const string newName = "bob.txt";
             peter.Rename(newName);
 
-            Assert.That(Disk.Root.ContentNames,Is.EquivalentTo(new[]{newName}));
-            Assert.That(peter.Name,Is.EqualTo(newName));
-            Assert.That(peter.FullName,Is.EqualTo(VirtualFileSystem.SeparatorChar + newName));
+            Assert.That(Disk.Root.ContentNames, Is.EquivalentTo(new[] { newName }));
+            Assert.That(peter.Name, Is.EqualTo(newName));
+            Assert.That(peter.FullName, Is.EqualTo(VirtualFileSystem.SeparatorChar + newName));
 
-            Assert.That(peter.Size,Is.EqualTo(sizeOrig),"Size stays the same");
-            Assert.That(ReadToEnd(peter),Is.EqualTo(data));
+            Assert.That(peter.Size, Is.EqualTo(sizeOrig), "Size stays the same");
+            Assert.That(ReadToEnd(peter), Is.EqualTo(data));
         }
 
         [Test]
@@ -164,17 +164,17 @@ namespace Panda.Test.Integration
             Assert.That(dir.FullName, Is.EqualTo(VirtualFileSystem.SeparatorChar + newName));
 
             Assert.That(ReadToEnd(peter), Is.EqualTo(data));
-            Assert.That(peter.FullName,Is.StringStarting(dir.FullName));
+            Assert.That(peter.FullName, Is.StringStarting(dir.FullName));
         }
 
-        [Test,ExpectedException(typeof(PathAlreadyExistsException))]
+        [Test, ExpectedException(typeof(PathAlreadyExistsException))]
         public void RenameFileConflict()
         {
             const string data = "Hello World";
             const string newName = "bob.txt";
             var peter = Disk.Root.CreateFile("peter.txt", data);
             Disk.Root.CreateFile("bob.txt", data);
-            
+
             peter.Rename(newName);
         }
 
@@ -222,25 +222,25 @@ namespace Panda.Test.Integration
             Assert.That(Disk.Root.CreateDirectory("b"), Is.AssignableTo<VirtualDirectory>());
 
             // move file into other directory
-            ((VirtualFile) Disk.Root.Navigate("/a/peter.txt")).Move((VirtualDirectory)Disk.Root.Navigate("b"));
+            ((VirtualFile)Disk.Root.Navigate("/a/peter.txt")).Move((VirtualDirectory)Disk.Root.Navigate("b"));
 
             // check if file was moved
             Assert.That(Disk.Root.Navigate("/b/peter.txt"), Is.AssignableTo<VirtualFile>());
             Assert.That(((VirtualDirectory)Disk.Root.Navigate("/a")).Count, Is.EqualTo(0));
 
             // copy file to original directory
-            ((VirtualFile) Disk.Root.Navigate("/b/peter.txt")).Copy((VirtualDirectory)Disk.Root.Navigate("a"));
-            
+            ((VirtualFile)Disk.Root.Navigate("/b/peter.txt")).Copy((VirtualDirectory)Disk.Root.Navigate("a"));
+
             // check if both files have the same content
             Assert.That(
-                (new StreamReader(((VirtualFile) Disk.Root.Navigate("/b/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
-                Is.EqualTo((new StreamReader(((VirtualFile) Disk.Root.Navigate("/a/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
+                (new StreamReader(((VirtualFile)Disk.Root.Navigate("/b/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
+                Is.EqualTo((new StreamReader(((VirtualFile)Disk.Root.Navigate("/a/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
 
             // move directory into other directory
             ((VirtualDirectory)Disk.Root.Navigate("a")).Move((VirtualDirectory)Disk.Root.Navigate("b"));
 
             // check if directory was moved
-            Assert.That(Disk.Root.Navigate("/b/a"),Is.AssignableTo<VirtualDirectory>());
+            Assert.That(Disk.Root.Navigate("/b/a"), Is.AssignableTo<VirtualDirectory>());
             Assert.That(Disk.Root.Count, Is.EqualTo(1));
 
             // copy directory to root
@@ -248,8 +248,8 @@ namespace Panda.Test.Integration
 
             // check if file was copied too
             Assert.That(
-                (new StreamReader(((VirtualFile) Disk.Root.Navigate("/a/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
-                Is.EqualTo((new StreamReader(((VirtualFile) Disk.Root.Navigate("/b/a/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
+                (new StreamReader(((VirtualFile)Disk.Root.Navigate("/a/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd(),
+                Is.EqualTo((new StreamReader(((VirtualFile)Disk.Root.Navigate("/b/a/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
         }
 
         /// <summary>
@@ -261,9 +261,9 @@ namespace Panda.Test.Integration
             const string oldFileName = "peter.txt";
             const string newFileName = "peter_new.txt";
 
-            if(File.Exists(oldFileName))
+            if (File.Exists(oldFileName))
                 File.Delete(oldFileName);
-            
+
             if (File.Exists(newFileName))
                 File.Delete(newFileName);
 
@@ -313,7 +313,7 @@ namespace Panda.Test.Integration
             Disk.Root.Navigate("f").Copy((VirtualDirectory)Disk.Root.Navigate("q"));
 
             // check size of root block
-            Assert.That(Disk.Root.Size, Is.EqualTo(2*43285));
+            Assert.That(Disk.Root.Size, Is.EqualTo(2 * 43285));
         }
 
         /// <summary>
@@ -323,11 +323,11 @@ namespace Panda.Test.Integration
         public void CreateLargeFile()
         {
             // create large file
-            const int largeFileLength = 6*1024*1024;
+            const int largeFileLength = 6 * 1024 * 1024;
             Assert.That(Disk.Root.CreateFile("f", new byte[largeFileLength]), Is.AssignableTo<VirtualFile>());
 
             // open the large file
-            var stream = ((VirtualFile) Disk.Root.Navigate("f")).Open();
+            var stream = ((VirtualFile)Disk.Root.Navigate("f")).Open();
 
             // check if reported file size is the same
             Assert.That(Disk.Root.Navigate("f").Size, Is.EqualTo(largeFileLength));
@@ -341,8 +341,41 @@ namespace Panda.Test.Integration
             Assert.That(result.Length, Is.EqualTo(largeFileLength));
 
             // check if its all zero
-            for (var i = 0; i < largeFileLength; i++ )
-                Assert.That(result[i], Is.EqualTo(0),"byte at index " + i + ", total length is " + largeFileLength);
+            for (var i = 0; i < largeFileLength; i++)
+                Assert.That(result[i], Is.EqualTo(0), "byte at index " + i + ", total length is " + largeFileLength);
+        }
+
+        /// <summary>
+        /// creates a large file, s.t. file continuation blocks are needed, deletes the file and creates another large file
+        /// causing changes to the break to happen.
+        /// </summary>
+        [Test]
+        public void CreateDeleteCreateLargeFile()
+        {
+            // create large file
+            const int largeFileLength = 6 * 1024 * 1024;
+            VirtualFile f;
+            Assert.That(f = Disk.Root.CreateFile("f", new byte[largeFileLength]), Is.AssignableTo<VirtualFile>());
+
+            f.Delete();
+
+            var secondLargeFile = new byte[largeFileLength];
+            int i;
+            for (i = 0; i < secondLargeFile.Length; i++)
+                secondLargeFile[i] = (byte) ((i + 1)%Byte.MaxValue);
+
+            f = Disk.Root.CreateFile("g", secondLargeFile);
+
+            using (var s = f.Open())
+            {
+                for (i = 0; i < secondLargeFile.Length; i++)
+                {
+                    var r = s.ReadByte();
+                    Assert.That(r,Is.GreaterThanOrEqualTo(0),
+                        "EOF should not appear before " + secondLargeFile.Length + " but occured at " + i + ".");
+                    Assert.That(r,Is.EqualTo(secondLargeFile[i]),"Value not as expected.");
+                }
+            }
         }
 
         /// <summary>
@@ -361,7 +394,7 @@ namespace Panda.Test.Integration
                 vd.CreateDirectory(name);
             }
 
-            Assert.That(vd.ContentNames,Is.EquivalentTo(expectedNames));
+            Assert.That(vd.ContentNames, Is.EquivalentTo(expectedNames));
         }
 
         /// <summary>
@@ -440,7 +473,7 @@ namespace Panda.Test.Integration
             var buffer = Enumerable.Repeat(guard, 20).ToArray();
             var bytesRead = str.Read(buffer, 0, 20);
             Assert.That(bytesRead, Is.EqualTo(data.Length), "bytes read");
-            Assert.That(Encoding.UTF8.GetString(buffer.Take(bytesRead).ToArray()),Is.EqualTo(data));
+            Assert.That(Encoding.UTF8.GetString(buffer.Take(bytesRead).ToArray()), Is.EqualTo(data));
             Assert.That(buffer.Skip(data.Length), Is.All.EqualTo(guard), "The extra region of the buffer was changed. This indicates an error in the stream implementation");
         }
 
@@ -465,7 +498,7 @@ namespace Panda.Test.Integration
             var buffer = Enumerable.Repeat(guard, 20).ToArray();
             var bytesRead = str.Read(buffer, 0, 20);
             Assert.That(bytesRead, Is.EqualTo(20), "bytes read");
-            Assert.That(Encoding.UTF8.GetString(buffer,0,bytesRead), Is.EqualTo(data.Substring(0,bytesRead)));
+            Assert.That(Encoding.UTF8.GetString(buffer, 0, bytesRead), Is.EqualTo(data.Substring(0, bytesRead)));
             var readSoFar = bytesRead;
 
             // read again
@@ -477,8 +510,8 @@ namespace Panda.Test.Integration
             // read across edge
             var largeBuffer = new byte[VirtualFileSystem.DefaultBlockSize];
             bytesRead = str.Read(largeBuffer, 0, largeBuffer.Length);
-            Assert.That(bytesRead,Is.LessThanOrEqualTo(largeBuffer.Length),"Bytes read compared to buffer length.");
-            Assert.That(Encoding.UTF8.GetString(largeBuffer,0,bytesRead),Is.EqualTo(data.Substring(readSoFar,bytesRead)));
+            Assert.That(bytesRead, Is.LessThanOrEqualTo(largeBuffer.Length), "Bytes read compared to buffer length.");
+            Assert.That(Encoding.UTF8.GetString(largeBuffer, 0, bytesRead), Is.EqualTo(data.Substring(readSoFar, bytesRead)));
         }
 
         [Test]
@@ -487,23 +520,23 @@ namespace Panda.Test.Integration
             Disk.Root.Import("../../../Panda.Core/Core");
 
             var ioAny = Disk.Navigate("/Core/IO");
-            Assert.That(ioAny,Is.Not.Null,"result of navigating to IO");
-            Assert.That(ioAny,Is.AssignableTo<VirtualDirectory>(),"IO");
-            var ioDir = (VirtualDirectory) ioAny;
+            Assert.That(ioAny, Is.Not.Null, "result of navigating to IO");
+            Assert.That(ioAny, Is.AssignableTo<VirtualDirectory>(), "IO");
+            var ioDir = (VirtualDirectory)ioAny;
 
-            Assert.That(ioDir.Contains("RawBlockManager.cs"),Is.True,"IO should contain entity named RawBlockManager.cs");
+            Assert.That(ioDir.Contains("RawBlockManager.cs"), Is.True, "IO should contain entity named RawBlockManager.cs");
             var rbmAny = ioDir.Navigate("RawBlockManager.cs");
 
             Assert.That(rbmAny, Is.Not.Null, "result of navigating to RawBlockManager.cs");
             Assert.That(rbmAny, Is.AssignableTo<VirtualFile>(), "RawBlockManager.cs");
-            var rbmFile = (VirtualFile) rbmAny;
+            var rbmFile = (VirtualFile)rbmAny;
             Debug.Assert(rbmFile != null);
             Assert.That(rbmFile.Size, Is.GreaterThanOrEqualTo(VirtualFileSystem.DefaultBlockSize));
             var contents = ReadToEnd(rbmFile);
-            Assert.That(contents.Length,Is.GreaterThanOrEqualTo(VirtualFileSystem.DefaultBlockSize));
+            Assert.That(contents.Length, Is.GreaterThanOrEqualTo(VirtualFileSystem.DefaultBlockSize));
             Assert.That(contents, Is.StringContaining("destinationRemainingLength"));
 
-            Assert.That(rbmAny.FullName, Is.EqualTo("/Core/IO/RawBlockManager.cs".Replace('/',VirtualFileSystem.SeparatorChar)));
+            Assert.That(rbmAny.FullName, Is.EqualTo("/Core/IO/RawBlockManager.cs".Replace('/', VirtualFileSystem.SeparatorChar)));
         }
 
         #region Disposal

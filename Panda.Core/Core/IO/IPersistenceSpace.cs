@@ -16,7 +16,9 @@ namespace Panda.Core.IO
         /// <summary>
         /// Indicates whether the space can be resized.
         /// </summary>
-        bool CanResize { get; }
+        bool CanShrink { get; }
+
+        bool CanGrow { get; }
 
         /// <summary>
         /// Resizes the space, maintaining content that isn't in a region affected by the resizing.

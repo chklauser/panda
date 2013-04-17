@@ -65,7 +65,16 @@ namespace Panda.Core.IO.InMemory
 
         public long Capacity { get; private set; }
 
-        public bool CanResize
+        public bool CanGrow
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return true;
+            }
+        }
+
+        public bool CanShrink
         {
             get
             {
@@ -87,7 +96,7 @@ namespace Panda.Core.IO.InMemory
                 // But in memory spaces **must** fit into memory and that memory will be allocated immediately on the heap, all 3TB at once :-P
 
                 // Large memory mapped regions without persistence are less problematic, because they are not part of the heap
-                // in both cases, the OS should not reserve all of the memory immediately but only when the pages are touched first (but I haven't verified this)
+                // in both cases, the OS should not reserve all of the memory immediately but only when the pages are touched first (but we haven't verified this)
                 throw new ArgumentOutOfRangeException("newSize",string.Format("In memory space does not support capacities beyond Int32.MaxValue ({0}).", Int32.MaxValue));
             }
         }

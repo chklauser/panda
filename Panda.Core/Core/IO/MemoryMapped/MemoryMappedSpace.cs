@@ -95,7 +95,16 @@ namespace Panda.Core.IO.MemoryMapped
 
         #region Resizing (not implemented)
 
-        public virtual bool CanResize
+        public virtual bool CanGrow
+        {
+            get
+            {
+                ThrowIfDisposed();
+                return false;
+            }
+        }
+
+        public virtual bool CanShrink
         {
             get
             {
