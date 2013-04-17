@@ -50,6 +50,8 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>SingleInstanceManagers.tt</DependentUpon>
     </Compile>
+    <Compile Include="Core\IO\MemoryMapped\NativeMethod.cs" />
+    <Compile Include="Core\IO\MemoryMapped\SparseFile.cs" />
     <Compile Include="Core\IO\RawBlock.cs" />
     <Compile Include="Core\IO\RawContinuedBlock.cs" />
     <Compile Include="Core\IO\RawDirectoryEntryListBlock.cs" />

@@ -50,13 +50,22 @@ namespace Panda.Core.IO.MemoryMapped
         /// <para>This method doesn't fully initialize a disk file, only the block capacity and block size fields.</para></remarks>
         public static MemoryMappedFileSpace CreateNew(string path, uint blockSize, uint blockCapacity)
         {
+            var capacity = blockSize * (long)blockCapacity;
             using (var file = new FileStream(path,FileMode.CreateNew,FileAccess.Write))
             {
                 var writer = new BinaryWriter(file, Encoding.UTF8, true);
                 writer.Write(blockCapacity);
                 writer.Write(blockSize);
+
+                var clCapa = (uint)Math.Min(UInt32.MaxValue, capacity);
+                var fullPath = Path.GetFullPath(path);
+                if (clCapa > 64*1024 - blockCapacity && SparseFile.VolumeSupportsSparseFiles(Path.GetPathRoot(fullPath)))
+                {
+                    SparseFile.Convert(file.SafeFileHandle);
+                    file.Seek(capacity,SeekOrigin.Begin);
+                    SparseFile.SetSparseRange(file.SafeFileHandle, blockSize,clCapa-blockSize);
+                }
             }
-            var capacity =  blockSize * (long) blockCapacity;
             return new MemoryMappedFileSpace(MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, capacity, MemoryMappedFileAccess.ReadWrite),path);
         }
 

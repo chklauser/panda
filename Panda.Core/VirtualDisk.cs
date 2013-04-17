@@ -56,7 +56,7 @@ namespace Panda
             var blockCount = (uint) (capacity/VirtualFileSystem.DefaultBlockSize + 1u);
             var space = MemoryMappedFileSpace.CreateNew(path, VirtualFileSystem.DefaultBlockSize,
                                             blockCount);
-            RawBlockManager.Initialize(space, blockCount,VirtualFileSystem.DefaultBlockSize);
+            RawBlockManager.Initialize(space, blockCount);
             return _wrapVirtualDisk(space);
         }
 
