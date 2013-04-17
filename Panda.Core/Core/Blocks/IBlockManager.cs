@@ -160,5 +160,9 @@ namespace Panda.Core.Blocks
 
         #endregion
 
+        /// <summary>
+        /// Instruct implementation to flush its buffers, writing their contents to underlying storage (if applicable)
+        /// </summary>
+        void Flush();
     }
 }

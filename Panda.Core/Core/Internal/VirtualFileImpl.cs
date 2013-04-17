@@ -66,6 +66,8 @@ namespace Panda.Core.Internal
             _parentDirectory.AddDirectoryEntry(newDe);
 
             _name = newName;
+            _disk.BlockManager.Flush();
+
             OnPropertyChanged("Name");
             OnPropertyChanged("FullName");
 
@@ -115,6 +117,8 @@ namespace Panda.Core.Internal
                 _disk.BlockManager.FreeBlock(de);
             }
 
+            _disk.BlockManager.Flush();
+
             // Notify disk of this deletion, this is necessary to keep the cache up to date
             _disk.OnDelete(this);
         }
@@ -149,6 +153,8 @@ namespace Panda.Core.Internal
             _name = newName;
             _parentDirectory = destination;
 
+            _disk.BlockManager.Flush();
+
             OnPropertyChanged("Name");
             OnPropertyChanged("ParentDirectory");
             OnPropertyChanged("FullName");
@@ -175,9 +181,14 @@ namespace Panda.Core.Internal
 
         }
 
-        private void _copy(VirtualDirectoryImpl destination)
+        private void _copy(VirtualDirectory destination)
         {
-            destination.CreateFile(Name, Open());
+            using (var dataStream = Open())
+            {
+                destination.CreateFile(Name, dataStream);
+            }
+
+            _disk.BlockManager.Flush();
         }
 
         public BlockOffset CacheKey

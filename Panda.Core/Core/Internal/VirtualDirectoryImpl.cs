@@ -286,6 +286,8 @@ namespace Panda.Core.Internal
 
             var dir = _disk.GetDirectory(this, de);
 
+            _disk.BlockManager.Flush();
+
             // No need to NotifyCollectionChanged here, AddDirectoryEntry already did that
 
             return dir;
@@ -433,6 +435,8 @@ namespace Panda.Core.Internal
             // return VirtualFile
             var file = _disk.GetFile(this, de);
 
+            _disk.BlockManager.Flush();
+
             // No need to notify collection changed, since AddDirectoryEntry already handled this
 
             return file;
@@ -490,6 +494,9 @@ namespace Panda.Core.Internal
             _parentDirectory.DeleteDirectoryEntry(tuple);
 
             _name = newName;
+
+            _disk.BlockManager.Flush();
+
             OnPropertyChanged("Name");
             OnPropertyChanged("FullName");
         }
@@ -508,6 +515,8 @@ namespace Panda.Core.Internal
             {
                  node.Delete();
             }
+
+            _disk.BlockManager.Flush();
 
             // Notify the disk of this deletion. Necessary to keep the cache consistent
             _disk.OnDelete(this);
@@ -569,6 +578,8 @@ namespace Panda.Core.Internal
 
             _name = newName;
             _parentDirectory = destination;
+
+            _disk.BlockManager.Flush();
 
             OnPropertyChanged("Name");
             OnPropertyChanged("FullName");

@@ -3,16 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using NUnit.Framework;
 using Panda.Core;
-using Panda.Core.Blocks;
-using Panda.Core.IO;
-using Panda.Core.IO.MemoryMapped;
-using Panda.Test.Unit;
 
 namespace Panda.Test.Integration
 {
@@ -222,14 +216,14 @@ namespace Panda.Test.Integration
             Assert.That(Disk.Root.CreateDirectory("b"), Is.AssignableTo<VirtualDirectory>());
 
             // move file into other directory
-            ((VirtualFile)Disk.Root.Navigate("/a/peter.txt")).Move((VirtualDirectory)Disk.Root.Navigate("b"));
+            Disk.Root.Navigate("/a/peter.txt").Move((VirtualDirectory)Disk.Root.Navigate("b"));
 
             // check if file was moved
             Assert.That(Disk.Root.Navigate("/b/peter.txt"), Is.AssignableTo<VirtualFile>());
             Assert.That(((VirtualDirectory)Disk.Root.Navigate("/a")).Count, Is.EqualTo(0));
 
             // copy file to original directory
-            ((VirtualFile)Disk.Root.Navigate("/b/peter.txt")).Copy((VirtualDirectory)Disk.Root.Navigate("a"));
+            Disk.Root.Navigate("/b/peter.txt").Copy((VirtualDirectory)Disk.Root.Navigate("a"));
 
             // check if both files have the same content
             Assert.That(
@@ -237,14 +231,14 @@ namespace Panda.Test.Integration
                 Is.EqualTo((new StreamReader(((VirtualFile)Disk.Root.Navigate("/a/peter.txt")).Open(), Encoding.UTF8)).ReadToEnd()));
 
             // move directory into other directory
-            ((VirtualDirectory)Disk.Root.Navigate("a")).Move((VirtualDirectory)Disk.Root.Navigate("b"));
+            Disk.Root.Navigate("a").Move((VirtualDirectory)Disk.Root.Navigate("b"));
 
             // check if directory was moved
             Assert.That(Disk.Root.Navigate("/b/a"), Is.AssignableTo<VirtualDirectory>());
             Assert.That(Disk.Root.Count, Is.EqualTo(1));
 
             // copy directory to root
-            ((VirtualDirectory)Disk.Root.Navigate("/b/a")).Copy((VirtualDirectory)Disk.Root);
+            Disk.Root.Navigate("/b/a").Copy(Disk.Root);
 
             // check if file was copied too
             Assert.That(
@@ -271,7 +265,7 @@ namespace Panda.Test.Integration
             Assert.That(Disk.Root.CreateFile(oldFileName, Encoding.UTF8.GetBytes("test0mat")), Is.AssignableTo<VirtualFile>());
 
             // export the file
-            ((VirtualFile)Disk.Root.Navigate(oldFileName)).Export(@"peter.txt");
+            Disk.Root.Navigate(oldFileName).Export(@"peter.txt");
 
             // move file on host filesytem
             File.Move(oldFileName, newFileName);

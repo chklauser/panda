@@ -360,6 +360,11 @@ namespace Panda.Core.IO
             }
         }
 
+        public void Flush()
+        {
+            Space.Flush();
+        }
+
         #endregion
 
         protected IRawPersistenceSpace Space

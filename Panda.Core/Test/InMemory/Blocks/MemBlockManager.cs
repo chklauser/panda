@@ -215,6 +215,11 @@ namespace Panda.Test.InMemory.Blocks
             get { return _dataBlockCapacity; }
         }
 
+        public void Flush()
+        {
+            // Nothing to be done here
+        }
+
         public int MetaBlockCapacity
         {
             get { return _metaBlockCapacity; }
