@@ -189,12 +189,52 @@ namespace Panda.UI
 
         protected void ExecuteImport(object sender, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            var ofd = new OpenFileDialog
+                {
+                    CheckFileExists = true,
+                    Multiselect = true,
+                    Title = "Import",
+                    CheckPathExists = true,
+                    InitialDirectory = Environment.CurrentDirectory,
+                };
+            var userClickedOk = ofd.ShowDialog(this);
+
+            // Abort if the user wasn't in the mood to import anything after all
+            if (!userClickedOk.Value) 
+                return;
+
+            var dvm = e.Parameter as DiskViewModel;
+            var vd = e.Parameter as VirtualDirectory;
+            if (dvm != null)
+            {
+                // User clicked on a disk (which is wrapped in a DiskViewModel). Import all the stuff
+                foreach (var fileName in ofd.FileNames)
+                {
+                    if ((new FileInfo(fileName)).Length < dvm.Disk.Capacity - dvm.Disk.Root.Size)
+                    {
+                        dvm.Disk.Root.Import("peter_new.txt");
+                        ViewModel.StatusText = "Arnold was in " + dvm.Name;
+                    }
+                }
+            }
+                //ViewModel.StatusText = "Files imported in " + dvm.Name;
+            else if (vd != null)
+            {
+                // User clicked on directory. Import all the stuff
+                foreach (var fileName in ofd.FileNames)
+                {
+                    if ((new FileInfo(fileName)).Length < vd.getDisk().Capacity - vd.getDisk().Size)
+                    {
+                        vd.Import(fileName);
+                    }
+                }
+                ViewModel.StatusText = "Files imported in " + vd.Name;
+            }
         }
 
         protected void CanImport(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = false;
+            e.CanExecute = true;
         }
 
         protected void CanOpenDisk(object sender, CanExecuteRoutedEventArgs e)
@@ -244,7 +284,7 @@ namespace Panda.UI
             ViewModel.StatusText = "Directory created in " + parentName;
         }
 
-        private void _newDirectory(VirtualDirectory parent)
+        private Panda.VirtualDirectory _newDirectory(VirtualDirectory parent)
         {
             var names = new HashSet<String>(parent.ContentNames);
             var counter = 1;
@@ -256,7 +296,9 @@ namespace Panda.UI
                 counter++;
             }
 
-            parent.CreateDirectory(name);
+            var dir = parent.CreateDirectory(name);
+
+            return dir;
         }
 
         protected void CanNewDirectory(object sender, CanExecuteRoutedEventArgs e)
