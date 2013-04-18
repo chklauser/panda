@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -23,6 +24,10 @@ namespace Panda.UI
     public partial class MainWindow
     {
         public const string FileSelectionFilter = "Panda Virtual Disks|*.panda|All files|*.*";
+
+        public Collection<VirtualNode> pasteBufferNodes = new Collection<VirtualNode>();
+        public VirtualDisk pasteBufferDisk;
+        public Boolean isCut;
 
         public MainWindow()
         {
@@ -153,14 +158,181 @@ namespace Panda.UI
 
         protected void CanCopy(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = false;
+            var vd = e.Parameter as VirtualNode;
+            if (vd != null)
+            {
+                e.CanExecute = true;
+            }
+            else
+            {
+                e.CanExecute = false;
+            }
         }
 
         protected void ExecuteCopy(object sender, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            // copy can only happen on a virtualnode
+            var vn = e.Parameter as VirtualNode;
+            if (vn != null)
+            {
+                // buffer from which disk the node is
+                pasteBufferDisk = vn.getDisk();
+                // empty pasteBufferNodes   
+                pasteBufferNodes.Clear();
+                // add selected node to pasteBufferNodes
+                pasteBufferNodes.Add(vn);
+                isCut = false;
+            }
+            else
+            {
+                throw new PandaException("No virtualnode clicked.");
+            }
         }
 
+        private void CanCut(object sender, CanExecuteRoutedEventArgs e)
+        {
+            var vd = e.Parameter as VirtualNode;
+            if (vd != null)
+            {
+                e.CanExecute = true;
+            }
+            else
+            {
+                e.CanExecute = false;
+            }
+        }
+
+        private void ExecuteCut(object sender, ExecutedRoutedEventArgs e)
+        {
+            // copy can only happen on a virtualnode
+            var vn = e.Parameter as VirtualNode;
+            if (vn != null)
+            {
+                // buffer from which disk the node is
+                pasteBufferDisk = vn.getDisk();
+                // empty pasteBufferNodes   
+                pasteBufferNodes.Clear();
+                // add selected node to pasteBufferNodes
+                pasteBufferNodes.Add(vn);
+                isCut = true;
+            }
+            else
+            {
+                throw new PandaException("No virtualnode clicked.");
+            }
+        }
+
+        private void CanPaste(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (pasteBufferNodes.Count > 0)
+            {
+                var targetDirectory = e.Parameter as VirtualDirectory;
+                var targetDisk = e.Parameter as DiskViewModel;
+                if (targetDirectory != null)
+                {
+                    e.CanExecute = true;
+                }
+                else if (targetDisk != null)
+                {
+                    e.CanExecute = true;
+                }
+                else
+                {
+                    e.CanExecute = false;
+                }
+            }
+            else
+            {
+                e.CanExecute = false;
+            }
+        }
+
+        private void ExecutePaste(object sender, ExecutedRoutedEventArgs e)
+        {
+            // if user clicked on a disk, the directory is the root directory
+            var dvm = e.Parameter as DiskViewModel;
+            var targetDirectory = e.Parameter as VirtualDirectory;
+            if (dvm != null)
+            {
+                targetDirectory = dvm.Disk.Root;
+            }
+
+            // paste can only happen on a virtualdirectory
+            
+            if (targetDirectory != null)
+            {
+                if (targetDirectory.getDisk() == pasteBufferDisk)
+                {
+                    // pasteBufferNodes can also be a collection of VirtualDirectories
+                    foreach (VirtualNode buffernode in pasteBufferNodes)
+                    {
+                        try
+                        {
+                            if (isCut)
+                            {
+                                buffernode.Move(targetDirectory);
+                            }
+                            else
+                            {
+                                buffernode.Copy(targetDirectory);
+                            }
+                        }
+                        catch (Panda.Core.PathAlreadyExistsException)
+                        {
+                            ViewModel.StatusText = "Paste failed because a node with the same name already exists.";
+                            return;
+                        }
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        // paste is on different disk
+                        // pasteBufferNodes can also be a collection of VirtualDirectories
+                        foreach (VirtualNode buffernode in pasteBufferNodes)
+                        {
+                            _doPasteToDifferentDisk(buffernode, targetDirectory);
+                            // if the values were cutted, not copied, we have to delete them too
+                            if (isCut)
+                            {
+                                buffernode.Delete();
+                            }
+                        }
+                    }
+                    catch (Panda.Core.PathAlreadyExistsException)
+                    {
+                        ViewModel.StatusText = "Paste failed because a node with the same name already exists.";
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                throw new PandaException("Paste on no virtualdirectory");
+            }
+            ViewModel.StatusText = "Paste successful.";
+        }
+
+        private void _doPasteToDifferentDisk(VirtualNode source, VirtualDirectory target)
+        {
+            // check if source is a directory
+            var vd = source as VirtualDirectory;
+            if (vd != null)
+            {
+                // yes => create directory & recursively call this function for all child nodes
+                var newVd = ((VirtualDirectory) target).CreateDirectory(source.Name);
+                foreach (VirtualNode child in vd)
+                {
+                    _doPasteToDifferentDisk(child, newVd);
+                }
+            }
+            else
+            {
+                // no => copy file
+                target.CreateFile(source.Name, ((VirtualFile) source).Open());
+            }
+        }
 
         protected void ExecuteRename(object sender, ExecutedRoutedEventArgs e)
         {
@@ -304,26 +476,6 @@ namespace Panda.UI
         protected void CanNewDirectory(object sender, CanExecuteRoutedEventArgs e)
         {
             e.CanExecute = e.Parameter is DiskViewModel || e.Parameter is VirtualDirectory;
-        }
-
-        private void ExecuteCut(object sender, ExecutedRoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void CanCut(object sender, CanExecuteRoutedEventArgs e)
-        {
-            e.CanExecute = false;
-        }
-
-        private void CanPaste(object sender, CanExecuteRoutedEventArgs e)
-        {
-            e.CanExecute = false;
-        }
-
-        private void ExecutePaste(object sender, ExecutedRoutedEventArgs e)
-        {
-            throw new NotImplementedException();
         }
 
         private void ExecuteDeleteNode(object sender, ExecutedRoutedEventArgs e)
