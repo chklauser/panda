@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -23,6 +24,10 @@ namespace Panda.UI
     public partial class MainWindow
     {
         public const string FileSelectionFilter = "Panda Virtual Disks|*.panda|All files|*.*";
+
+        public Collection<VirtualNode> pasteBufferNodes = new Collection<VirtualNode>();
+        public VirtualDisk pasteBufferDisk;
+        public Boolean isCut;
 
         public MainWindow()
         {
@@ -153,14 +158,137 @@ namespace Panda.UI
 
         protected void CanCopy(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = false;
+            var vd = e.Parameter as VirtualNode;
+            if (vd != null)
+            {
+                e.CanExecute = true;
+            }
+            else
+            {
+                e.CanExecute = false;
+            }
         }
 
         protected void ExecuteCopy(object sender, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            // copy can only happen on a virtualnode
+            var vn = e.Parameter as VirtualNode;
+            if (vn != null)
+            {
+                // TODO: buffer from which disk the node is
+                //pasteBufferDisk = vn.getVirtualDisk();
+                // empty pasteBufferNodes   
+                pasteBufferNodes.Clear();
+                // add selected node to pasteBufferNodes
+                pasteBufferNodes.Add(vn);
+                isCut = false;
+            }
+            else
+            {
+                throw new PandaException("No virtualnode clicked.");
+            }
         }
 
+        private void CanCut(object sender, CanExecuteRoutedEventArgs e)
+        {
+            var vd = e.Parameter as VirtualNode;
+            if (vd != null)
+            {
+                e.CanExecute = true;
+            }
+            else
+            {
+                e.CanExecute = false;
+            }
+        }
+
+        private void ExecuteCut(object sender, ExecutedRoutedEventArgs e)
+        {
+            // copy can only happen on a virtualnode
+            var vn = e.Parameter as VirtualNode;
+            if (vn != null)
+            {
+                // TODO: buffer from which disk the node is
+                //pasteBufferDisk = vn.getVirtualDisk();
+                // empty pasteBufferNodes   
+                pasteBufferNodes.Clear();
+                // add selected node to pasteBufferNodes
+                pasteBufferNodes.Add(vn);
+                isCut = true;
+            }
+            else
+            {
+                throw new PandaException("No virtualnode clicked.");
+            }
+        }
+
+        private void CanPaste(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (pasteBufferNodes.Count > 0)
+            {
+                var targetDirectory = e.Parameter as VirtualDirectory;
+                if (targetDirectory != null)
+                {
+                    e.CanExecute = true;
+                }
+                else
+                {
+                    e.CanExecute = false;
+                }
+            }
+            else
+            {
+                e.CanExecute = false;
+            }
+        }
+
+        private void ExecutePaste(object sender, ExecutedRoutedEventArgs e)
+        {
+            // paste can only happen on a virtualdirectory
+            var targetDirectory = e.Parameter as VirtualDirectory;
+            if (targetDirectory != null)
+            {
+                // TODO: get disk where the virtualnodes come from
+                //if paste is on different disk
+                // if node is directory, do for each subnode
+                //var buffervd = buffernode as VirtualDirectory;
+                //if (buffervd != null)
+                //{
+                //    // buffernode is a directory
+                //    // do for each subnode
+                //}
+                //else
+                //{
+                //    // buffernode is a file, copy it to new location
+                //    targetDirectory.CreateFile(buffernode.Name, ((VirtualFile)buffernode).Open());
+
+                // pasteBufferNodes can also be a collection of VirtualDirectories
+                foreach (VirtualNode buffernode in pasteBufferNodes)
+                {
+                    try
+                    {
+                        if (isCut)
+                        {
+                            buffernode.Move(targetDirectory);
+                        }
+                        else
+                        {
+                            buffernode.Copy(targetDirectory);
+                        }
+                    }
+                    catch (Panda.Core.PathAlreadyExistsException)
+                    {
+                        ViewModel.StatusText = "Paste failed because a node with the same name already exists.";
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                throw new PandaException("Paste on no virtualdirectory");
+            }
+            ViewModel.StatusText = "Paste successful.";
+        }
 
         protected void ExecuteRename(object sender, ExecutedRoutedEventArgs e)
         {
@@ -262,26 +390,6 @@ namespace Panda.UI
         protected void CanNewDirectory(object sender, CanExecuteRoutedEventArgs e)
         {
             e.CanExecute = e.Parameter is DiskViewModel || e.Parameter is VirtualDirectory;
-        }
-
-        private void ExecuteCut(object sender, ExecutedRoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void CanCut(object sender, CanExecuteRoutedEventArgs e)
-        {
-            e.CanExecute = false;
-        }
-
-        private void CanPaste(object sender, CanExecuteRoutedEventArgs e)
-        {
-            e.CanExecute = false;
-        }
-
-        private void ExecutePaste(object sender, ExecutedRoutedEventArgs e)
-        {
-            throw new NotImplementedException();
         }
 
         private void ExecuteDeleteNode(object sender, ExecutedRoutedEventArgs e)

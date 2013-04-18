@@ -46,6 +46,7 @@
                         <MenuItem Command="model:Commands.Import" CommandParameter="{Binding}"/>
                         <MenuItem Command="model:Commands.Export" CommandParameter="{Binding}"/>
                         <MenuItem Command="Copy" CommandParameter="{Binding}"/>
+                        <MenuItem Command="Paste" CommandParameter="{Binding}"/>
                         <MenuItem Command="Cut" CommandParameter="{Binding}"/>
                         <MenuItem Command="ApplicationCommands.Delete" CommandParameter="{Binding}"/>
                         <MenuItem Command="model:Commands.Rename" CommandParameter="{Binding}" />
