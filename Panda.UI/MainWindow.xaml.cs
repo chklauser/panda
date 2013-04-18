@@ -384,18 +384,17 @@ namespace Panda.UI
                 {
                     if ((new FileInfo(fileName)).Length < dvm.Disk.Capacity - dvm.Disk.Root.Size)
                     {
-                        dvm.Disk.Root.Import("peter_new.txt");
-                        ViewModel.StatusText = "Arnold was in " + dvm.Name;
+                        dvm.Disk.Root.Import(fileName);
                     }
                 }
+                ViewModel.StatusText = "Files imported in " + dvm.Name;
             }
-                //ViewModel.StatusText = "Files imported in " + dvm.Name;
             else if (vd != null)
             {
                 // User clicked on directory. Import all the stuff
                 foreach (var fileName in ofd.FileNames)
                 {
-                    if ((new FileInfo(fileName)).Length < vd.getDisk().Capacity - vd.getDisk().Size)
+                    if ((new FileInfo(fileName)).Length < vd.getDisk().Capacity - vd.getDisk().Root.Size)
                     {
                         vd.Import(fileName);
                     }
