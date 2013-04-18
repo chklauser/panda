@@ -175,8 +175,8 @@ namespace Panda.UI
             var vn = e.Parameter as VirtualNode;
             if (vn != null)
             {
-                // TODO: buffer from which disk the node is
-                //pasteBufferDisk = vn.getVirtualDisk();
+                // buffer from which disk the node is
+                pasteBufferDisk = vn.getDisk();
                 // empty pasteBufferNodes   
                 pasteBufferNodes.Clear();
                 // add selected node to pasteBufferNodes
@@ -208,8 +208,8 @@ namespace Panda.UI
             var vn = e.Parameter as VirtualNode;
             if (vn != null)
             {
-                // TODO: buffer from which disk the node is
-                //pasteBufferDisk = vn.getVirtualDisk();
+                // buffer from which disk the node is
+                pasteBufferDisk = vn.getDisk();
                 // empty pasteBufferNodes   
                 pasteBufferNodes.Clear();
                 // add selected node to pasteBufferNodes
@@ -227,7 +227,12 @@ namespace Panda.UI
             if (pasteBufferNodes.Count > 0)
             {
                 var targetDirectory = e.Parameter as VirtualDirectory;
+                var targetDisk = e.Parameter as DiskViewModel;
                 if (targetDirectory != null)
+                {
+                    e.CanExecute = true;
+                }
+                else if (targetDisk != null)
                 {
                     e.CanExecute = true;
                 }
@@ -244,36 +249,55 @@ namespace Panda.UI
 
         private void ExecutePaste(object sender, ExecutedRoutedEventArgs e)
         {
-            // paste can only happen on a virtualdirectory
+            // if user clicked on a disk, the directory is the root directory
+            var dvm = e.Parameter as DiskViewModel;
             var targetDirectory = e.Parameter as VirtualDirectory;
+            if (dvm != null)
+            {
+                targetDirectory = dvm.Disk.Root;
+            }
+
+            // paste can only happen on a virtualdirectory
+            
             if (targetDirectory != null)
             {
-                // TODO: get disk where the virtualnodes come from
-                //if paste is on different disk
-                // if node is directory, do for each subnode
-                //var buffervd = buffernode as VirtualDirectory;
-                //if (buffervd != null)
-                //{
-                //    // buffernode is a directory
-                //    // do for each subnode
-                //}
-                //else
-                //{
-                //    // buffernode is a file, copy it to new location
-                //    targetDirectory.CreateFile(buffernode.Name, ((VirtualFile)buffernode).Open());
-
-                // pasteBufferNodes can also be a collection of VirtualDirectories
-                foreach (VirtualNode buffernode in pasteBufferNodes)
+                if (targetDirectory.getDisk() == pasteBufferDisk)
+                {
+                    // pasteBufferNodes can also be a collection of VirtualDirectories
+                    foreach (VirtualNode buffernode in pasteBufferNodes)
+                    {
+                        try
+                        {
+                            if (isCut)
+                            {
+                                buffernode.Move(targetDirectory);
+                            }
+                            else
+                            {
+                                buffernode.Copy(targetDirectory);
+                            }
+                        }
+                        catch (Panda.Core.PathAlreadyExistsException)
+                        {
+                            ViewModel.StatusText = "Paste failed because a node with the same name already exists.";
+                            return;
+                        }
+                    }
+                }
+                else
                 {
                     try
                     {
-                        if (isCut)
+                        // paste is on different disk
+                        // pasteBufferNodes can also be a collection of VirtualDirectories
+                        foreach (VirtualNode buffernode in pasteBufferNodes)
                         {
-                            buffernode.Move(targetDirectory);
-                        }
-                        else
-                        {
-                            buffernode.Copy(targetDirectory);
+                            _doPasteToDifferentDisk(buffernode, targetDirectory);
+                            // if the values were cutted, not copied, we have to delete them too
+                            if (isCut)
+                            {
+                                buffernode.Delete();
+                            }
                         }
                     }
                     catch (Panda.Core.PathAlreadyExistsException)
@@ -288,6 +312,26 @@ namespace Panda.UI
                 throw new PandaException("Paste on no virtualdirectory");
             }
             ViewModel.StatusText = "Paste successful.";
+        }
+
+        private void _doPasteToDifferentDisk(VirtualNode source, VirtualDirectory target)
+        {
+            // check if source is a directory
+            var vd = source as VirtualDirectory;
+            if (vd != null)
+            {
+                // yes => create directory & recursively call this function for all child nodes
+                var newVd = ((VirtualDirectory) target).CreateDirectory(source.Name);
+                foreach (VirtualNode child in vd)
+                {
+                    _doPasteToDifferentDisk(child, newVd);
+                }
+            }
+            else
+            {
+                // no => copy file
+                target.CreateFile(source.Name, ((VirtualFile) source).Open());
+            }
         }
 
         protected void ExecuteRename(object sender, ExecutedRoutedEventArgs e)
