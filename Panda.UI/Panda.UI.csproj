@@ -57,6 +57,9 @@
     <Compile Include="EditableTextBlock.xaml.cs" />
     <Compile Include="Internal\CommandLabelConverter.cs" />
     <Compile Include="Internal\InformationAmountConverter.cs" />
+    <Compile Include="SearchWindow.xaml.cs">
+      <DependentUpon>SearchWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ViewModel\BrowserViewModel.cs" />
     <Compile Include="ViewModel\Commands.cs" />
     <Compile Include="ViewModel\DiskCreationViewModel.cs" />
@@ -81,6 +84,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="DiskCreationWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SearchWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

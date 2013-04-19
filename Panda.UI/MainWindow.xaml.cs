@@ -530,5 +530,48 @@ namespace Panda.UI
                }
            }
         }
+
+        private void CanSearch(object sender, CanExecuteRoutedEventArgs e)
+        {
+            var vdir = e.Parameter as VirtualDirectory;
+            var vdisk = e.Parameter as DiskViewModel;
+            if (vdir != null)
+            {
+                e.CanExecute = true;
+            }
+            else if (vdisk != null)
+            {
+                e.CanExecute = true;
+            }
+            else
+            {
+                e.CanExecute = false;
+            }
+        }
+
+        private void ExecuteSearch(object sender, ExecutedRoutedEventArgs e)
+        {
+            SearchWindow dialog;
+            var vdir = e.Parameter as VirtualDirectory;
+            var vdisk = e.Parameter as DiskViewModel;
+            if (vdir != null)
+            {
+                dialog = new SearchWindow(vdir);
+            }
+            else if (vdisk != null)
+            {
+                dialog = new SearchWindow(vdisk.Disk.Root);
+            }
+            else
+            {
+                throw new PandaException("shit blows up");
+            }
+
+            var result = dialog.ShowDialog();
+            if (!(result ?? false))
+                return;
+
+            var fileName = dialog.clickedPath;
+        }
     }
 }

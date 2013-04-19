@@ -7,8 +7,9 @@
         xmlns:borgstrup="clr-namespace:Borgstrup.EditableTextBlock" mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525" d:DataContext="{d:DesignInstance Type=model:BrowserViewModel}">
     <Window.CommandBindings>
-        <CommandBinding Command="Open" Executed="ExecuteOpenDisk" CanExecute="CanOpenDisk"/>
+        <CommandBinding Command="Open" Executed="ExecuteOpenDisk" CanExecute="CanOpenDisk" />
         <CommandBinding Command="New" Executed="ExecuteNewDisk" CanExecute="CanNewDisk" />
+        <CommandBinding Command="Search" Executed="ExecuteSearch" CanExecute="CanSearch" />
         <CommandBinding Command="Close" Executed="ExecuteCloseBrowser" CanExecute="CanCloseBrowser" />
         <CommandBinding Command="ApplicationCommands.Delete" Executed="ExecuteDeleteNode" CanExecute="CanDeleteNode" />
         <CommandBinding Command="Copy" Executed="ExecuteCopy" CanExecute="CanCopy" />
@@ -33,6 +34,7 @@
                         <MenuItem Command="model:Commands.Import" CommandParameter="{Binding}"/>
                         <MenuItem Command="model:Commands.Export" CommandParameter="{Binding}"/>
                         <MenuItem Command="Paste" CommandParameter="{Binding}"/>
+                        <MenuItem Command="Search" CommandParameter="{Binding}" />
                     </ContextMenu>
                 </StackPanel.ContextMenu>
                 <TextBlock Text="{Binding Path=Name}"/>
@@ -51,6 +53,7 @@
                         <MenuItem Command="Cut" CommandParameter="{Binding}"/>
                         <MenuItem Command="ApplicationCommands.Delete" CommandParameter="{Binding}"/>
                         <MenuItem Command="model:Commands.Rename" CommandParameter="{Binding}" />
+                        <MenuItem Command="Search" CommandParameter="{Binding}" />
                     </ContextMenu>
                 </StackPanel.ContextMenu>
                 <borgstrup:EditableTextBlock Text="{Binding Path=Name, Mode=OneWay}" Edited="RenameNode_Edited" />
@@ -77,7 +80,7 @@
             <MenuItem Header="File">
                 <MenuItem Header="_New Disk…" Command="New" />
                 <MenuItem Header="_Open Disk…" Command="Open" />
-                <MenuItem Header="E_xit" Command="Close"/>
+                <MenuItem Header="E_xit" Command="Close" />
             </MenuItem>
         </Menu>
         <StatusBar DockPanel.Dock="Bottom">
