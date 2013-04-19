@@ -7,13 +7,14 @@ using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using Borgstrup.EditableTextBlock;
 using JetBrains.Annotations;
-using Microsoft.Win32;
 using Panda.Core.Internal;
 using Panda.UI.ViewModel;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace Panda.UI
 {
@@ -351,12 +352,57 @@ namespace Panda.UI
 
         protected void ExecuteExport(object sender, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            var fbd = new FolderBrowserDialog
+            {
+                SelectedPath = Environment.CurrentDirectory,
+            };
+
+            //if (fbd.ShowDialog() == DialogResult.OK)
+            //    return;
+
+            //var result = fbd.ShowDialog();
+            //if (!(result ?? false))
+            //    return;
+
+            var userClickedOk = fbd.ShowDialog();
+
+            //// Abort if the user wasn't in the mood to open disks after all
+            //if (!userClickedOk.Value)
+            //    return;
+
+            var dvm = e.Parameter as DiskViewModel;
+            var vd = e.Parameter as VirtualDirectory;
+            var vf = e.Parameter as VirtualFile;
+            string name;
+            if (dvm != null)
+            {
+                // User clicked on a disk (which is wrapped in a DiskViewModel). Export all the stuff
+                dvm.Disk.Root.Export(fbd.SelectedPath);
+                name = dvm.Name;
+            }
+            else if (vd != null)
+            {
+                // User clicked on directory. Export all the stuff
+                vd.Export(fbd.SelectedPath);
+                name = vd.Name;
+            }
+            else if (vf != null)
+            {
+                // User clicked on directory. Export all the stuff
+                vf.Export(fbd.SelectedPath);
+                name = vf.Name;
+            }
+            else
+            {
+                return;
+            }
+
+            ViewModel.StatusText = "Files exported from " + name;
         }
 
         protected void CanExport(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = false;
+            e.CanExecute = true;
         }
 
         protected void ExecuteImport(object sender, ExecutedRoutedEventArgs e)
