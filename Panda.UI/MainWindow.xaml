@@ -60,7 +60,7 @@
             </StackPanel>
         </HierarchicalDataTemplate>
         <DataTemplate DataType="{x:Type core:VirtualFile}">
-            <StackPanel Orientation="Horizontal" MouseDown="UIElement_OnMouseDown">
+            <StackPanel Orientation="Horizontal">
                 <StackPanel.ContextMenu>
                     <ContextMenu DataContext="{Binding PlacementTarget.DataContext,
                        RelativeSource={RelativeSource Self}}" Name="diskCtxMenu">
@@ -91,6 +91,7 @@
                 <KeyBinding Key="Delete" Command="ApplicationCommands.Delete" CommandParameter="{Binding ElementName=DiskTree, Path=SelectedValue}" />
                 <KeyBinding Key="F2" Command="model:Commands.Rename" CommandParameter="{Binding ElementName=DiskTree, Path=SelectedValue}"/>
                 <KeyBinding Key="N" Modifiers="Control" Command="model:Commands.NewDirectory" CommandParameter="{Binding ElementName=DiskTree, Path=SelectedValue}" />
+                <KeyBinding Key="F3" Command="Search" CommandParameter="{Binding ElementName=DiskTree, Path=SelectedValue}" />
             </TreeView.InputBindings>
         </TreeView>
     </DockPanel>

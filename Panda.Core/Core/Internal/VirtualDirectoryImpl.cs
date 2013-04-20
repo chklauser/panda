@@ -516,10 +516,9 @@ namespace Panda.Core.Internal
             _parentDirectory.DeleteDirectoryEntry(_blockOffset);
 
             // go trough all directoryEntries (also from ContinationBlocks) and invoke Delete(), done by enumerator:
-            foreach (var node in this)
-            {
-                 node.Delete();
-            }
+            // important: make a copy of the list of children first
+            foreach (var node in this.ToArray<VirtualNode>())
+                node.Delete();
 
             _disk.BlockManager.Flush();
 

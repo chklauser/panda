@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -13,47 +15,103 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using JetBrains.Annotations;
 
 namespace Panda.UI
 {
     /// <summary>
     /// Interaction logic for SearchWindow.xaml
     /// </summary>
-    public partial class SearchWindow : Window
+    public partial class SearchWindow : Window, INotifyPropertyChanged
     {
-        private string searchString_;
-        private readonly VirtualDirectory parentNode_;
-        public string clickedPath;
-        private ObservableCollection<string> searchResults_;
+        private string _searchString;
+        private readonly VirtualDirectory _parentNode;
+        private VirtualNode _selectedNode;
+        private readonly ObservableCollection<VirtualNode> _searchResults = new ObservableCollection<VirtualNode>();
+        private bool _isRecursive = true;
+        private bool _isRegularExpression;
+        private bool _isCaseSensitive = true;
 
         public SearchWindow(VirtualDirectory parentNode)
         {
             InitializeComponent();
-            searchTextBox.DataContext = searchString_;
-            parentNode_ = parentNode;
-            searchResults_ = new ObservableCollection<string>();
+            DataContext = this;
+            _parentNode = parentNode;
+        }
+
+        public VirtualNode SelectedNode
+        {
+            get { return _selectedNode; }
+            set
+            {
+                _selectedNode = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ObservableCollection<VirtualNode> SearchResults
+        {
+            get { return _searchResults; }
+        }
+
+        public string SearchString
+        {
+            get { return _searchString; }
+            set 
+            { 
+                _searchString = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsCaseSensitive
+        {
+            get { return _isCaseSensitive; }
+            set
+            {
+                _isCaseSensitive = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsRegularExpression
+        {
+            get { return _isRegularExpression; }
+            set
+            {
+                _isRegularExpression = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsRecursive
+        {
+            get { return _isRecursive; }
+            set
+            {
+                _isRecursive = value;
+                OnPropertyChanged();
+            }
         }
 
         private void _searchButtonClick(object sender, RoutedEventArgs e)
         {
             // a new search was started, so clear the results
-            searchResults_.Clear();
+            SearchResults.Clear();
 
-            // TODO searchString is not updated, still null, so I experiment with a constant string
-            string needle = ".*B";
+            var needle = SearchString;
+            if(needle == null)
+                return;
 
-            // TODO if recursively is set
-            Boolean recursive = true;
+            var recursive = IsRecursive;
 
-            // TODO if case sensitive is set
-            Boolean caseSens = false;
+            var caseSens = IsCaseSensitive;
 
-            // TODO if regex is set
-            Boolean regex = true;
+            var regex = IsRegularExpression;
 
             var hayStack = new Stack<VirtualDirectory>();
 
-            hayStack.Push(parentNode_);
+            hayStack.Push(_parentNode);
 
             while (hayStack.Count > 0)
             {
@@ -65,7 +123,7 @@ namespace Panda.UI
                     {
                         foreach (var vn in currentElement)
                         {
-                            Match match = null;
+                            Match match;
                             try
                             {
                                 match = Regex.Match(vn.Name, needle);
@@ -78,7 +136,7 @@ namespace Panda.UI
 
                             if (match.Success)
                             {
-                                searchResults_.Add(vn.FullName);
+                                SearchResults.Add(vn);
                             }
                         }
                     }
@@ -88,7 +146,7 @@ namespace Panda.UI
                         VirtualNode bla;
                         if (currentElement.TryGetNode(needle, out bla))
                         {
-                            searchResults_.Add(bla.FullName);
+                            SearchResults.Add(bla);
                         }
                     }
                 }
@@ -98,7 +156,7 @@ namespace Panda.UI
                     {
                         foreach (var vn in currentElement)
                         {
-                            Match match = null;
+                            Match match;
                             try
                             {
                                 match = Regex.Match(vn.Name, needle, RegexOptions.IgnoreCase);
@@ -111,7 +169,7 @@ namespace Panda.UI
 
                             if (match.Success)
                             {
-                                searchResults_.Add(vn.FullName);
+                                SearchResults.Add(vn);
                             }
                         }
                     }
@@ -122,7 +180,7 @@ namespace Panda.UI
                         {
                             if (vn.Name.ToLower() == needle.ToLower())
                             {
-                                searchResults_.Add(vn.FullName);
+                                SearchResults.Add(vn);
                             }
                         }
                     }
@@ -140,6 +198,24 @@ namespace Panda.UI
                         }
                     }
                 }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            var handler = PropertyChanged;
+            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void _doubleClickedResult(object sender, MouseButtonEventArgs e)
+        {
+            if (SelectedNode != null)
+            {
+                DialogResult = true;
+                Close();
             }
         }
     }

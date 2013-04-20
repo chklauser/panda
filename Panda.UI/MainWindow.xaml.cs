@@ -4,14 +4,17 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using Borgstrup.EditableTextBlock;
 using JetBrains.Annotations;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using Panda.Core.Internal;
 using Panda.UI.ViewModel;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
@@ -90,6 +93,10 @@ namespace Panda.UI
         {
             var name = Path.GetFileNameWithoutExtension(fileName) ??
                 "disk" + Interlocked.Increment(ref _uniqueDiskNameCounter);
+
+            // have the virtual disk dispatch its notifications on the UI thread.
+            vdisk.NotificationDispatcher = Dispatcher;
+
             var diskModel = new DiskViewModel()
                 {
                     Disk = vdisk,
@@ -405,48 +412,76 @@ namespace Panda.UI
             e.CanExecute = true;
         }
 
-        protected void ExecuteImport(object sender, ExecutedRoutedEventArgs e)
+        protected async void ExecuteImport(object sender, ExecutedRoutedEventArgs e)
         {
-            var ofd = new OpenFileDialog
-                {
-                    CheckFileExists = true,
-                    Multiselect = true,
-                    Title = "Import",
-                    CheckPathExists = true,
-                    InitialDirectory = Environment.CurrentDirectory,
-                };
-            var userClickedOk = ofd.ShowDialog(this);
+            const string folderSelectionSentinel = "Folder Selection.";
+            var ofd = new CommonOpenFileDialog("Import file or folder."){AddToMostRecentlyUsedList = false,AllowNonFileSystemItems = false,RestoreDirectory = true,DefaultFileName = folderSelectionSentinel};
+            var dialogResult = ofd.ShowDialog(this);
 
             // Abort if the user wasn't in the mood to import anything after all
-            if (!userClickedOk.Value) 
+            if (dialogResult != CommonFileDialogResult.Ok) 
                 return;
 
             var dvm = e.Parameter as DiskViewModel;
             var vd = e.Parameter as VirtualDirectory;
+            VirtualDirectory targetDirectory;
             if (dvm != null)
             {
-                // User clicked on a disk (which is wrapped in a DiskViewModel). Import all the stuff
-                foreach (var fileName in ofd.FileNames)
-                {
-                    if ((new FileInfo(fileName)).Length < dvm.Disk.Capacity - dvm.Disk.Root.Size)
-                    {
-                        dvm.Disk.Root.Import(fileName);
-                    }
-                }
-                ViewModel.StatusText = "Files imported in " + dvm.Name;
+                // User clicked on a disk (which is wrapped in a DiskViewModel).
+                targetDirectory = dvm.Disk.Root;
             }
             else if (vd != null)
             {
-                // User clicked on directory. Import all the stuff
+                targetDirectory = vd;
+            }
+            else
+            {
+                ViewModel.StatusText = "No disk or directory selected. Unable to import.";
+                return;
+            }
+
+            // Perform actual import
+            try
+            {
                 foreach (var fileName in ofd.FileNames)
                 {
-                    if ((new FileInfo(fileName)).Length < vd.getDisk().Capacity - vd.getDisk().Root.Size)
-                    {
-                        vd.Import(fileName);
-                    }
+                    var actualPath = fileName;
+                    if (actualPath.EndsWith(folderSelectionSentinel))
+                        actualPath = Path.GetDirectoryName(actualPath);
+                    await targetDirectory.ImportAsync(actualPath);
                 }
-                ViewModel.StatusText = "Files imported in " + vd.Name;
+                ViewModel.StatusText = "Files imported into " + _getDiskName(targetDirectory) + ":" + targetDirectory.FullName;
             }
+            catch (Exception ex)
+            {
+                ViewModel.StatusText = "Import failed: " + _getHumanExceptionMessage(ex);
+                Trace.WriteLine("Exception during import: " + ex);
+            }
+        }
+
+        private string _getHumanExceptionMessage(Exception ex)
+        {
+            var aggregateException = ex as AggregateException;
+            var targetInvocationException = ex as TargetInvocationException;
+
+            if (aggregateException != null)
+            {
+                aggregateException = aggregateException.Flatten();
+                return _getHumanExceptionMessage(aggregateException.InnerException);
+            }
+            else if (targetInvocationException != null)
+            {
+                return _getHumanExceptionMessage(targetInvocationException.InnerException);
+            }
+            else
+            {
+                return ex.Message;
+            }
+        }
+
+        private object _getDiskName(VirtualNode virtualNode)
+        {
+            return ViewModel.OpenDisks.First(dvm => dvm.Disk == virtualNode.getDisk()).Name;
         }
 
         protected void CanImport(object sender, CanExecuteRoutedEventArgs e)
@@ -546,11 +581,6 @@ namespace Panda.UI
             e.Handled = true;
         }
 
-        private void UIElement_OnMouseDown(object sender, MouseButtonEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
         private void RenameNode_Edited(object sender, EventArgs eventArgs)
         {
             var element = sender as EditableTextBlock;
@@ -617,7 +647,19 @@ namespace Panda.UI
             if (!(result ?? false))
                 return;
 
-            var fileName = dialog.clickedPath;
+            // TODO find a way to display the search result
+        }
+
+        private IEnumerable<VirtualNode> _nodePath(VirtualNode virtualNode)
+        {
+            var buffer = new LinkedList<VirtualNode>();
+            while (virtualNode != null)
+            {
+                buffer.AddLast(virtualNode);
+                virtualNode = virtualNode.ParentDirectory;
+            }
+
+            return buffer;
         }
     }
 }

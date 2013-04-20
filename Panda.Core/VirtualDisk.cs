@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Security;
+using System.Windows.Threading;
 using JetBrains.Annotations;
 using Panda.Core;
 using Panda.Core.IO;
@@ -142,6 +143,9 @@ namespace Panda
                 
             }
         }
+
+        [CanBeNull]
+        public Dispatcher NotificationDispatcher { get; set; }
 
         public void Dispose()
         {
