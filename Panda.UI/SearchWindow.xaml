@@ -1,0 +1,15 @@
+﻿<Window x:Class="Panda.UI.SearchWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SearchWindow" Height="228.8" Width="183.2">
+    <Grid Margin="15">
+        <Grid>
+            <TextBox HorizontalAlignment="Left" x:Name="searchTextBox" Text="{Binding Path=searchString_}" VerticalAlignment="Top" Width="Auto" MinWidth="100" />
+            <Button Content="Search" HorizontalAlignment="Left" Margin="0,83,0,0" VerticalAlignment="Top" Click="_searchButtonClick"/>
+            <CheckBox x:Name="recursively" Content="search recursively" HorizontalAlignment="Left" Margin="0,23,0,0" VerticalAlignment="Top"/>
+            <CheckBox x:Name="caseSensitive" Content="case sensitive" HorizontalAlignment="Left" Margin="0,43,0,0" VerticalAlignment="Top"/>
+            <ListBox HorizontalAlignment="Left" Height="60" Margin="0,107,0,0" VerticalAlignment="Top" Width="147" RenderTransformOrigin="-0.162,1.085"/>
+            <CheckBox Content="RegEx" HorizontalAlignment="Left" Margin="0,63,0,0" VerticalAlignment="Top"/>
+        </Grid>
+    </Grid>
+</Window>

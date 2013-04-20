@@ -104,7 +104,7 @@ The API that users of the Core consume is located in the \texttt{Panda} namespac
 
 The entire system is wired up (instantiating persistence spaces, supplying them to block managers and injecting those into virtual disk implementations) by a pair of factory methods in \texttt{VirtualDisk}.
 
-\section{Requirements}
+\section{VFS Core Requirements}
 
 Each requirement which is listed is also implemented. The software elements which are involved can be found in the test class \hbox{Panda.Test/Integration/Specification.cs}. The test method is noted to each requirement.
 
@@ -261,24 +261,13 @@ The VFS is designed to maintain an index of unused blocks. The addresses of the 
 
 \section{VFS Browser}
 
-% TODO: Remove this line
-\textbf{[This section has to be completed by April 22nd.]}
-
-%TODO: Remove this text and replace it with actual content
-\emph{Give a short (1-2 paragraphs) description of what VFS Browser is.}
-
-
-\subsection{Requirements}
-
-% TODO: Remove this text and replace it with actual content
-\emph{Describe which requirements (and possibly bonus requirements) you have implemented in this part. Give a quick description (1-2 sentences) of each requirement. List the software elements (classes and or functions) that are mainly involved in implementing each requirement.}
-
+The VFS Browser is a Graphical User Interface which allowes the user to use all functions which are implemented in VFS Core. This can be done by mouse or keyboard. Further it is extended by a search function.
 
 \subsection{Design}
 
 % TODO: Remove this text and replace it with actual content
-\emph{Give an overview of the design of this part and describe in general terms how the implementation works. You can mention design patterns used, class diagrams, definition of custom file formats, network protocols, or anything else that helps understand the implementation.}
-
+\emph{Give an overview of the design of this part and describe in general terms how the implementation works. You can mention design patterns used, class diagrams, definition of custom file formats, network protocols, or anything else that helps understand the implementation.}\\
+Since our implementation is written in C\# we used WPF for our GUI. After opening the browser you get an DockPanel. We implemented a Manu on top and a StatusBar at the bottem which shows a StatusText. The actual VFS is shown as a TreeView.
 
 \subsection{Integration}
 
@@ -286,6 +275,37 @@ The VFS is designed to maintain an index of unused blocks. The addresses of the 
 \emph{If you had to change the design or API of the previous part, describe the changes and the reasons for each change here.}
 
 
+\section{VFS Browser Requirements}
+
+% TODO: Remove this text and replace it with actual content
+\emph{Describe which requirements (and possibly bonus requirements) you have implemented in this part. Give a quick description (1-2 sentences) of each requirement. List the software elements (classes and or functions) that are mainly involved in implementing each requirement.}
+
+\begin{enumerate}
+	\item \emph{The browser should be implemented on one of the following platforms: desktop, web or mobile.}\\
+		Implemented as an WPF application which runs on a desktop.\\
+		Test method:
+	\item \emph{The browser should support all operations from Part 1 (VFS core). For example, users should be able to select a file/folder and copy it to another location without using console commands.}\\
+		Possible.\\
+		Test method:
+	\item \emph{The browser should support both single and multiple selection of files/folders.}\\
+		TODO\\
+		Test method:
+	\item \emph{The browser should support keyboard navigation. The mandatory set of operations includes folder navigation, going to parent and child folders (this is optional for mobile applications due to limited keyboard functionality).}\\
+		TODO\\
+		Test method:
+	\item \emph{The browser should support mouse navigation (or touch in case of the mobile platform). The required operations are the same as in requirement 4.}\\
+		Possible.\\
+		Test method:
+	\item \emph{The browser should support file-name search based on user-given keybwords. The search should provide options for: case sensitive/ case insensitive search; restrict search to folder; restrict search to folder and subfolders.}\\
+		TODO\\
+		Test method:
+	\item \textbf{Bonus Basic:} \emph{Responsive UI, i.e. the browser does not stall during long-running operations (i.e. file search or import).}\\
+		Works for importing files.\\
+		Test method:
+	\item \textbf{Bonus Basic:} \emph{Advanced search; For example, search with wildcards/regexp, and approximate search based on some metric, e.g. edit distance.}\\
+		RegEx is implemented.\\
+		Test method:
+\end{enumerate}
 
 % PART III: Synchronization Server
 % --------------------------------------
@@ -300,10 +320,6 @@ The VFS is designed to maintain an index of unused blocks. The addresses of the 
 
 
 \subsection{Requirements}
-
-% TODO: Remove this text and replace it with actual content
-\emph{Describe which requirements (and possibly bonus requirements) you have implemented in this part. Give a quick description (1-2 sentences) of each requirement. List the software elements (classes and or functions) that are mainly involved in implementing each requirement.}
-
 
 \subsection{Design}
 
