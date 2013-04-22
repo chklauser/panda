@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Threading;
 using JetBrains.Annotations;
 using System;
 using Panda.Core;
@@ -220,9 +219,9 @@ namespace Panda
             var handler = CollectionChanged;
             if (handler != null)
             {
-                var dispatcher = getDisk().NotificationDispatcher;
+                var dispatcher = Disk.NotificationDispatcher;
                 if (dispatcher != null && !dispatcher.CheckAccess())
-                    dispatcher.BeginInvoke(DispatcherPriority.Background,handler, this, e);
+                    dispatcher.BeginInvoke(handler, this, e);
                 else
                     handler(this, e);
             }

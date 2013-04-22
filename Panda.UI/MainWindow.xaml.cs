@@ -6,12 +6,14 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Borgstrup.EditableTextBlock;
 using JetBrains.Annotations;
 using Microsoft.WindowsAPICodePack.Dialogs;
@@ -89,13 +91,34 @@ namespace Panda.UI
             }
         }
 
+        private class WindowsDispatcherAdapter : INotificationDispatcher
+        {
+            [NotNull]
+            private readonly Dispatcher _dispatcher;
+
+            public WindowsDispatcherAdapter(Dispatcher dispatcher)
+            {
+                _dispatcher = dispatcher;
+            }
+
+            public bool CheckAccess()
+            {
+                return _dispatcher.CheckAccess();
+            }
+
+            public Task BeginInvoke(Delegate method, params object[] args)
+            {
+                return _dispatcher.BeginInvoke(DispatcherPriority.Background, method, args).Task;
+            }
+        }
+
         private void _registerDisk(string fileName, VirtualDisk vdisk)
         {
             var name = Path.GetFileNameWithoutExtension(fileName) ??
                 "disk" + Interlocked.Increment(ref _uniqueDiskNameCounter);
 
             // have the virtual disk dispatch its notifications on the UI thread.
-            vdisk.NotificationDispatcher = Dispatcher;
+            vdisk.NotificationDispatcher = new WindowsDispatcherAdapter(Dispatcher);
 
             var diskModel = new DiskViewModel()
                 {
@@ -184,7 +207,7 @@ namespace Panda.UI
             if (vn != null)
             {
                 // buffer from which disk the node is
-                pasteBufferDisk = vn.getDisk();
+                pasteBufferDisk = vn.Disk;
                 // empty pasteBufferNodes   
                 pasteBufferNodes.Clear();
                 // add selected node to pasteBufferNodes
@@ -217,7 +240,7 @@ namespace Panda.UI
             if (vn != null)
             {
                 // buffer from which disk the node is
-                pasteBufferDisk = vn.getDisk();
+                pasteBufferDisk = vn.Disk;
                 // empty pasteBufferNodes   
                 pasteBufferNodes.Clear();
                 // add selected node to pasteBufferNodes
@@ -269,7 +292,7 @@ namespace Panda.UI
             
             if (targetDirectory != null)
             {
-                if (targetDirectory.getDisk() == pasteBufferDisk)
+                if (targetDirectory.Disk == pasteBufferDisk)
                 {
                     // pasteBufferNodes can also be a collection of VirtualDirectories
                     foreach (VirtualNode buffernode in pasteBufferNodes)
@@ -481,7 +504,7 @@ namespace Panda.UI
 
         private object _getDiskName(VirtualNode virtualNode)
         {
-            return ViewModel.OpenDisks.First(dvm => dvm.Disk == virtualNode.getDisk()).Name;
+            return ViewModel.OpenDisks.First(dvm => dvm.Disk == virtualNode.Disk).Name;
         }
 
         protected void CanImport(object sender, CanExecuteRoutedEventArgs e)

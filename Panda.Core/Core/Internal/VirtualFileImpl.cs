@@ -46,9 +46,9 @@ namespace Panda.Core.Internal
             get { return _parentDirectory; }
         }
 
-        public override VirtualDisk getDisk()
+        public override VirtualDisk Disk
         {
-            return _disk;
+            get { return _disk; }
         }
 
         public override void Rename(string newName)

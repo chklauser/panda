@@ -46,7 +46,7 @@ namespace Panda
             Move(destination, Name);
         }
 
-        public abstract VirtualDisk getDisk();
+        public abstract VirtualDisk Disk { get; }
 
         [PublicAPI]
         public abstract void Rename([NotNull] string newName);
