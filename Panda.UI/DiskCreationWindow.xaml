@@ -10,11 +10,11 @@
         d:DesignHeight="156" d:DesignWidth="469" SizeToContent="WidthAndHeight">
     <Window.CommandBindings>
         <CommandBinding Command="model:DiskCreationViewModel.Confirm" CanExecute="Confirm_CanExecute" Executed="Confirm_Execute" />
-        <CommandBinding Command="model:DiskCreationViewModel.Cancel" CanExecute="Cancel_CanExecute" Executed="Cancel_Execute" />
-        <CommandBinding Command="model:DiskCreationViewModel.Browse" CanExecute="Browse_CanExecute" Executed="Browse_Execute" />
+        <CommandBinding Command="model:Commands.Cancel" CanExecute="Cancel_CanExecute" Executed="Cancel_Execute" />
+        <CommandBinding Command="model:Commands.Browse" CanExecute="Browse_CanExecute" Executed="Browse_Execute" />
     </Window.CommandBindings>
     <Window.InputBindings>
-        <KeyBinding Key="Escape" Command="model:DiskCreationViewModel.Cancel"/>
+        <KeyBinding Key="Escape" Command="model:Commands.Cancel"/>
         <KeyBinding Key="Enter" Command="model:DiskCreationViewModel.Confirm"/>
     </Window.InputBindings>
     <Window.Resources>
@@ -53,10 +53,10 @@
         <TextBox Grid.Row="0" Grid.Column="1" Name="CapacityTextBox" Text="{Binding Path=Capacity, Converter={StaticResource InformationAmountConverter}, ValidatesOnExceptions=True}" Width="Auto" MinWidth="100" HorizontalAlignment="Left"/>
         <Label Grid.Row="2" Grid.Column="0" Target="{Binding ElementName=FileNameTextBox}">_File name</Label>
         <DockPanel Grid.Row="2" Grid.Column="1">
-            <Button DockPanel.Dock="Right" Command="model:DiskCreationViewModel.Browse" Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"/>
+            <Button DockPanel.Dock="Right" Command="model:Commands.Browse" Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"/>
             <TextBox Name="FileNameTextBox" Width="250" Text="{Binding Path=FileName, UpdateSourceTrigger=PropertyChanged}"/>
         </DockPanel>
-        <Button Grid.Row="4" Grid.Column="0" Command="model:DiskCreationViewModel.Cancel" 
+        <Button Grid.Row="4" Grid.Column="0" Command="model:Commands.Cancel" 
                 Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"
                 IsCancel="True"/>
         <Button HorizontalAlignment="Right" Grid.Row="4" Grid.Column="1" Command="model:DiskCreationViewModel.Confirm"

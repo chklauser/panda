@@ -54,12 +54,26 @@ namespace Panda.UI.ViewModel
             get { return _closeDisk; }
         }
 
-        [NotNullAttribute] private static readonly RoutedUICommand _deleteDisk = new RoutedUICommand("Delete Disk", "DeleteDisk", typeof (Commands
+        [NotNull] private static readonly RoutedUICommand _deleteDisk = new RoutedUICommand("Delete Disk", "DeleteDisk", typeof (Commands
             ));
 
         public static RoutedUICommand DeleteDisk
         {
             get { return _deleteDisk; }
         }
+
+        public static RoutedUICommand Cancel
+        {
+            get { return _cancel; }
+        }
+
+        public static RoutedUICommand Browse
+        {
+            get { return _browse; }
+        }
+
+        [NotNull] private static readonly RoutedUICommand _cancel = new RoutedUICommand("Cancel","Cancel",typeof(DiskCreationViewModel));
+
+        [NotNull] private static readonly RoutedUICommand _browse = new RoutedUICommand("Browse...","Browse",typeof(DiskCreationViewModel));
     }
 }

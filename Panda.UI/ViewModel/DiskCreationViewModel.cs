@@ -34,33 +34,10 @@ namespace Panda.UI.ViewModel
             }
         }
 
-        public static RoutedUICommand Confirm
-        {
-            get { return _confirm; }
-        }
-
-        public static RoutedUICommand Cancel
-        {
-            get { return _cancel; }
-        }
-
-        public static RoutedUICommand Browse
-        {
-            get { return _browse; }
-        }
-
         public DiskCreationViewModel()
         {
             Capacity = 10*1024*1024;
         }
-
-        [NotNull] private static readonly RoutedUICommand _confirm = new RoutedUICommand("Create disk","Confirm",typeof(DiskCreationViewModel));
-
-        [NotNull]
-        private static readonly RoutedUICommand _cancel = new RoutedUICommand("Cancel","Cancel",typeof(DiskCreationViewModel));
-
-        [NotNull]
-        private static readonly RoutedUICommand _browse = new RoutedUICommand("Browse...","Browse",typeof(DiskCreationViewModel));
 
         private string _fileName;
         private long? _capacity;
@@ -73,5 +50,12 @@ namespace Panda.UI.ViewModel
             var handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        public static RoutedUICommand Confirm
+        {
+            get { return _confirm; }
+        }
+
+        [NotNull] private static readonly RoutedUICommand _confirm = new RoutedUICommand("Create disk","Confirm",typeof(DiskCreationViewModel));
     }
 }
