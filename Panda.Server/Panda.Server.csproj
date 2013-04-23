@@ -75,7 +75,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppHost.cs" />
-    <Compile Include="HelloWorldService.cs" />
+    <Compile Include="Persistence\DiskHandler.cs" />
+    <Compile Include="Persistence\DiskLease.cs" />
+    <Compile Include="Persistence\DiskRepository.cs" />
+    <Compile Include="Persistence\IDiskRepository.cs" />
+    <Compile Include="ServiceInterface\DiskService.cs" />
+    <Compile Include="ServiceInterface\HelloWorldService.cs" />
     <Compile Include="Persistence\DiskAssociation.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

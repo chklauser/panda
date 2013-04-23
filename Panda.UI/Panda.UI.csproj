@@ -101,11 +101,11 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="EditableTextBlock.xaml.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Internal\CommandLabelConverter.cs" />
     <Compile Include="Internal\InformationAmountConverter.cs" />
-    <Compile Include="RegistrationDialog.xaml.cs">
-      <DependentUpon>RegistrationDialog.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="Internal\NotEmptyValidationRule.cs" />
+    <Compile Include="Internal\UrlValidationRule.cs" />
     <Compile Include="SearchWindow.xaml.cs">
       <DependentUpon>SearchWindow.xaml</DependentUpon>
     </Compile>
@@ -134,10 +134,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="DiskCreationWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="RegistrationDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -178,6 +174,10 @@
     <ProjectReference Include="..\Panda.Core\Panda.Core.csproj">
       <Project>{C8D5E487-20B7-48DA-A811-DC0BADD492B3}</Project>
       <Name>Panda.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Panda.ServiceModel\Panda.ServiceModel.csproj">
+      <Project>{8007857E-1F99-4C2A-A71B-5FC8C2F75E28}</Project>
+      <Name>Panda.ServiceModel</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

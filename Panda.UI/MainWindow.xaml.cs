@@ -37,8 +37,8 @@ namespace Panda.UI
 
         public MainWindow()
         {
-            InitializeComponent();
             DataContext = _viewModel = new BrowserViewModel();
+            InitializeComponent();
         }
 
         private readonly BrowserViewModel _viewModel;
@@ -683,6 +683,37 @@ namespace Panda.UI
             }
 
             return buffer;
+        }
+
+        private async void ExecuteConnect(object sender, ExecutedRoutedEventArgs e)
+        {
+            await ViewModel.ConnectAsync();
+        }
+
+        private void CanConnect(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = !ViewModel.IsConnected 
+                && App.IsValid(ServerUrlTextBox)
+                && !String.IsNullOrWhiteSpace(ViewModel.Username)
+                && !String.IsNullOrWhiteSpace(ViewModel.Password);
+        }
+
+        private void CanRegister(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = !ViewModel.IsConnected
+                && App.IsValid(ServerUrlTextBox)
+                && !String.IsNullOrWhiteSpace(ViewModel.Username)
+                && !String.IsNullOrWhiteSpace(ViewModel.Password);
+        }
+
+        private async void ExecuteRegister(object sender, ExecutedRoutedEventArgs e)
+        {
+            await ViewModel.RegisterUserAsync();
+        }
+
+        private void PasswordBox_OnPasswordChanged(object sender, RoutedEventArgs e)
+        {
+            ViewModel.Password = PasswordBox.Password;
         }
     }
 }

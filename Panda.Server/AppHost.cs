@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Funq;
 using JetBrains.Annotations;
+using Panda.Server.Persistence;
 using ServiceStack.CacheAccess;
 using ServiceStack.CacheAccess.Providers;
 using ServiceStack.OrmLite;
@@ -20,6 +21,8 @@ namespace Panda.Server
         {
             _configureDatabase(container);
 
+            container.RegisterAs<DiskRepository,IDiskRepository>();
+
             Plugins.Add(new AuthFeature(() => new AuthUserSession(), new IAuthProvider[]
                 {
                     new BasicAuthProvider(), 
@@ -36,7 +39,7 @@ namespace Panda.Server
 
             using (var db = container.Resolve<IDbConnectionFactory>().OpenDbConnection())
             {
-                db.CreateTableIfNotExists<Persistence.DiskAssociation>();
+                db.CreateTableIfNotExists<DiskAssociation>();
             }
         }
 

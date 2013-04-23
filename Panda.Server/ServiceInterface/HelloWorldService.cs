@@ -1,8 +1,7 @@
 ﻿using Panda.ServiceModel;
-using ServiceStack.ServiceHost;
 using ServiceStack.ServiceInterface;
 
-namespace Panda.Server
+namespace Panda.Server.ServiceInterface
 {
     public class HelloService : Service
     {

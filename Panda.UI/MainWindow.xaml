@@ -4,7 +4,8 @@
         xmlns:core="clr-namespace:Panda;assembly=Panda.Core"
         xmlns:model="clr-namespace:Panda.UI.ViewModel" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:borgstrup="clr-namespace:Borgstrup.EditableTextBlock" mc:Ignorable="d"
+        xmlns:borgstrup="clr-namespace:Borgstrup.EditableTextBlock" xmlns:internal="clr-namespace:Panda.UI.Internal"
+        mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525" d:DataContext="{d:DesignInstance Type=model:BrowserViewModel}">
     <Window.CommandBindings>
         <CommandBinding Command="Open" Executed="ExecuteOpenDisk" CanExecute="CanOpenDisk" />
@@ -21,8 +22,11 @@
         <CommandBinding Command="model:Commands.Rename" Executed="ExecuteRename" CanExecute="CanRename" />
         <CommandBinding Command="model:Commands.Export" Executed="ExecuteExport" CanExecute="CanExport" />
         <CommandBinding Command="model:Commands.Import" Executed="ExecuteImport" CanExecute="CanImport" />
+        <CommandBinding Command="model:Commands.Connect" Executed="ExecuteConnect" CanExecute="CanConnect" />
+        <CommandBinding Command="model:RegistrationViewModel.Register" CanExecute="CanRegister" Executed="ExecuteRegister" />
     </Window.CommandBindings>
     <Window.Resources>
+        <internal:CommandLabelConverter x:Key="CommandLabelConverter" />
         <HierarchicalDataTemplate DataType = "{x:Type model:DiskViewModel}"
                                   ItemsSource = "{Binding Path=Disk.Root}">
             <StackPanel Orientation="Horizontal">
@@ -75,19 +79,19 @@
             </StackPanel>
         </DataTemplate>
     </Window.Resources>
-    <TabControl>
-        <TabItem Header="Browser">
-            <DockPanel>
-                <Menu DockPanel.Dock="Top">
-                    <MenuItem Header="File">
-                        <MenuItem Header="_New Disk…" Command="New" />
-                        <MenuItem Header="_Open Disk…" Command="Open" />
-                        <MenuItem Header="E_xit" Command="Close" />
-                    </MenuItem>
-                </Menu>
-                <StatusBar DockPanel.Dock="Bottom">
-                    <TextBlock Text="{Binding Path=StatusText}" />
-                </StatusBar>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="_New Disk…" Command="New" />
+                <MenuItem Header="_Open Disk…" Command="Open" />
+                <MenuItem Header="E_xit" Command="Close" />
+            </MenuItem>
+        </Menu>
+        <StatusBar DockPanel.Dock="Bottom">
+            <TextBlock Text="{Binding Path=StatusText}" />
+        </StatusBar>
+        <TabControl>
+            <TabItem Header="Browser">
                 <TreeView ItemsSource="{Binding Path=OpenDisks}" Name="DiskTree">
                     <TreeView.InputBindings>
                         <KeyBinding Key="Delete" Command="ApplicationCommands.Delete" CommandParameter="{Binding ElementName=DiskTree, Path=SelectedValue}" />
@@ -96,10 +100,96 @@
                         <KeyBinding Key="F3" Command="Search" CommandParameter="{Binding ElementName=DiskTree, Path=SelectedValue}" />
                     </TreeView.InputBindings>
                 </TreeView>
-            </DockPanel>
-        </TabItem>
-        <TabItem Header="Server">
-            
-        </TabItem>
-    </TabControl>
+            </TabItem>
+            <TabItem Header="Server">
+                <Grid Margin="15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Server URL -->
+                    <Label Target="{Binding ElementName=ServerUrlTextBox}" 
+                       Grid.Row="0" Grid.Column="0" 
+                       VerticalAlignment="Top" HorizontalAlignment="Right">
+                        Server URL
+                    </Label>
+                    <TextBox x:Name="ServerUrlTextBox" 
+                         Grid.Row="0" Grid.Column="1" 
+                         VerticalAlignment="Top">
+                        <TextBox.Text>
+                            <Binding Path="ServerUrl" UpdateSourceTrigger="PropertyChanged">
+                                <Binding.ValidationRules>
+                                    <internal:UrlValidationRule />
+                                </Binding.ValidationRules>
+                            </Binding>
+                        </TextBox.Text>
+                    </TextBox>
+
+                    <!-- Username -->
+                    <Label Target="{Binding ElementName=UsernameTextBox}" 
+                       Grid.Row="1" Grid.Column="0" 
+                       VerticalAlignment="Top" HorizontalAlignment="Right">
+                        Username
+                    </Label>
+                    <TextBox x:Name="UsernameTextBox"  
+                         Grid.Row="1" Grid.Column="1" 
+                         VerticalAlignment="Top">
+                        <TextBox.Text>
+                            <Binding Path="Username" >
+                                <Binding.ValidationRules>
+                                    <internal:NotEmptyValidationRule />
+                                </Binding.ValidationRules>
+                            </Binding>
+                        </TextBox.Text>
+                    </TextBox>
+
+                    <!-- Password -->
+                    <Label Target="{Binding ElementName=PasswordBox}" 
+                       Grid.Row="2" Grid.Column="0" 
+                       VerticalAlignment="Top" HorizontalAlignment="Right">
+                        Password
+                    </Label>
+                    <PasswordBox x:Name="PasswordBox" 
+                             Grid.Row="2" Grid.Column="1" VerticalAlignment="Top" 
+                             PasswordChanged="PasswordBox_OnPasswordChanged"/>
+
+                    <!-- Buttons -->
+                    <Button Grid.Row="3" Grid.Column="1" 
+                        HorizontalAlignment="Left" VerticalAlignment="Top"
+                        Command="model:Commands.Connect"
+                        Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"/>
+
+                    <Button Grid.Row="3" Grid.Column="1" 
+                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Command="model:RegistrationViewModel.Register"
+                        Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"/>
+
+                    <!-- Account view -->
+                    <DataGrid ItemsSource="{Binding ServerDiskRecords}"
+                          Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+                          CanUserReorderColumns="False" 
+                          CanUserResizeRows="False" 
+                          CanUserResizeColumns="True" 
+                          CanUserSortColumns="True" 
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True" 
+                          Margin="0 15 0 0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Disk name" Binding="{Binding Name}"/>
+                            <DataGridTextColumn Header="Capacity" Binding="{Binding Capacity}"/>
+                            <DataGridTextColumn Header="Last updated" Binding="{Binding LastUpdated}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
 </Window>

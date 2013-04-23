@@ -10,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using JetBrains.Annotations;
 using Panda.Core.Internal;
+using Panda.UI.Properties;
 
 namespace Panda.UI
 {
@@ -57,6 +58,11 @@ namespace Panda.UI
         public static T FindVisualChild<T>(DependencyObject visual, object toFind) where T : FrameworkElement
         {
             return VisualDescendants(visual).OfType<T>().First(fe => ReferenceEquals(fe.DataContext, toFind));
+        }
+
+        private void App_OnExit(object sender, ExitEventArgs e)
+        {
+            Settings.Default.Save();
         }
     }
 }

@@ -75,5 +75,13 @@ namespace Panda.UI.ViewModel
         [NotNull] private static readonly RoutedUICommand _cancel = new RoutedUICommand("Cancel","Cancel",typeof(DiskCreationViewModel));
 
         [NotNull] private static readonly RoutedUICommand _browse = new RoutedUICommand("Browse...","Browse",typeof(DiskCreationViewModel));
+
+        [NotNullAttribute] private static readonly RoutedUICommand _connect = new RoutedUICommand("Connect to server", "Connect", typeof (Commands
+            ));
+
+        public static RoutedUICommand Connect
+        {
+            get { return _connect; }
+        }
     }
 }

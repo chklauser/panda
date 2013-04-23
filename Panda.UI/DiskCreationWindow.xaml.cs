@@ -25,8 +25,8 @@ namespace Panda.UI
         private readonly DiskCreationViewModel _viewModel = new DiskCreationViewModel();
         public DiskCreationWindow()
         {
-            InitializeComponent();
             DataContext = _viewModel;
+            InitializeComponent();
         }
 
         public DiskCreationViewModel ViewModel

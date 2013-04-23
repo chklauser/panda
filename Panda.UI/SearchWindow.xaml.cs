@@ -34,9 +34,9 @@ namespace Panda.UI
 
         public SearchWindow(VirtualDirectory parentNode)
         {
-            InitializeComponent();
             DataContext = this;
             _parentNode = parentNode;
+            InitializeComponent();
         }
 
         public VirtualNode SelectedNode
