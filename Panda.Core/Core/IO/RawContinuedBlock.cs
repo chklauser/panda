@@ -4,7 +4,7 @@ namespace Panda.Core.IO
 {
     public class RawContinuedBlock : RawBlock, IContinuationBlock
     {
-        public RawContinuedBlock(IRawPersistenceSpace space, BlockOffset offset, uint blockSize) : base(space, offset, blockSize)
+        public RawContinuedBlock(RawBlockManager manager, BlockOffset offset, uint blockSize) : base(manager, offset, blockSize)
         {
         }
 
@@ -36,6 +36,7 @@ namespace Panda.Core.IO
                 {
                     *ContinuationBlockSlot = value.Value;
                 }
+                OnBlockChanged();
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace Panda.Core.Blocks
@@ -115,7 +116,7 @@ namespace Panda.Core.Blocks
         /// Overwrites the specified data block. 
         /// </summary>
         /// <param name="blockOffset">The offset of the data block to write to.</param>
-        /// <param name="data">The data to overwrite the data block with. If shorter than <see cref="DataBlockSize"/> will be padded with zeroes.</param>
+        /// <param name="data">The data to overwrite the data block with. If shorter than <see cref="BlockSize"/> will be padded with zeroes.</param>
         /// <remarks><para>Implementations may or may not guard against writing to non-allocated or non-data blocks.</para></remarks>
         void WriteDataBlock(BlockOffset blockOffset, [NotNull] byte[] data);
 
@@ -156,7 +157,16 @@ namespace Panda.Core.Blocks
         /// <summary>
         /// Number of bytes that fit into a data block.
         /// </summary>
-        int DataBlockSize { get; }
+        int BlockSize { get; }
+
+        DateTime LastTimeSynchronized { get; }
+
+        [CanBeNull]
+        string ServerDiskName { get; set; }
+
+        void NotifySynchronized();
+
+        IEnumerable<JournalEntry> GetJournalEntriesSince(DateTime lastSynchronizationTime);
 
         #endregion
 

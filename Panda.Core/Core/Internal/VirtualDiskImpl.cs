@@ -32,7 +32,7 @@ namespace Panda.Core.Internal
 
         public override long Capacity
         {
-            get { return _blockManager.TotalBlockCount*_blockManager.DataBlockSize; }
+            get { return _blockManager.TotalBlockCount*_blockManager.BlockSize; }
         }
 
         public override long CurrentSize
@@ -42,7 +42,7 @@ namespace Panda.Core.Internal
 
         public override long FreeSpace
         {
-            get { return (_blockManager.TotalBlockCount-_blockManager.TotalFreeBlockCount)*_blockManager.DataBlockSize; }
+            get { return (_blockManager.TotalBlockCount-_blockManager.TotalFreeBlockCount)*_blockManager.BlockSize; }
         }
 
         public override VirtualDirectory Root
@@ -60,6 +60,11 @@ namespace Panda.Core.Internal
         internal ILockingPolicy LockingPolicy
         {
             get { return _lockingPolicy; }
+        }
+
+        public override DateTime LastTimeSynchronized
+        {
+            get { return _blockManager.LastTimeSynchronized; }
         }
 
         internal virtual VirtualDirectoryImpl GetDirectory(VirtualDirectoryImpl parentDirectory, DirectoryEntry de)

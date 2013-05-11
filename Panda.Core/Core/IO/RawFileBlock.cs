@@ -10,7 +10,7 @@ namespace Panda.Core.IO
 {
     internal class RawFileBlock : RawOffsetListBlock, IFileBlock
     {
-        public RawFileBlock([NotNull] IRawPersistenceSpace space, BlockOffset offset, uint size) : base(space, offset, size)
+        public RawFileBlock([NotNull] RawBlockManager manager, BlockOffset offset, uint size) : base(manager, offset, size)
         {
         }
 
@@ -28,6 +28,7 @@ namespace Panda.Core.IO
                     throw new ArgumentOutOfRangeException("value",value,"File size cannot be negative.");
 
                 *SizeSlot = value;
+                OnBlockChanged();
             }
         }
 

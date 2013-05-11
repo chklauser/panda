@@ -192,7 +192,7 @@ namespace Panda.Core.IO
 			}			
         }
 
-		public override IEmptyListBlock AllocateEmptyListBlock()
+		protected override IEmptyListBlock AllocateEmptyListBlock()
 		{
 			var block = base.AllocateEmptyListBlock();
 			_lock.Wait();
@@ -311,7 +311,7 @@ namespace Panda.Core.IO
 			}
         }
 
-		public override IEmptyListBlock GetEmptyListBlock(BlockOffset blockOffset)
+		protected override IEmptyListBlock GetEmptyListBlock(BlockOffset blockOffset)
 		{
 			_lock.Wait();
 			try

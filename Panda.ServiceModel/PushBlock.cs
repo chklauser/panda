@@ -10,7 +10,6 @@ using ServiceStack.ServiceInterface;
 namespace Panda.ServiceModel
 {
     [Route("/disks/{DiskName}/{BlockOffset}", Verbs = "POST")]
-    [Authenticate]
     public class PushBlock : IRequiresRequestStream
     {
         public String DiskName { get; set; }

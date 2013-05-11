@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using Panda.Core;
 using Panda.Core.Blocks;
 
@@ -29,6 +31,7 @@ namespace Panda.Test.InMemory.Blocks
 
         // points to the next free block
         private uint _spaceBreak;
+        private DateTime _lastTimeSynchronized;
 
         public MemBlockManager(uint totalBlockCount, BlockOffset rootDirectoryBlockOffset, int metaBlockCapacity, int dataBlockCapacity)
         {
@@ -93,7 +96,7 @@ namespace Panda.Test.InMemory.Blocks
         public virtual BlockOffset AllocateDataBlock()
         {
             var offset = AllocateBlockOffset();
-            var dataBlock = new byte[DataBlockSize];
+            var dataBlock = new byte[BlockSize];
             _blocks.Add(offset,new MemStored {Data = dataBlock});
             return offset;
         }
@@ -210,9 +213,27 @@ namespace Panda.Test.InMemory.Blocks
 
         public BlockOffset RootDirectoryBlockOffset { get; private set; }
 
-        public int DataBlockSize
+        public int BlockSize
         {
             get { return _dataBlockCapacity; }
+        }
+
+        public DateTime LastTimeSynchronized
+        {
+            get { return _lastTimeSynchronized; }
+        }
+
+        public string ServerDiskName { get; set; }
+
+        public void NotifySynchronized()
+        {
+            _lastTimeSynchronized = DateTime.Now;
+        }
+
+        public IEnumerable<JournalEntry> GetJournalEntriesSince(DateTime lastSynchronizationTime)
+        {
+            Trace.WriteLine("MemBlockManager was asked for journal entries. Returning an empty sequence. MemBlockManager does not track changes.");
+            return Enumerable.Empty<JournalEntry>();
         }
 
         public void Flush()

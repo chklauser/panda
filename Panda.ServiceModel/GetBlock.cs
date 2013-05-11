@@ -7,7 +7,6 @@ namespace Panda.ServiceModel
 {
     [Route("disks/{DiskName}/batch/{BlockOffsets*}", Verbs = "GET")]
     [Route("disks/{DiskName}/{BlockOffset}", Verbs = "GET")]
-    [Authenticate]
     public class GetBlock : IReturn<Stream>
     {
         public string DiskName { get; set; }

@@ -11,7 +11,7 @@ namespace Panda.Test.Unit
     public abstract class RawBlockManagerTestsBase : IDisposable
     {
         internal IBlockManager BlockManager;
-        public const uint DefaultBlockSize = 32;
+        public const uint DefaultBlockSize = 48;
         public IRawPersistenceSpace Space { get; set; }
         public uint BlockCount { get; set; }
         public uint BlockSize { get; set; }

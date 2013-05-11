@@ -11,8 +11,8 @@ namespace Panda.Core.IO
 {
     public class RawOffsetListBlock : RawContinuedBlock, IFileContinuationBlock
     {
-        public RawOffsetListBlock([NotNull] IRawPersistenceSpace space, BlockOffset offset, uint size)
-            : base(space, offset, size)
+        public RawOffsetListBlock([NotNull] RawBlockManager manager, BlockOffset offset, uint size)
+            : base(manager, offset, size)
         {
         }
 
@@ -96,6 +96,8 @@ namespace Panda.Core.IO
                     ptr[i] = 0u;
                 }
             }
+
+            OnBlockChanged();
         }
     }
 }

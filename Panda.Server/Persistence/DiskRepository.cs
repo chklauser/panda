@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Panda.Server.Persistence
 {
@@ -15,6 +16,11 @@ namespace Panda.Server.Persistence
             {
                 return new DiskLease(_handlers.GetOrAdd(diskName, dn => new DiskHandler(dn)));
             }
+        }
+
+        public IEnumerable<string> GetKnownDiskNames()
+        {
+            return Directory.EnumerateFiles(Environment.CurrentDirectory, "*.panda", SearchOption.TopDirectoryOnly);
         }
 
         #region Disposal

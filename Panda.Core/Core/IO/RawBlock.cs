@@ -8,21 +8,21 @@ namespace Panda.Core.IO
 {
     public class RawBlock : IBlock, IDisposable
     {
-        private readonly IRawPersistenceSpace _space;
+        private readonly RawBlockManager _manager;
         private readonly BlockOffset _offset;
         private readonly uint _blockSize;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
-        public RawBlock([NotNull] IRawPersistenceSpace space, BlockOffset offset, uint blockSize)
+        public RawBlock([NotNull] RawBlockManager manager, BlockOffset offset, uint blockSize)
         {
-            _space = space;
+            _manager = manager;
             _offset = offset;
             _blockSize = blockSize;
         }
 
         public IRawPersistenceSpace Space
         {
-            get { return _space; }
+            get { return _manager.Space; }
         }
 
         public BlockOffset Offset
@@ -48,6 +48,11 @@ namespace Panda.Core.IO
         public uint BlockSize
         {
             get { return _blockSize; }
+        }
+
+        protected void OnBlockChanged()
+        {
+            _manager.OnBlockChanged(Offset);
         }
 
         public void Dispose()

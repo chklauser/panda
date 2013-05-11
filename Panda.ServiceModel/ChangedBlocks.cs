@@ -6,7 +6,6 @@ using ServiceStack.ServiceInterface;
 namespace Panda.ServiceModel
 {
     [Route("/disks/{DiskName}/changes")]
-    [Authenticate]
     public class ChangedBlocks : IReturn<ChangedBlocksResponse>
     {
         public string DiskName { get; set; }

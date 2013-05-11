@@ -6,7 +6,6 @@ using ServiceStack.ServiceInterface;
 namespace Panda.ServiceModel
 {
     [Route("/disks",Verbs = "GET")]
-    [Authenticate]
     public class Disks : IReturn<DisksResponse>
     {
     }

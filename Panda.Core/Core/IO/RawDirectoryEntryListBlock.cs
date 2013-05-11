@@ -13,7 +13,7 @@ namespace Panda.Core.IO
     {
         public static readonly Encoding TextEncoding = Encoding.UTF8;
 
-        public RawDirectoryEntryListBlock(IRawPersistenceSpace space, BlockOffset offset, uint blockSize) : base(space, offset, blockSize)
+        public RawDirectoryEntryListBlock(RawBlockManager manager, BlockOffset offset, uint blockSize) : base(manager, offset, blockSize)
         {
         }
 
@@ -148,6 +148,7 @@ namespace Panda.Core.IO
             // Buffer just for directory entries
             var buffer = new byte[BlockSize-prefixByteSize-sizeof(UInt32)];
 
+            // Write entries into a temporary buffer (block remains untouched)
             var index = 0;
             foreach (var entry in entries)
             {
@@ -174,15 +175,17 @@ namespace Panda.Core.IO
                 index += entryLen;
             }
 
+            // Commit the updated buffer into the block
             var ptr = ((byte*) ThisPointer) + prefixByteSize;
             Marshal.Copy(buffer,0,(IntPtr)ptr,buffer.Length);
+            OnBlockChanged();
             return true;
         }
     }
 
     class RawDirectoryBlock : RawDirectoryEntryListBlock, IDirectoryBlock
     {
-        public RawDirectoryBlock(IRawPersistenceSpace space, BlockOffset offset, uint blockSize) : base(space, offset, blockSize)
+        public RawDirectoryBlock(RawBlockManager manager, BlockOffset offset, uint blockSize) : base(manager, offset, blockSize)
         {
         }
 
@@ -207,6 +210,7 @@ namespace Panda.Core.IO
                 if(value < 0)
                     throw new ArgumentOutOfRangeException("value",value,"TotalSize cannot be negative.");
                 *TotalSizeSlot = value;
+                OnBlockChanged();
             }
         }
     }

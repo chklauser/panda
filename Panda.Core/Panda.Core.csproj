@@ -58,6 +58,8 @@
     <Compile Include="Core\Blocks\BlockOffset.cs" />
     <Compile Include="Core\Blocks\IContinuationBlock.cs" />
     <Compile Include="Core\Blocks\IFileContinuationBlock.cs" />
+    <Compile Include="Core\Blocks\IJournalBlock.cs" />
+    <Compile Include="Core\Blocks\JournalEntry.cs" />
     <Compile Include="Core\DontTouchRootException.cs" />
     <Compile Include="Core\IllegalNodeNameException.cs" />
     <Compile Include="Core\Internal\SingleInstanceVirtualDiskImpl.cs" />
@@ -74,6 +76,7 @@
     <Compile Include="Core\IO\RawDirectoryEntryListBlock.cs" />
     <Compile Include="Core\IO\RawEmptyListBlock.cs" />
     <Compile Include="Core\IO\RawFileBlock.cs" />
+    <Compile Include="Core\IO\RawJournalBlock.cs" />
     <Compile Include="Core\IO\RawOffsetListBlock.cs" />
     <Compile Include="Core\PathAlreadyExistsException.cs" />
     <Compile Include="GlobalSuppressions.cs" />
@@ -133,9 +136,6 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

@@ -35,3 +35,6 @@ The **IO layer**, finally, is used to implement the block API
 and handles the actual storage and retrieval of data on
 the host file system.
 
+Acknowledgements
+----------------------------------------
+*Panda application icon* by http://www.visualpharm.com/ licensed as Linkware

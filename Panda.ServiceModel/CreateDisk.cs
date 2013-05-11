@@ -6,7 +6,6 @@ using ServiceStack.ServiceInterface;
 namespace Panda.ServiceModel
 {
     [Route("/disks/{Name}", Verbs = "POST")]
-    [Authenticate]
     public class CreateDisk : IReturn<DiskRecord>, IRequiresRequestStream
     {
         public string Name { get; set; }

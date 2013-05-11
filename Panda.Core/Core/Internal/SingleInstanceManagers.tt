@@ -215,7 +215,7 @@ namespace <#=TNs#>
         }
 
 <# if(impl.ManagesEmptyBlocks){ #>
-		public override IEmptyListBlock AllocateEmptyListBlock()
+		protected override IEmptyListBlock AllocateEmptyListBlock()
 		{
 			var block = base.AllocateEmptyListBlock();
 			_lock.Wait();
@@ -336,7 +336,7 @@ namespace <#=TNs#>
         }
 
 <# if(impl.ManagesEmptyBlocks) { #>
-		public override IEmptyListBlock GetEmptyListBlock(BlockOffset blockOffset)
+		protected override IEmptyListBlock GetEmptyListBlock(BlockOffset blockOffset)
 		{
 			_lock.Wait();
 			try

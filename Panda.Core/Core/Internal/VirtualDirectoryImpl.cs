@@ -368,7 +368,7 @@ namespace Panda.Core.Internal
             var de = new DirectoryEntry(name, fb.Offset, DirectoryEntryFlags.None);
 
             // create buffer with size of a data block
-            var buffer = new byte[_disk.BlockManager.DataBlockSize];
+            var buffer = new byte[_disk.BlockManager.BlockSize];
 
             // keep track of file size
             long fileSize = 0;

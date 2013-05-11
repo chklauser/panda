@@ -1,4 +1,6 @@
-﻿namespace Panda.Server.Persistence
+﻿using System.Collections.Generic;
+
+namespace Panda.Server.Persistence
 {
     /// <summary>
     /// Provides exclusive access to lazily loaded disks.
@@ -19,5 +21,10 @@
         /// // DON'T USE DISK HERE, it might have been closed</code>
         /// </remarks>
         DiskLease this[string diskName] { get; }
+
+        /// <summary>
+        /// Returns a sequence of disk names known to the server.
+        /// </summary>
+        IEnumerable<string> GetKnownDiskNames();
     }
 }

@@ -692,28 +692,8 @@ namespace Panda.UI
 
         private void CanConnect(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = !ViewModel.IsConnected 
-                && App.IsValid(ServerUrlTextBox)
-                && !String.IsNullOrWhiteSpace(ViewModel.Username)
-                && !String.IsNullOrWhiteSpace(ViewModel.Password);
-        }
-
-        private void CanRegister(object sender, CanExecuteRoutedEventArgs e)
-        {
             e.CanExecute = !ViewModel.IsConnected
-                && App.IsValid(ServerUrlTextBox)
-                && !String.IsNullOrWhiteSpace(ViewModel.Username)
-                && !String.IsNullOrWhiteSpace(ViewModel.Password);
-        }
-
-        private async void ExecuteRegister(object sender, ExecutedRoutedEventArgs e)
-        {
-            await ViewModel.RegisterUserAsync();
-        }
-
-        private void PasswordBox_OnPasswordChanged(object sender, RoutedEventArgs e)
-        {
-            ViewModel.Password = PasswordBox.Password;
+                && App.IsValid(ServerUrlTextBox);
         }
     }
 }

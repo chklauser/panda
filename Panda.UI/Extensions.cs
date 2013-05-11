@@ -13,7 +13,7 @@ namespace Panda.UI
              if (serviceClient == null)
                  throw new ArgumentNullException("serviceClient");
              var tcs = new TaskCompletionSource<T>();
-             serviceClient.SendAsync<T>(requestMessage, tcs.SetResult, 
+             serviceClient.GetAsync(requestMessage, tcs.SetResult, 
                  (r, e) => tcs.SetException(new RemoteServerException(r,e)));
              return tcs.Task;
          }         

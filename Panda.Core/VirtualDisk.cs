@@ -147,6 +147,8 @@ namespace Panda
         [CanBeNull]
         public INotificationDispatcher NotificationDispatcher { get; set; }
 
+        public abstract DateTime LastTimeSynchronized { get; }
+
         public void Dispose()
         {
             Dispose(true);

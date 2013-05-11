@@ -7,7 +7,7 @@ namespace Panda.Core.IO
 {
     class RawEmptyListBlock : RawOffsetListBlock, IEmptyListBlock
     {
-        public RawEmptyListBlock([NotNull] IRawPersistenceSpace space, BlockOffset offset, uint size) : base(space, offset, size)
+        public RawEmptyListBlock([NotNull] RawBlockManager manager, BlockOffset offset, uint size) : base(manager, offset, size)
         {
         }
 
@@ -22,6 +22,7 @@ namespace Panda.Core.IO
                 if(value < 0)
                     throw new ArgumentOutOfRangeException("value",value,"TotalFreeBlockCount cannot be negative.");
                 *TotalFreeBlockCountSlot = value;
+                OnBlockChanged();
             }
         }
 
@@ -41,7 +42,7 @@ namespace Panda.Core.IO
                 throw new ArgumentOutOfRangeException("count",count,"Not enough offsets in the block to satisfy the remove request.");
             }
 
-            // Move offsets to result, setting them to 0 in the offset-arry
+            // Move offsets to result, setting them to 0 in the offset-array
             var result = new BlockOffset[count];
             for (var i = 0; i < result.Length; i++)
             {
