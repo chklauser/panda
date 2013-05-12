@@ -81,6 +81,7 @@
     <Compile Include="Core\PathAlreadyExistsException.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="INotificationDispatcher.cs" />
+    <Compile Include="ISynchronizingDisk.cs" />
     <Compile Include="Test\InMemory\Blocks\MemBlock.cs" />
     <Compile Include="Test\InMemory\Blocks\MemBlockManager.cs" />
     <Compile Include="Test\InMemory\Blocks\MemDirectoryBase.cs" />

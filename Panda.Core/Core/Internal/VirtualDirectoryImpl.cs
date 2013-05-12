@@ -276,10 +276,10 @@ namespace Panda.Core.Internal
                 throw new PathAlreadyExistsException("A file or directory with the name " + name + " already exists. Cannot create directory " + name + ".");
 
             // create new DirectoryBlock
-            IDirectoryBlock db = _disk.BlockManager.AllocateDirectoryBlock();
+            var db = _disk.BlockManager.AllocateDirectoryBlock();
 
             // create new DirectoryEntry
-            DirectoryEntry de = new DirectoryEntry(name, db.Offset, DirectoryEntryFlags.Directory);
+            var de = new DirectoryEntry(name, db.Offset, DirectoryEntryFlags.Directory);
 
             // add DirectoryEntry referencing this new Block to this DirectoryBlock or a DirectoryContinuationBlock of it
             AddDirectoryEntry(de);

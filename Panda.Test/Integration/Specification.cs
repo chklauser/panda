@@ -533,6 +533,26 @@ namespace Panda.Test.Integration
             Assert.That(rbmAny.FullName, Is.EqualTo("/Core/IO/RawBlockManager.cs".Replace('/', VirtualFileSystem.SeparatorChar)));
         }
 
+        [Test]
+        public void CreateNestedDirectories()
+        {
+            // This test creates a very large directory that requires
+            // a directory continuation block
+            var newDir = Disk.Root.CreateDirectory("new");
+            var d1 = newDir.CreateDirectory("d1");
+            var d2 = newDir.CreateDirectory("d2");
+            var d11 = d1.CreateDirectory("d11");
+            d2.CreateDirectory("d21");
+            d2.CreateDirectory("d22");
+            for (var i = 1; i < 500; i++)
+            {
+                var d = d11.CreateDirectory("d11" + i);
+                d.CreateDirectory("d" + i);
+            }
+            var dir = Disk.Root.Navigate("new/d1/d11/d11450/d450");
+            Assert.That(dir, Is.Not.Null, "/new/d1/d11/d11450/d450 exists");
+        }
+
         #region Disposal
 
         #endregion

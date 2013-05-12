@@ -439,6 +439,7 @@ namespace Panda.UI
         {
             const string folderSelectionSentinel = "Folder Selection.";
             var ofd = new CommonOpenFileDialog("Import file or folder."){AddToMostRecentlyUsedList = false,AllowNonFileSystemItems = false,RestoreDirectory = true,DefaultFileName = folderSelectionSentinel};
+            
             var dialogResult = ofd.ShowDialog(this);
 
             // Abort if the user wasn't in the mood to import anything after all

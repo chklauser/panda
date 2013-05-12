@@ -64,6 +64,8 @@
     <Compile Include="Integration\Specification.cs" />
     <Compile Include="Integration\SpecificationBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Unit\DiskSynchronizationBase.cs" />
+    <Compile Include="Unit\DiskSynchronizationTests.cs" />
     <Compile Include="Unit\FileSystem.cs" />
     <Compile Include="Unit\FileSystemBlackBox.cs" />
     <Compile Include="Unit\RawBlockManagerMappedTests.cs" />

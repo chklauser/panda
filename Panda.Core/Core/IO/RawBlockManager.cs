@@ -184,6 +184,7 @@ namespace Panda.Core.IO
             if (!leaveUninitialized)
                 _initZero(Space, (uint)BlockSize, newOffset);
 
+            OnBlockChanged(newOffset);
             return newOffset;
         }
 
@@ -268,7 +269,7 @@ namespace Panda.Core.IO
             OnBlockChanged(blockOffset);
         }
 
-        public unsafe void WriteBlockDirect(BlockOffset blockOffset, byte[] data)
+        public virtual unsafe void WriteBlockDirect(BlockOffset blockOffset, byte[] data)
         {
             if (data == null)
                 throw new ArgumentNullException("data");
@@ -493,6 +494,7 @@ namespace Panda.Core.IO
 
             var alreadyRunning = _journalJobQueue.Count > 0;
             _journalJobQueue.Enqueue(blockOffset);
+            _modifiedBlocks.Add(blockOffset);
 
             // If OnBlockChanges is already running and this is a recursive/nested call, putting
             // the block offset in the queue was enough. The activation higher up in the call stack
@@ -525,7 +527,11 @@ namespace Panda.Core.IO
                     _journalJobQueue.Enqueue(jobOffset);
                     var nextBlock = AllocateJournalBlock();
                     // link new block to old list and move the journal head pointer to the new block
-                    JournalOffset = nextBlock.ContinuationBlockOffset = journalBlock.Offset;
+                    nextBlock.ContinuationBlockOffset = journalBlock.Offset;
+                    JournalOffset = nextBlock.Offset;
+
+                    // start inserting into the new journal block
+                    journalBlock = nextBlock;
                 }
             }
         }

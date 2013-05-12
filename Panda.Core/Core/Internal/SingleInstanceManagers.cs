@@ -146,7 +146,7 @@ namespace Panda.Core.IO
 
         public override IDirectoryContinuationBlock AllocateDirectoryContinuationBlock()
         {
-            var block = base.AllocateDirectoryBlock();
+            var block = base.AllocateDirectoryContinuationBlock();
 			_lock.Wait();
             try
 			{
@@ -211,7 +211,11 @@ namespace Panda.Core.IO
         public override void FreeBlock(BlockOffset blockOffset)
         {
             base.FreeBlock(blockOffset);
+            EvictBlock(blockOffset);
+        }
 
+        protected void EvictBlock(BlockOffset blockOffset)
+        {
             _lock.Wait();
             try
             {
@@ -330,6 +334,12 @@ namespace Panda.Core.IO
 				_lock.Release();
 			}
 		}
+
+        public override void WriteBlockDirect(BlockOffset blockOffset, byte[] data)
+        {
+            base.WriteBlockDirect(blockOffset, data);
+            EvictBlock(blockOffset);
+        }
 
 		#region IDisposable
 
@@ -490,7 +500,7 @@ namespace Panda.Test.InMemory.Blocks
 
         public override IDirectoryContinuationBlock AllocateDirectoryContinuationBlock()
         {
-            var block = base.AllocateDirectoryBlock();
+            var block = base.AllocateDirectoryContinuationBlock();
 			_lock.Wait();
             try
 			{
@@ -540,7 +550,11 @@ namespace Panda.Test.InMemory.Blocks
         public override void FreeBlock(BlockOffset blockOffset)
         {
             base.FreeBlock(blockOffset);
+            EvictBlock(blockOffset);
+        }
 
+        protected void EvictBlock(BlockOffset blockOffset)
+        {
             _lock.Wait();
             try
             {
@@ -639,6 +653,7 @@ namespace Panda.Test.InMemory.Blocks
 				_lock.Release();
 			}
         }
+
 
 
 		#region IDisposable

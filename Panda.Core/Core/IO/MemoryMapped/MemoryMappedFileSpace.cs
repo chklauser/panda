@@ -62,8 +62,7 @@ namespace Panda.Core.IO.MemoryMapped
                 writer.Write(blockCapacity);
                 writer.Write(blockSize);
 
-                var fullPath = Path.GetFullPath(path);
-                if (clCapa > 64*1024 - blockCapacity && SparseFile.VolumeSupportsSparseFiles(Path.GetPathRoot(fullPath)))
+                if (clCapa > 64*1024 - blockCapacity && SparseFile.VolumeSupportsSparseFiles(Path.GetPathRoot(Path.GetFullPath(path))))
                 {
                     SparseFile.Convert(file.SafeFileHandle);
                     file.Seek(capacity,SeekOrigin.Begin);
@@ -103,9 +102,6 @@ namespace Panda.Core.IO.MemoryMapped
             {
                 // No change in size or not shrunk sufficiently, ignore this resize
             }
-
-            
-            
         }
     }
 }

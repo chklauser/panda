@@ -146,7 +146,7 @@ namespace Panda.Core.IO
         {
             var prefixByteSize = MetaPrefixUInt32Count*sizeof (UInt32);
             // Buffer just for directory entries
-            var buffer = new byte[BlockSize-prefixByteSize-sizeof(UInt32)];
+            var buffer = new byte[BlockSize-prefixByteSize-sizeof(BlockOffset)];
 
             // Write entries into a temporary buffer (block remains untouched)
             var index = 0;

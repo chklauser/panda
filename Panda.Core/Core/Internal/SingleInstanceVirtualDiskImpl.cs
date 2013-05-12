@@ -147,6 +147,30 @@ namespace Panda.Core.Internal
             }
         }
 
+        public override void ReceiveChanges(BlockOffset blockOffset, byte[] data)
+        {
+            base.ReceiveChanges(blockOffset, data);
+
+            // This override makes sure that any nodes that were associated with that particular block offset
+            // are flushed from the cache. They might after all have changed their representation
+            _lock.Wait();
+            try
+            {
+                WeakReference<ICacheKeyed<BlockOffset>> weakNode;
+                ICacheKeyed<BlockOffset> node;
+                if (_existingNodes.TryGetValue(blockOffset, out weakNode) && weakNode.TryGetTarget(out node))
+                {
+                    ReferenceCache.EvictEarly(node);
+                    _existingNodes.Remove(blockOffset);
+                    _handleGc();
+                }
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
         internal override VirtualDirectoryImpl GetDirectory(VirtualDirectoryImpl parentDirectory, DirectoryEntry de)
         {
             _lock.Wait();

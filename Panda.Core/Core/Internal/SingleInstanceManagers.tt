@@ -14,8 +14,19 @@ using Panda.Core.Internal;
 
 <# 
 	Impl[] implementationClasses = new Impl[] {
-		new Impl { T = "Panda.Core.IO.RawBlockManager", CtorParams = "IRawPersistenceSpace persistenceSpace", CtorArgs = "persistenceSpace", ManagesEmptyBlocks = true, IsDisposable = true },
-		new Impl { T = "Panda.Test.InMemory.Blocks.MemBlockManager", CtorParams = "uint totalBlockCount, BlockOffset rootDirectoryBlockOffset, int metaBlockCapacity, int dataBlockCapacity", CtorArgs = "totalBlockCount, rootDirectoryBlockOffset, metaBlockCapacity, dataBlockCapacity"}
+		new Impl { 
+            T = "Panda.Core.IO.RawBlockManager", 
+            CtorParams = "IRawPersistenceSpace persistenceSpace", 
+            CtorArgs = "persistenceSpace", 
+            ManagesEmptyBlocks = true, 
+            IsDisposable = true, 
+            SupportsDirectWrite = true 
+        },
+		new Impl { 
+            T = "Panda.Test.InMemory.Blocks.MemBlockManager", 
+            CtorParams = "uint totalBlockCount, BlockOffset rootDirectoryBlockOffset, int metaBlockCapacity, int dataBlockCapacity", 
+            CtorArgs = "totalBlockCount, rootDirectoryBlockOffset, metaBlockCapacity, dataBlockCapacity"
+        }
 	};
 	foreach(var impl in implementationClasses) {
 		var T = impl.T;
@@ -168,7 +179,7 @@ namespace <#=TNs#>
 
         public override IDirectoryContinuationBlock AllocateDirectoryContinuationBlock()
         {
-            var block = base.AllocateDirectoryBlock();
+            var block = base.AllocateDirectoryContinuationBlock();
 			_lock.Wait();
             try
 			{
@@ -235,7 +246,11 @@ namespace <#=TNs#>
         public override void FreeBlock(BlockOffset blockOffset)
         {
             base.FreeBlock(blockOffset);
+            EvictBlock(blockOffset);
+        }
 
+        protected void EvictBlock(BlockOffset blockOffset)
+        {
             _lock.Wait();
             try
             {
@@ -357,6 +372,14 @@ namespace <#=TNs#>
 		}
 <# } #>
 
+<# if(impl.SupportsDirectWrite) { #>
+        public override void WriteBlockDirect(BlockOffset blockOffset, byte[] data)
+        {
+            base.WriteBlockDirect(blockOffset, data);
+            EvictBlock(blockOffset);
+        }
+<# } #>
+
 		#region IDisposable
 
 <# if(!impl.IsDisposable) { #>
@@ -411,5 +434,6 @@ namespace <#=TNs#>
 		public string CtorParams { get; set; }
 		public bool IsDisposable { get; set; }
 		public bool ManagesEmptyBlocks { get; set; }
+        public bool SupportsDirectWrite { get; set; }
 	}
 #>

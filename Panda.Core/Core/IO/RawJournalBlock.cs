@@ -21,12 +21,12 @@ namespace Panda.Core.IO
         {
             get
             {
-                var entrySize = (uint) (sizeof (long) + sizeof (BlockOffset));
-                return BlockSize/entrySize;
+                var entrySize = (uint) sizeof (RawJournalEntry);
+                return ((BlockSize - (uint)sizeof(BlockOffset)) / entrySize);
             }
         }
 
-        [StructLayout(LayoutKind.Sequential)]
+        [StructLayout(LayoutKind.Sequential,Pack = 4)]
         struct RawJournalEntry
         {
             public long BinaryDate;
