@@ -8,25 +8,44 @@ namespace Panda.UI
 {
     public static class Extensions
     {
-         public static Task<T> SendAsync<T>(this IServiceClientAsync serviceClient, IReturn<T> requestMessage)
+         public static Task<T> GetAsync<T>(this IServiceClientAsync serviceClient, IReturn<T> requestMessage)
          {
              if (serviceClient == null)
                  throw new ArgumentNullException("serviceClient");
              var tcs = new TaskCompletionSource<T>();
              serviceClient.GetAsync(requestMessage, tcs.SetResult, 
-                 (r, e) => tcs.SetException(new RemoteServerException(r,e)));
+                 (r, e) => tcs.SetException(e));
              return tcs.Task;
-         }         
-    }
+         }
 
-    [Serializable]
-    public class RemoteServerException : Exception
-    {
-        public RemoteServerException(object responseMessage, Exception inner) : base(inner.Message, inner)
-        {
-            ResponseMessage = responseMessage;
-        }
+         public static Task<T> PostAsync<T>(this IServiceClientAsync serviceClient, IReturn<T> requestMessage)
+         {
+             if (serviceClient == null)
+                 throw new ArgumentNullException("serviceClient");
+             var tcs = new TaskCompletionSource<T>();
+             serviceClient.PostAsync(requestMessage, tcs.SetResult,
+                 (r, e) => tcs.SetException(e));
+             return tcs.Task;
+         }
 
-        public object ResponseMessage { get; set; }
+         public static Task<T> PutAsync<T>(this IServiceClientAsync serviceClient, IReturn<T> requestMessage)
+         {
+             if (serviceClient == null)
+                 throw new ArgumentNullException("serviceClient");
+             var tcs = new TaskCompletionSource<T>();
+             serviceClient.PutAsync(requestMessage, tcs.SetResult,
+                 (r, e) => tcs.SetException(e));
+             return tcs.Task;
+         } 
+
+         public static Task<T> HeadAsync<T>(this IServiceClientAsync serviceClient, IReturn<T> requestMessage)
+         {
+             if (serviceClient == null)
+                 throw new ArgumentNullException("serviceClient");
+             var tcs = new TaskCompletionSource<T>();
+             serviceClient.CustomMethodAsync("HEAD",requestMessage, tcs.SetResult,
+                 (r, e) => tcs.SetException(e));
+             return tcs.Task;
+         }
     }
 }

@@ -9,7 +9,7 @@ namespace Panda.ServiceModel
     public class ChangedBlocks : IReturn<ChangedBlocksResponse>
     {
         public string DiskName { get; set; }
-        public DateTime ChangedAfter { get; set; }
+        public DateTime ChangesSince { get; set; }
     }
 
     public class ChangedBlocksResponse

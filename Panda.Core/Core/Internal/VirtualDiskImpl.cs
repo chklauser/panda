@@ -128,14 +128,26 @@ namespace Panda.Core.Internal
             raw.ReadDataBlock(blockOffset, destination, index);
         }
 
-        public void Associate(string serverDiskName)
+        public string ServerAssociation
         {
-            var raw = BlockManager as RawBlockManager;
-            if (raw == null)
-                throw new NotSupportedException(
-                    "The block manager underlying this virtual disk does not support synchronization.");
+            get
+            {
+                var raw = BlockManager as RawBlockManager;
+                if (raw == null)
+                    throw new NotSupportedException(
+                        "The block manager underlying this virtual disk does not support synchronization.");
 
-            raw.ServerDiskName = serverDiskName;
+                return raw.ServerDiskName;
+            }
+            set
+            {
+                var raw = BlockManager as RawBlockManager;
+                if (raw == null)
+                    throw new NotSupportedException(
+                        "The block manager underlying this virtual disk does not support synchronization.");
+
+                raw.ServerDiskName = value;
+            }
         }
 
         public void NotifySynchronized()

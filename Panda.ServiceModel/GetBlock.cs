@@ -11,6 +11,6 @@ namespace Panda.ServiceModel
     {
         public string DiskName { get; set; }
         public long BlockOffset { get; set; }
-        public List<long> BlockOffsets { get; set; }
+        public List<long> BatchBlockOffsets { get; set; }
     }
 }

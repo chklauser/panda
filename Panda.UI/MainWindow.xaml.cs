@@ -18,6 +18,7 @@ using Borgstrup.EditableTextBlock;
 using JetBrains.Annotations;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using Panda.Core.Internal;
+using Panda.ServiceModel;
 using Panda.UI.ViewModel;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
@@ -42,7 +43,6 @@ namespace Panda.UI
         }
 
         private readonly BrowserViewModel _viewModel;
-        private static int _uniqueDiskNameCounter = 0;
 
         public BrowserViewModel ViewModel
         {
@@ -69,63 +69,7 @@ namespace Panda.UI
 
             // Open all the disks
             foreach (var fileName in ofd.FileNames)
-                _openDisk(fileName);
-        }
-
-        private void _openDisk(string fileName)
-        {
-            VirtualDisk vdisk = null;
-            try
-            {
-                vdisk = VirtualDisk.OpenExisting(fileName);
-                _registerDisk(fileName, vdisk);
-            }
-            catch
-            {
-                // We weren't able to get the disk into the caring
-                // hands of the view model. Close the file to prevent
-                // more damage.
-                if (vdisk != null)
-                    vdisk.Dispose();
-                throw;
-            }
-        }
-
-        private class WindowsDispatcherAdapter : INotificationDispatcher
-        {
-            [NotNull]
-            private readonly Dispatcher _dispatcher;
-
-            public WindowsDispatcherAdapter(Dispatcher dispatcher)
-            {
-                _dispatcher = dispatcher;
-            }
-
-            public bool CheckAccess()
-            {
-                return _dispatcher.CheckAccess();
-            }
-
-            public Task BeginInvoke(Delegate method, params object[] args)
-            {
-                return _dispatcher.BeginInvoke(DispatcherPriority.Background, method, args).Task;
-            }
-        }
-
-        private void _registerDisk(string fileName, VirtualDisk vdisk)
-        {
-            var name = Path.GetFileNameWithoutExtension(fileName) ??
-                "disk" + Interlocked.Increment(ref _uniqueDiskNameCounter);
-
-            // have the virtual disk dispatch its notifications on the UI thread.
-            vdisk.NotificationDispatcher = new WindowsDispatcherAdapter(Dispatcher);
-
-            var diskModel = new DiskViewModel()
-                {
-                    Disk = vdisk,
-                    Name = name
-                };
-            _viewModel.OpenDisks.Add(diskModel);
+                ViewModel.OpenDisk(fileName,Dispatcher);
         }
 
         protected void ExecuteNewDisk(object sender, ExecutedRoutedEventArgs e)
@@ -144,7 +88,7 @@ namespace Panda.UI
             {
                 // we just use a dummy capacity here
                 vdisk = VirtualDisk.CreateNew(fileName,dialog.ViewModel.Capacity ?? 10L*1024*1024);
-                _registerDisk(fileName, vdisk);
+                ViewModel.RegisterDisk(fileName, vdisk,Dispatcher);
             }
             catch
             {
@@ -588,11 +532,10 @@ namespace Panda.UI
             if(!(n != null && !n.IsRoot))
                 return;
 
-            VirtualDirectory parent = n.ParentDirectory;
+            var parent = n.ParentDirectory;
             Debug.Assert(parent != null);
-            var nextText = String.Format("Delete {0} from directory {1}.", n.Name, parent.Name);
             n.Delete();
-            ViewModel.StatusText = nextText;
+            ViewModel.StatusText = String.Format("Delete {0} from directory {1}.", n.Name, parent.Name);
             var ui = e.OriginalSource as UIElement;
             if (ui != null && ui.Focusable)
                 ui.Focus();
@@ -664,14 +607,13 @@ namespace Panda.UI
             }
             else
             {
-                throw new PandaException("shit blows up");
+                throw new PandaException("Invalid parameter to search command. Expecting disk or directory.");
             }
 
-            var result = dialog.ShowDialog();
-            if (!(result ?? false))
-                return;
+            dialog.ShowDialog();
 
-            // TODO find a way to display the search result
+            // ideally we would like to display the search result in the main browser
+            // but the TreeView does not make it easy to select a particular node.
         }
 
         private IEnumerable<VirtualNode> _nodePath(VirtualNode virtualNode)
@@ -693,8 +635,79 @@ namespace Panda.UI
 
         private void CanConnect(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = !ViewModel.IsConnected
+            e.CanExecute = ViewModel.CanConnect
                 && App.IsValid(ServerUrlTextBox);
+        }
+
+        private async void ExecuteRefresh(object sender, ExecutedRoutedEventArgs e)
+        {
+            await ViewModel.RefreshServerDisksAsync();
+        }
+
+        private void CanRefresh(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = ViewModel.IsConnected;
+        }
+
+        private async void ExecuteAssociate(object sender, ExecutedRoutedEventArgs e)
+        {
+            var diskView = e.Parameter as DiskViewModel;
+
+            if (diskView == null)
+            {
+                Trace.TraceError("Disconnect command parameter is not DiskViewModel.");
+                return;
+            }
+
+            await ViewModel.AssociateDiskAsync(diskView);
+        }
+
+        private void CanAssociate(object sender, CanExecuteRoutedEventArgs e)
+        {
+            var diskView = e.Parameter as DiskViewModel;
+
+            e.CanExecute = diskView != null && ViewModel.CanAssociateDisk(diskView);
+        }
+
+        private void ExecuteDisconnectDisk(object sender, ExecutedRoutedEventArgs e)
+        {
+            var diskView = e.Parameter as DiskViewModel;
+
+            if (diskView == null)
+            {
+                Trace.TraceError("Disconnect command parameter is not DiskViewModel.");
+                return;
+            }
+
+            diskView.Disconnect();
+        }
+
+        private void CanDisconnectDisk(object sender, CanExecuteRoutedEventArgs e)
+        {
+            var diskView = e.Parameter as DiskViewModel;
+
+            e.CanExecute = diskView != null && diskView.CanDisconnect;
+        }
+
+        private async void ExecuteDownloadDisk(object sender, ExecutedRoutedEventArgs e)
+        {
+            await ViewModel.DownloadDisk((DiskRecord) e.Parameter,Dispatcher);
+        }
+
+        private void CanDownloadDisk(object sender, CanExecuteRoutedEventArgs e)
+        {
+            var diskRecord = e.Parameter as DiskRecord;
+            e.CanExecute = diskRecord != null && ViewModel.CanDownloadDiks(diskRecord);
+        }
+
+        private void ExecuteDisconnectServer(object sender, ExecutedRoutedEventArgs e)
+        {
+            ViewModel.Disconnect();
+        }
+
+        private void CanDisconnectServer(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = ViewModel.IsConnected;
         }
     }
 }

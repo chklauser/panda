@@ -39,9 +39,10 @@ namespace Panda
         /// <summary>
         /// Associates the (client) disk with a server disk or removes such an association.
         /// </summary>
-        /// <param name="serverDiskName">The name the disk has on the server. Or null to remove existing associations.</param>
+        /// <value>The name the disk has on the server. Or null to remove existing associations.</value>
         /// <exception cref="ArgumentException">Server disk name is too long to fit into the meta data block of the disk</exception>
-        void Associate([CanBeNull] string serverDiskName);
+        [CanBeNull]
+        string ServerAssociation { get; set; }
 
         /// <summary>
         /// Informs the disk that synchronization was successful.

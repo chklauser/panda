@@ -1,13 +1,72 @@
-﻿using JetBrains.Annotations;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using JetBrains.Annotations;
 
 namespace Panda.UI.ViewModel
 {
-    public class DiskViewModel
+    public class DiskViewModel : INotifyPropertyChanged
     {
-        [NotNull]
-        public string Name { get; set; }
+        private string _name;
+        private VirtualDisk _disk;
+        private string _fileName;
 
         [NotNull]
-        public VirtualDisk Disk { get; set; } 
+        public string Name
+        {
+            get { return _name; }
+            set
+            {
+                if (value == _name) return;
+                _name = value;
+                OnPropertyChanged();
+            }
+        }
+
+        [NotNull]
+        public VirtualDisk Disk
+        {
+            get { return _disk; }
+            set
+            {
+                if (Equals(value, _disk)) return;
+                _disk = value;
+                OnPropertyChanged();
+                OnPropertyChanged("SynchronizingDisk");
+            }
+        }
+
+        [NotNull]
+        public string FileName
+        {
+            get { return _fileName; }
+            set
+            {
+                if (value == _fileName) return;
+                _fileName = value;
+                OnPropertyChanged();
+            }
+        }
+
+        [NotNull]
+        public ISynchronizingDisk SynchronizingDisk { get { return (ISynchronizingDisk) Disk; } }
+
+        public bool CanDisconnect
+        {
+            get { return SynchronizingDisk.ServerAssociation != null; }
+        }
+
+        public void Disconnect()
+        {
+            SynchronizingDisk.ServerAssociation = null;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            var handler = PropertyChanged;
+            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

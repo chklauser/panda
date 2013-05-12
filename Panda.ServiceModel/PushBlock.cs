@@ -9,12 +9,11 @@ using ServiceStack.ServiceInterface;
 
 namespace Panda.ServiceModel
 {
-    [Route("/disks/{DiskName}/{BlockOffset}", Verbs = "POST")]
-    public class PushBlock : IRequiresRequestStream
+    [Route("/disks/{DiskName}/{BlockOffset}", Verbs = "PUT,POST")]
+    public class PushBlock
     {
         public String DiskName { get; set; }
         public long BlockOffset { get; set; }
-        public DateTime DateChanged { get; set; }
-        public Stream RequestStream { get; set; }
+        public byte[] Data { get; set; }
     }
 }

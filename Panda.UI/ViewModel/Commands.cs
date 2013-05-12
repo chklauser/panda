@@ -83,5 +83,46 @@ namespace Panda.UI.ViewModel
         {
             get { return _connect; }
         }
+
+        [NotNullAttribute] private static readonly RoutedUICommand _refresh = new RoutedUICommand("Refresh", "Refresh", typeof (Commands
+            ));
+
+        public static RoutedUICommand Refresh
+        {
+            get { return _refresh; }
+        }
+
+        [NotNullAttribute] private static readonly RoutedUICommand _associate = new RoutedUICommand("Associate with server", "Associate", typeof (Commands
+            ));
+
+        public static RoutedUICommand Associate
+        {
+            get { return _associate; }
+        }
+
+        [NotNullAttribute]
+        private static readonly RoutedUICommand _disconnectDisk = new RoutedUICommand("Disconnect from server", "DisconnectDisk", typeof(Commands
+            ));
+
+        public static RoutedUICommand DisconnectDisk
+        {
+            get { return _disconnectDisk; }
+        }
+
+        [NotNullAttribute] private static readonly RoutedUICommand _downloadDisk = new RoutedUICommand("Download disk", "DownloadDisk", typeof (Commands
+            ));
+
+        public static RoutedUICommand DownloadDisk
+        {
+            get { return _downloadDisk; }
+        }
+
+        [NotNullAttribute] private static readonly RoutedUICommand _disconnectServer = new RoutedUICommand("Disconnect from server", "DisconnectServer", typeof (Commands
+            ));
+
+        public static RoutedUICommand DisconnectServer
+        {
+            get { return _disconnectServer; }
+        }
     }
 }

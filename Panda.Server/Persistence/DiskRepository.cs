@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Panda.Server.Persistence
 {
@@ -20,7 +21,7 @@ namespace Panda.Server.Persistence
 
         public IEnumerable<string> GetKnownDiskNames()
         {
-            return Directory.EnumerateFiles(Environment.CurrentDirectory, "*.panda", SearchOption.TopDirectoryOnly);
+            return Directory.EnumerateFiles(Environment.CurrentDirectory, "*.panda", SearchOption.TopDirectoryOnly).Select(Path.GetFileNameWithoutExtension);
         }
 
         #region Disposal

@@ -23,6 +23,11 @@
         <CommandBinding Command="model:Commands.Export" Executed="ExecuteExport" CanExecute="CanExport" />
         <CommandBinding Command="model:Commands.Import" Executed="ExecuteImport" CanExecute="CanImport" />
         <CommandBinding Command="model:Commands.Connect" Executed="ExecuteConnect" CanExecute="CanConnect" />
+        <CommandBinding Command="model:Commands.Refresh" Executed="ExecuteRefresh" CanExecute="CanRefresh" />
+        <CommandBinding Command="model:Commands.Associate" Executed="ExecuteAssociate" CanExecute="CanAssociate" />
+        <CommandBinding Command="model:Commands.DisconnectDisk" Executed="ExecuteDisconnectDisk" CanExecute="CanDisconnectDisk" />
+        <CommandBinding Command="model:Commands.DisconnectServer" Executed="ExecuteDisconnectServer" CanExecute="CanDisconnectServer" />
+        <CommandBinding Command="model:Commands.DownloadDisk" Executed="ExecuteDownloadDisk" CanExecute="CanDownloadDisk" />
     </Window.CommandBindings>
     <Window.Resources>
         <internal:CommandLabelConverter x:Key="CommandLabelConverter" />
@@ -38,6 +43,8 @@
                         <MenuItem Command="model:Commands.Export" CommandParameter="{Binding}"/>
                         <MenuItem Command="Paste" CommandParameter="{Binding}"/>
                         <MenuItem Command="Search" CommandParameter="{Binding}" />
+                        <MenuItem Command="model:Commands.Associate" CommandParameter="{Binding}" />
+                        <MenuItem Command="model:Commands.DisconnectDisk" CommandParameter="{Binding}" />
                     </ContextMenu>
                 </StackPanel.ContextMenu>
                 <TextBlock Text="{Binding Path=Name}"/>
@@ -102,11 +109,22 @@
             </TabItem>
             <TabItem Header="Server">
                 <Grid Margin="15">
+                    <Grid.Resources>
+                        <ContextMenu  x:Key="RowMenu" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                            <MenuItem 
+                                Command="model:Commands.DownloadDisk" CommandParameter="{Binding}"
+                                Header="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"/>
+                        </ContextMenu>
+                        <Style x:Key="DefaultRowStyle" TargetType="{x:Type DataGridRow}">
+                            <Setter Property="ContextMenu" Value="{StaticResource RowMenu}" />
+                        </Style>
+                    </Grid.Resources>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -120,7 +138,7 @@
                     </Label>
                     <TextBox x:Name="ServerUrlTextBox" 
                          Grid.Row="0" Grid.Column="1" 
-                         VerticalAlignment="Top">
+                         VerticalAlignment="Top" IsEnabled="{Binding Path=CanConnect}">
                         <TextBox.Text>
                             <Binding Path="ServerUrl" UpdateSourceTrigger="PropertyChanged">
                                 <Binding.ValidationRules>
@@ -130,22 +148,34 @@
                         </TextBox.Text>
                     </TextBox>
 
-                    <!-- Buttons -->
+                    <!-- Connect button -->
                     <Button Grid.Row="1" Grid.Column="1" 
                         HorizontalAlignment="Left" VerticalAlignment="Top"
                         Command="model:Commands.Connect"
                         Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"/>
+                    
+                    <Button Grid.Row="1" Grid.Column="1" 
+                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Command="model:Commands.DisconnectServer"
+                        Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"/>
 
+                    <!-- Refresh button -->
+                    <Button Grid.Row="2" Grid.Column="0"
+                            HorizontalAlignment="Left" VerticalAlignment="Top"
+                            Command="model:Commands.Refresh"
+                            Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"/>
+                    
                     <!-- Server view -->
                     <DataGrid ItemsSource="{Binding ServerDiskRecords}"
-                          Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                          Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
                           CanUserReorderColumns="False" 
                           CanUserResizeRows="False" 
                           CanUserResizeColumns="True" 
                           CanUserSortColumns="True" 
                           AutoGenerateColumns="False"
                           IsReadOnly="True" 
-                          Margin="0 15 0 0">
+                          Margin="0 15 0 0"
+                          RowStyle="{StaticResource DefaultRowStyle}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Disk name" Binding="{Binding Name}"/>
                             <DataGridTextColumn Header="Capacity" Binding="{Binding Capacity}"/>

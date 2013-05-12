@@ -50,8 +50,8 @@ namespace Panda.Test.Unit
             SyncServer = (ISynchronizingDisk) Server;
             SyncOtherClient = (ISynchronizingDisk) OtherClient;
 
-            SyncClient.Associate(serverDiskName);
-            SyncOtherClient.Associate(serverDiskName);
+            SyncClient.ServerAssociation = serverDiskName;
+            SyncOtherClient.ServerAssociation = serverDiskName;
 
             DiskNames = new List<string> {clientDiskName, otherClientDiskName,serverDiskName};
 

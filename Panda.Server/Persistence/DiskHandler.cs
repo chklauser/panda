@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -58,9 +59,21 @@ namespace Panda.Server.Persistence
         [NotNull]
         private VirtualDisk _openDisk()
         {
-            var disk = VirtualDisk.OpenExisting(DiskName);
+            var disk = VirtualDisk.OpenExisting(DiskPath);
+
             _monitorInactivity();
             return disk;
+        }
+
+        public string DiskPath
+        {
+            get
+            {
+                var name = DiskName;
+                if (!File.Exists(name))
+                    name = name + ".panda";
+                return name;
+            }
         }
 
         #region Inactivity monitor
@@ -129,5 +142,19 @@ namespace Panda.Server.Persistence
 
         #endregion
 
+        public void TemporarilyCloseDisk()
+        {
+            if (_disk != null)
+            {
+                lock (this)
+                {
+                    if (_disk != null)
+                    {
+                        _disk.Dispose();
+                        _disk = null;
+                    }
+                }
+            }
+        }
     }
 }

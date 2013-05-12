@@ -24,6 +24,21 @@ namespace Panda.Server.Persistence
             get { return _handler.Disk; }
         }
 
+        public void TemporarilyCloseDisk()
+        {
+            _handler.TemporarilyCloseDisk();
+        }
+
+        public string DiskName
+        {
+            get { return _handler.DiskName; }
+        }
+
+        public string DiskPath
+        {
+            get { return _handler.DiskPath; }
+        }
+
         public void Dispose()
         {
             Dispose(true);
