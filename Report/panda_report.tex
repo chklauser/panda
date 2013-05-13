@@ -382,6 +382,23 @@ The job of this journal is to answer one simple question: ``Which blocks have ch
 The answer comes in the form of a set of block offsets that can then be used to send or receive these changes to and from the server. 
 Together with a mechanism that allows reading from and writing to individual blocks, synchronization of changes is pretty straightforward.
 
+\subsubsection{Communication}
+We decided to implement the synchronization server as a RESTful web service.
+This decision was primarily motivated by the fact that basic HTTP requests are easier to debug and issue ``by hand'' than SOAP or custom exchange protocols.
+To help us we used \href{http://www.servicestack.net/}{ServiceStack}, a relatively young web service framework that has the advantage that servers built with it can easily be hosted in a standalone application.
+
+ServiceStack's programming model revolves around DTOs (data transfer objects). Each DTO, a distinct C\# type, represents one kind of message understood by the server. 
+Request DTOs can be bound to URLs and have one or more handler methods associated with them, for instance one per HTTP verb.
+So you could have that DTO type represent your REST resource and perform different actions depending on the HTTP method used in the various requests.
+Our server actions are implemented in the Panda.Server.ServiceInterface.DiskService class.
+
+ServiceStack also comes with client-side abstractions which will automatically assemble the correct request URL depending on what kind of request object they are supplied with. 
+For this to work, both server and client need the same definitions of these DTOs. 
+That is why we have a separate assembly called Panda.ServiceModel, which provides the common DTOs to both the server and the client.
+These are completely ``dumb'' objects with no application logic.
+Combined with the ServiceStack's client's support for asynchronous operations meant that communication was actually rather straightforward to implement.
+However, ServiceStack is still pretty new and it's documentation is lacking in places, making it's use an adventure in of itself.
+
 \subsubsection{Global journal}
 Like with distributed version control systems, our journal is the exact same on all synchronized machines.
 While this isn't technically necessary for clients in our solution, it is vital that the server has a change journal reaching all the way back to the initial upload of the disk.
