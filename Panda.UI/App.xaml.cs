@@ -25,7 +25,16 @@ namespace Panda.UI
 #if DEBUG
             Trace.Listeners.Clear();
             Trace.Listeners.Add(new DefaultTraceListener());
+            Trace.Listeners.Add(new ConsoleTraceListener());
 #endif
+            DispatcherUnhandledException += App_DispatcherUnhandledException;
+        }
+
+        void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            MessageBox.Show(e.Exception.Message, string.Format("{0} in Panda.UI", e.Exception.GetType().Name),
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            e.Handled = true;
         }
 
         public static bool IsValid(DependencyObject obj)

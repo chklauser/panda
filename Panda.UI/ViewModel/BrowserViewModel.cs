@@ -11,6 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Threading;
 using JetBrains.Annotations;
 using Panda.Core.Blocks;
@@ -133,8 +134,16 @@ namespace Panda.UI.ViewModel
 
         public async Task ConnectAsync()
         {
-            _resetServiceClient();
-            await RefreshServerDisksAsync();
+            try
+            {
+                _resetServiceClient();
+                await RefreshServerDisksAsync();
+            }
+            catch (WebServiceException e)
+            {
+                MessageBox.Show(e.Message, "Server communication error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Disconnect();
+            }
         }
 
         public Task RefreshServerDisksAsync()
