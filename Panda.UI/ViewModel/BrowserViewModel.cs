@@ -188,6 +188,7 @@ namespace Panda.UI.ViewModel
 
             var capacity = diskView.Disk.Capacity;
             diskView.SynchronizingDisk.ServerAssociation = diskView.Name;
+            var oldNotificationDispatcher = diskView.Disk.NotificationDispatcher;
 
             if (resp == null)
             {
@@ -241,6 +242,7 @@ namespace Panda.UI.ViewModel
                 finally
                 {
                     diskView.Disk = VirtualDisk.OpenExisting(diskView.FileName);
+                    diskView.Disk.NotificationDispatcher = oldNotificationDispatcher;
                 }
             }
             StatusText = String.Format("Disk {0} associated with server as {1}.", diskView.Name, resp.Name);

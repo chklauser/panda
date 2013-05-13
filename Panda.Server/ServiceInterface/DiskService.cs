@@ -54,8 +54,6 @@ namespace Panda.Server.ServiceInterface
         {
             if (uploadDiskRequest == null)
                 throw new ArgumentNullException("uploadDiskRequest");
-            if(String.IsNullOrWhiteSpace(uploadDiskRequest.DiskName))
-                throw new ArgumentException("DiskName is missing.","uploadDiskRequest");
 
             using (var req = uploadDiskRequest.RequestStream)
             {

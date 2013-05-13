@@ -59,6 +59,12 @@ namespace Panda.Server
             
             Console.WriteLine("Panda.Server started, reachable at ");
             Console.WriteLine(baseUrl);
+            Console.WriteLine("If you want to make the server accessible from external machines, you might need to a corresponding rule to the Windows firewall.");
+            Console.WriteLine("The following command would do the trick");
+            Console.WriteLine("  netsh advfirewall firewall add rule name=\"Panda.Server\" dir=in action=allow protocol=TCP localport={0}", _extractPort(baseUrl));
+            Console.WriteLine();
+            Console.WriteLine("Note that this command might need to be run with administrative privileges");
+            Console.WriteLine();
             _waitForKey();
             appHost.Stop();
             return 0;

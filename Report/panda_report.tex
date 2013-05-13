@@ -1,12 +1,25 @@
+% !TeX program = XeLaTex
 \documentclass[a4paper,12pt]{article}
 
-% !TeX program = pdfLaTeX
+\usepackage{fontspec} % Font selection for XeLaTeX; see fontspec.pdf for documentation
+\defaultfontfeatures{Mapping=tex-text} % to support TeX conventions like ``---''
+\usepackage{xunicode} % Unicode support for LaTeX character names (accents, European chars, etc)
+\usepackage{xltxtra} % Extra customizations for XeLaTeX
+\usepackage[math-style=ISO]{unicode-math}
+
+\setmainfont{Cambria} % set the main body font (\textrm), assumes Cambria is installed
+\setsansfont{Calibri}
+\setmonofont{Consolas}
+\setmathfont{Cambria Math}
 
 % add more packages if necessary
 \usepackage{xspace}
-%\usepackage{graphicx}
-%\usepackage{xcolor}
-%\usepackage{hyperref}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{url}
+\usepackage[colorlinks=true,citecolor=darkgreen,urlcolor=blue,linkcolor=Sepia]{hyperref}
+
+\usepackage{listings}
+\lstset{language=[Sharp]C}
 
 
 \newcommand{\groupname}{Panda\xspace}
@@ -32,7 +45,7 @@ Roger Walt
 
 \section{Introduction}
 
-This document describes the design and implementation of the \emph{Panda Virtual File System} of group \emph{Pandas}. The project is part of the course \emph{Java and C\# in depth} at ETH Zurich. The following sections describe each project phase, listing the requirements that were implemented and the design decisions taken. The last section describes a use case of using the \emph{Panda Virtual File System}.
+This document describes the design and implementation of the \emph{Panda Virtual File System} of group \emph{Pandas}. The project is part of the course \emph{Java and C\# in depth} at ETH Zurich. The following sections describe each project phase, listing the requirements that were implemented and the design decisions taken. 
 
 % PART I: VFS CORE
 % --------------------------------------
@@ -148,10 +161,9 @@ concrete path.}\\
 		Size is implemented as by recursively querying the individual directories. To get the occupied space just ask root.\\
 		Test method: Req2\_1\_10
 	\item \textbf{Bonus Basic:} \emph{Elastic disk: Virtual disk can dynamically grow or shrink, depending on its occupied space.}\\
-		The internal data structure can already grow and shrink dynamically. 
-Section \ref{sct:empty} discusses how keep track of how much space our file system actually needs.
-However, at this time, the space on disk is pre-allocated to the capacity that the user specified and our disk refuses to grow beyond that size.
-	\item \textbf{Bonus Advanced:} \emph{Large data: This means, that VFS core can store \& operate amount of data, that can't fit to PC RAM ( typically, more than 4Gb).}\\
+		The internal data structure starts out with just the minimal space necessary and then grows incrementally.  
+Section \ref{sct:empty} discusses how keep track of how much space our file system actually needs. Note that we make use of sparse files to implement this features. This means that for most windows APIs, the file appears to be pre-allocated to the entire disk capacity. Accessing the disk file's properties, however, will reveal what the file's ``Size on disk'' is. Also note that this dynamic growth only applies to ``local'' disks. Disks downloaded from a server will not benefit from this.
+	\item \textbf{Bonus Advanced:} \emph{Large data: This means, that VFS core can store \& operate amount of data, that can't fit to PC RAM ( typically, more than 4GB).}\\
 		We use the operating system's virtual memory mechanism to get the relevant pieces of our file system in memory. 
 We were careful not to hold on to data structures (blocks, virtual nodes) but instead re-create them whenever required.
 That way, our file system implementation only uses as much RAM as the user wielding it.
@@ -169,7 +181,7 @@ This section lists the detailed specification of the block system of the virtual
 \begin{itemize}
 	\item Offsets \& lengths in bytes.
 	\item The VFS is organized in blocks with fixed BLOCK\_SIZE.
-	\item All addresses are in number of blocks from 0 and of length 4 bytes.
+	\item All addresses are in number of blocks from 0 and of length 4 bytes (unsigned 32bit integer).
 	\item Only single links to blocks (not more than one hard-link) are allowed. This means that one file or directory can only be in one directory.
 	\item Block address 0 is illegal, it means absence of a block.
 	\item B\_S := BLOCK\_SIZE \& d-t := data-type
@@ -188,7 +200,10 @@ Offset 	&Length	&C\# d-t	&Description\\\hline
 8	&4	&UInt32	&Address of root directory node\\
 12	&4	&UInt32	&Address of empty page block. Must never be 0\\
 16	&4	&UInt32	&“break” in number of blocks, see empty space management.\\
-20	&B\_S -20	&UInt32	&Empty (initialized with 0)\\\hline
+20	&4	&UInt32	&Address of the journal block.\\
+24	&8	&UInt64	&Time of last synchronization.\\
+32	&*	&string	&Name of this disk on the server (prefixed by byte indicating the byte length of this string)\\
+\hline
 \end{tabular}\\
 
 Normal blocks are everywhere but at address 0.
@@ -196,11 +211,13 @@ Normal blocks are everywhere but at address 0.
 \paragraph{Block Types}
 
 \begin{itemize}
-	\item Directory blocks (many different blocks, with optional continuation blocks)
-	\item File blocks (many different blocks, with optional continuation blocks)
-	\item Data blocks (many different blocks)
-	\item Empty space block (exactly one block, with optional continuation blocks)
+	\item Directory blocks
+	\item File blocks
+	\item Data blocks
+	\item Empty space blocks
+	\item Journal blocks
 \end{itemize}
+In addition, for files and directories there are dedicated ``continuation'' (overflow) blocks for when one block cannot hold all necessary information. 
 
 \subparagraph{Directory blocks} \mbox{} \\
 
@@ -218,10 +235,11 @@ Directory continuation blocks look the same as directory blocks and can link to 
 
 \begin{tabular}{|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{7cm}|}\hline
 Offset 	&Length	&C\# d-t	&Description\\\hline
-0	&1	&UInt8	&If first bit (the least significant) set (== 1), following address points to directory. Else to file.\\
-2	&1	&UInt8	&Number of bytes in file name. 0 here marks end of directory block.\\
-3	&X	&String	&File / directory name\\
-X	&X + 4	&UInt32	&Address to file / directory block\\\hline
+0		&1		&UInt8	&Number of bytes in file name. 0 here marks end of directory block.\\
+1		&1		&UInt8	&If first bit (the least significant) set (== 1), following address points to directory. Else to file.\\
+2		&4		&UInt32	&Address to file / directory block\\
+3		&X		&String	&File / directory name\\
+\hline
 \end{tabular} \\
 
 \subparagraph{File blocks} \mbox{} \\
@@ -230,7 +248,7 @@ Contain addresses to data blocks.\\
 
 \begin{tabular}{|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{7cm}|}\hline
 Offset 	&Length	&C\# d-t	&Description\\\hline
-0	&8	&UInt64	&File size in bytes (to manage files smaller than block size)\\
+0	&8	&UInt64	&File size in bytes (to manage file sizes not equal to a multiple of the block size)\\
 8	&?	&UInt32	&Arbitrary number of addresses to data blocks\\
 B\_S - 4	&4	&UInt32	&Link to file continuation block. 0 here marks absence of continuation blocks.\\\hline
 \end{tabular} \\
@@ -256,111 +274,247 @@ B\_S - 4	&4	&UInt32	&Link to empty space continuation block. 0 here marks absenc
 
 The VFS is designed to maintain an index of unused blocks. The addresses of the unused blocks are stored in the empty space block. Its address is stored in the VFS meta-data. This empty space block may also have empty space continuation blocks. But not every address to an empty block in the whole VFS can be stored in this empty space block. Instead, only addresses of empty blocks up to a maximum address, which is called “break”, is stored in this block. If there are no empty blocks left, the “break” must be increased by 1, and the new empty block addresses must be added to the empty space block. If the block next to “break” is freed, decrease the “break”, otherwise the address of this block to the empty space block or its last continuation block.
 
+Unfortunately, our organisation of empty blocks does not allow us to reclaim blocks efficiently that have been freed and lie next to the break. This means that our disk only grows dynamically, but remains constant in size when its contents are being deleted.
+
 % PART II: VFS Browser
 % --------------------------------------
 
 \section{VFS Browser}
 
-The VFS Browser is a Graphical User Interface which allowes the user to use all functions which are implemented in VFS Core. This can be done by mouse or keyboard. Further it is extended by a search function.
+The VFS Browser is a Graphical User Interface which allows the user to use all functions which are implemented in VFS Core. 
 
 \subsection{Design}
 
 % TODO: Remove this text and replace it with actual content
-\emph{Give an overview of the design of this part and describe in general terms how the implementation works. You can mention design patterns used, class diagrams, definition of custom file formats, network protocols, or anything else that helps understand the implementation.}\\
-Since our implementation is written in C\# we used WPF for our GUI. After opening the browser you get an DockPanel. We implemented a Manu on top and a StatusBar at the bottem which shows a StatusText. The actual VFS is shown as a TreeView.
+%\emph{Give an overview of the design of this part and describe in general terms how the implementation works. You can mention design patterns used, class diagrams, definition of custom file formats, network protocols, or anything else that helps understand the implementation.}\\
+Since our implementation is written in C\# we used WPF for our GUI. 
+The interface of our application is fairly straightforward with a menu bar on top and a status bar at the bottom. A tree view (provided by WPF) takes the center stage. It doubles as the list of currently open disks as well as a hierarchical view of each disk's directory structure. The user can access operations on open disks, files and directories via a context menu on each of these elements.
+
+An additional tab, introduced in the last phase of the project, allows the user to connect to a synchronization server, view a list of disks available on that server and download any of theses disk (if they are not yet present locally).
 
 \subsection{Integration}
+We were able to leave our Core largely intact for it's integration into the GUI. 
+We can partly attribute this to our use of standard .NET interfaces such as \lstinline!IReadOnlyCollection!. 
+This meant that we could simply the WPF tree view at one of our disks and it would recursively bind to our file system hierarchy.
+
+However, in order to update the view in an efficient and fine grained fashion, we decided to implement \lstinline!INotifyPropertyChanged! and \lstinline!INotifyCollectionChanged! in our Core where appropriate.
+These interfaces allow any client (not necessarily GUIs, they are not part of a GUI assembly) to receive notifications (event handler callbacks) when a property or collection in our file system API changes its value.
+
+%\emph{If you had to change the design or API of the previous part, describe the changes and the reasons for each change here.}
+
+\subsection{VFS Browser Requirements}
 
 % TODO: Remove this text and replace it with actual content
-\emph{If you had to change the design or API of the previous part, describe the changes and the reasons for each change here.}
-
-
-\section{VFS Browser Requirements}
-
-% TODO: Remove this text and replace it with actual content
-\emph{Describe which requirements (and possibly bonus requirements) you have implemented in this part. Give a quick description (1-2 sentences) of each requirement. List the software elements (classes and or functions) that are mainly involved in implementing each requirement.}
+%\emph{Describe which requirements (and possibly bonus requirements) you have implemented in this part. Give a quick description (1-2 sentences) of each requirement. List the software elements (classes and or functions) that are mainly involved in implementing each requirement.}
 
 \begin{enumerate}
 	\item \emph{The browser should be implemented on one of the following platforms: desktop, web or mobile.}\\
 		Implemented as an WPF application which runs on a desktop.\\
-		Test method:
 	\item \emph{The browser should support all operations from Part 1 (VFS core). For example, users should be able to select a file/folder and copy it to another location without using console commands.}\\
 		Possible.\\
-		Test method:
-	\item \emph{The browser should support both single and multiple selection of files/folders.}\\
-		TODO\\
-		Test method:
-	\item \emph{The browser should support keyboard navigation. The mandatory set of operations includes folder navigation, going to parent and child folders (this is optional for mobile applications due to limited keyboard functionality).}\\
-		TODO\\
-		Test method:
+		Most operations are accessible via context menus. Where appropriate, we also provide keyboard short cuts. Users can copy, paste, rename, delete, import and export files and directories. 
+Note that copy and paste is not supported across different disks. 
+If the user wants to transfer a file from one disk to another, they have to export the file or folder from one and then re-import them into the other disk.
 	\item \emph{The browser should support mouse navigation (or touch in case of the mobile platform). The required operations are the same as in requirement 4.}\\
-		Possible.\\
-		Test method:
+		All operations can be initiated with the mouse via context menus or buttons. The file system can be navigated by clicking on the small white arrows next to disks or directories.
 	\item \emph{The browser should support file-name search based on user-given keybwords. The search should provide options for: case sensitive/ case insensitive search; restrict search to folder; restrict search to folder and subfolders.}\\
-		TODO\\
-		Test method:
+		The user can access search via the context menu on directories or disks. A search dialogue will appear that allows the user to specify the search string and whether the search is to be conducted recursively, case-sensitively and/or using regular expressions. 
+The system displays the search results in a list box in the lower half of the search window.
 	\item \textbf{Bonus Basic:} \emph{Responsive UI, i.e. the browser does not stall during long-running operations (i.e. file search or import).}\\
-		Works for importing files.\\
-		Test method:
-	\item \textbf{Bonus Basic:} \emph{Advanced search; For example, search with wildcards/regexp, and approximate search based on some metric, e.g. edit distance.}\\
-		RegEx is implemented.\\
-		Test method:
+		Many operations are implemented in an asynchronous fashion (using the \lstinline!async! features of C\# 5.0). 
+For instance when the user imports a directory the system performs the import in the background and the imported files and directories will appear in the directory hierarchy before the user's eyes.
+
 \end{enumerate}
+
+\subsection{Implementation details}
+We tried to separate browser logic out of the view as much as possible by using a Model-View-ViewModel or Model-View-Presenter pattern. The state of our application is largely held in \lstinline!BrowserViewModel! and \lstinline!DiskViewModel!.
+The actual view (\lstinline!MainWindow.xaml!) communicates with the view model only via two-way property binding.
+This turned out to be a very convenient way of programming, since our application logic could operate in terms of the domain model (it manipulates virtual disk objects and string properties) whereas WPF will automatically display changes that we make to the view model.
+
+We also made extensive use of the \lstinline!async! keyword in C\# 5.0, which allowed us to express the synchronization work flow in a very succinct yet completely non-blocking way. 
+The user can see the progress of their up- or download in the status bar at the bottom and still interact with the application.
 
 % PART III: Synchronization Server
 % --------------------------------------
 
 \section{Synchronization Server}
-
-% TODO: Remove this line
-\textbf{[This section has to be completed by May 13th.]}
-
-%TODO: Remove this text and replace it with actual content
-\emph{Give a short (1-2 paragraphs) description of what VFS Browser is.}
-
+The synchronization server allows users to keep a disk synchronized across multiple machines. 
+The user can choose to associate any of their disks with the server, uploading a copy of that disk to the server in the process. After that, the system can keep the server's and client's disk in sync by only exchanging the parts of the disk that have actually changed. 
+The user can also have their changes replicated to linked disks on other machines or revert a disk with diverging changes to the state of the authorative copy on the server.
 
 \subsection{Requirements}
+\emph{Note: Since team \groupname fell apart on the way to the final milestone, me and Julian Tschannen agreed to reduce the scope of the final milestone. We decided to drop user authentication and authorisation, focusing on the more interesting aspect of synchronizing disk state instead.}
+
+\begin{description}
+\item[6.3.1.1] \emph{dropped}
+\item[6.3.1.2] \emph{The browser should offer to switch to an offline mode, and be able to operate without a connection to the server.} \\
+The default behaviour of disks is to record all changes. 
+The user decides when to synchronize changes.
+To initiate synchronization, the user opens the context menu of a disk and selects the ``Synchronise disk with server'' option.
+\item[6.3.1.3] \emph{The browser should support binding an existing virtual disk to [the server].} \\
+The user can associate any locally created disk with the server.
+To do so, the user selects the ``Associate with server'' option from a disk's context menu.
+The system will then check with the server to see if that disk already exists on the server. 
+If that is not the case, the browser will upload the disk to the server and then perform the association.
+Servers don't have an identity, so technically a disk can be synchronized with multiple servers.
+
+\item[6.3.2.1] \emph{dropped}
+\item[6.3.2.2] \emph{The server should track changes to linked virtual disks [...] and synchronize the changes across the machines.}\\
+Clients can query our server for a list of changes made to a disc since a client-specified point in time.
+With this list in hand, they can then have the server transfer only those parts (the parts that changed).
+It is not the server, however, that initiates synchronization, but the clients.
+The server simply serves as a central authoritative copy of the disk.
+
+\item[Reverting conflicting changes] 
+When our implementation detects a conflict, our client will make sure that their disks become consistent with the server's version.
+This means that in addition to requesting the changes that other clients have made to the disk, our client also orders the server to send it the original versions of blocks that it changed, effectively reverting the local disk to the last synchronization before incorporating the new changes.
+This feature is limited to conflict resolution on synchronization. It cannot be triggered manually.
+
+\end{description}
 
 \subsection{Design}
+We decided to perform our synchronization on the level of disk blocks.
+Our system keeps track of the offset of each block that has been changed as well as when it was changed last.
+We call the list that tracks these changes our ``journal''.
+Like the list of empty blocks, it is implemented as a singly linked list of blocks (``journal blocks'') as part of the disk it describes.
 
-% TODO: Remove this text and replace it with actual content
-\emph{Give an overview of the design of this part and describe in general terms how the implementation works. You can mention design patterns used, class diagrams, definition of custom file formats, network protocols, or anything else that helps understand the implementation.}
+The job of this journal is to answer one simple question: ``Which blocks have changed since time $X$''.
+The answer comes in the form of a set of block offsets that can then be used to send or receive these changes to and from the server. 
+Together with a mechanism that allows reading from and writing to individual blocks, synchronization of changes is pretty straightforward.
 
+\subsubsection{Global journal}
+Like with distributed version control systems, our journal is the exact same on all synchronized machines.
+While this isn't technically necessary for clients in our solution, it is vital that the server has a change journal reaching all the way back to the initial upload of the disk.
+The server cannot know how many copies of the virtual disk are floating around and at what stage (``revision'') they are.
+After all these virtual disks are just file that the user can copy at will.
+So in order to synchronize with all copies of a disk, regardless of how old the disk is, the server needs to keep the entire journal.
+
+So could we have dropped unnecessary parts of the journal from the clients? 
+Not while the journal is part of the disk itself, no.
+While the client could function with a journal that only reaches back to the last time it synchronized, the missing journal blocks would still have to be reserved.
+
+This is because the journal really tracks changes to \emph{all} blocks in disk, including the journal blocks and the empty block list blocks. 
+So if the client were able to re-allocate no-longer-needed journal block, it would quickly diverge from the server.
+
+One advantage that client-side global journals have, is that every copy of the disk can serve as a new starting point for a server copy.
+So if your server dies with a catastrophic hard drive failure, you can re-upload any copy of the synchronized disks without losing compatibility with older versions of the disk.
+
+\subsubsection{Duplicate entries}
+As the journal keeps track of \emph{all} blocks changed on a disk and is itself located on the disk, it also keeps track of itself.
+So every time a change to any block on a disk happens, the journal actually writes two entries, one for the changed block and one for the changed journal?
+No, at runtime, the block manager keeps track of blocks that have been changed since the last synchronization in a hash set.
+Repeated changes to a single block without an intermittent synchronization are not re-recorded.
+However, this data structure is \emph{not} stored on the disk. 
+So if the browser is shut down, it forgets about the changes that have already been recorded since the last synchronization.
+
+Another tricky aspect of journal keeping is the space for the journal blocks themselves. 
+When the current journal page runs out of space, the system allocates a new one (likely changing the empty block list) and updates the pointer in the meta data block (to point to the new ``head'' of the journal list), incurring yet another change.
+
+The journal keeping algorithm is implemented in \lstinline!OnBlockChanged! in class \lstinline!RawBlockManager!.
 
 \subsection{Integration}
+Unfortunately, our synchronization works at a lower level of abstraction (blocks) than our file system API (disks, files and directories).
+This meant that we had to ``punch a hole'' through the file system API in order to operate our synchronization mechanism.
+We did this by implementing the newly created interface \lstinline!ISynchronizingDisk!. 
+We have not encapsulated the synchronization logic as part of the VFS Core. 
+Most of the synchronization logic is located in \lstinline!Synchronize! in class \lstinline!BrowserViewModel!.
 
-% TODO: Remove this text and replace it with actual content
-\emph{If you had to change the design or API of the previous part, describe the changes and the reasons for each change here.}
-
-
+The interface that the user would use to manipulate the disk has not been affected by this change.
+One downside of this approach is that the client cannot tell in advance whether a disk supports synchronization as that is a property of the block manager underlying the disk.
+Our mock implementation of IO, against which we unit test our file system layer --- the \lstinline!MemBlockManager! --- for instance does not support synchronization, because it is not based on blocks.
 
 % PART IV: Quick Start Guide
 % --------------------------------------
 
 \section{Quick Start Guide}
+The server, called \lstinline!Panda.Server!, and the VFS browser, called \lstinline!Panda.UI! are separate assemblies. The respective \lstinline!bin! folders contain all their dependencies (apart from the .NET framework 4.5).
 
-% TODO: Remove this line
-\textbf{[optional: This part has to be completed by April 8th.]}
+By default, the VFS browser (``client'') operates on files located in the process working directory. If you want to run multiple client instances on the same machine, either create multiple copies of the client binaries in different locations or make sure that the client instances are run with different working directories.
 
-% TODO: Remove this text and replace it with actual content
-\emph{If you have a command line interface for your VFS, describe here the commands available (e.g. ls, copy, import).} \\ \\ \\
+\subsection{Server setup}
+The server uses \lstinline!HttpListener!, which takes advantage of communication infrastructure built into Windows XP SP3, and Vista upwards. 
+Depending on how your system is configured (user account privileges) you might need to some preparatory work.
 
+In the simplest case, you can just double-click/run Panda.Server to start a server on port 8997. 
+Pressing any key will shut the server down.
 
-% TODO: Remove this line
-\noindent\textbf{[This part has to be completed by May 13th.]}
+If you want to run the server on another port, you can pass the server's base URL as a command line parameter:
 
-% TODO: Remove this text and replace it with actual content
-\emph{Describe how to realize the following use case with your system. Describe the steps involved and how to perform each action (e.g. command line executions and arguments, menu entries, keyboard shortcuts, screenshots). The use case is the following:
+\begin{lstlisting}[language=bash]
+> Panda.Server.exe http://*:9080/
+# or
+> Panda.Server.exe http://*:80/pandas/
+\end{lstlisting}
+
+The \lstinline!*! instructs the \lstinline!HttpListener! to bind to all network interfaces. 
+You can optionally specify a service prefix after the port number, but you need to make sure that all clients also use that same prefix.
+\emph{Important}: the service base URL \emph{must} end with a forward slash (\lstinline!/!).
+
+\subsubsection{Troubleshooting}
+Depending on your system configuration, you might need to first allow the server to bind to that address.
+You can do this via the \lstinline[language=bash]!netsh! from privileged (Administrator) command line.
+Type:
+\begin{lstlisting}[language=bash]
+> netsh http add urlacl url=<the-url-to-allow> \ 
+                user=<your-username> listen=yes
+\end{lstlisting}
+(The server detects this scenario and provide the concrete command line for you to type)
+
+If you want the server to accessible from other machines, you might have to add a corresponding exception to the windows firewall.
+One way to do this, is to run the following command, again on an elevated command line:
+\begin{lstlisting}[language=bash]
+> netsh advfirewall firewall add rule \ 
+      name="Panda.Server" dir=in action=allow \ 
+      protocol=TCP localport=<the-port-to-open>
+\end{lstlisting}
+and later delete the firewall exception via
+\begin{lstlisting}[language=bash]
+> netsh advfirewall firewall delete rule \
+               name="Panda.Server"
+\end{lstlisting}
+
+\subsection{Example interaction}
 \begin{enumerate}
-\item Start synchronization server on localhost.
-\item Create account on synchronization server.
-\item Create two VFS disks (on the same machine) and link them to the new account.
-\item Import a directory (recursively) from the host file system into Disk 1.
-\item Dispose Disk 1 after the synchronization finished.
-\item Export the directory (recursively) from Disk 2 into the host file system.
-\item Stop synchronization server.
+\item Start the server, for instance bound to \lstinline[language=bash]!http://*:8997/!
+\item Create two copies of the client binaries in two different directories (or run it from two different working directories).
+\item Launch both clients, we'll call them client A and client B.
+\item In client A, choose ``New Disk...'' from the ``File'' menu in the upper right corner (or press Ctrl+N).
+\item Choose a maximum capacity and a disk name. We'll leave it at 10MB and call our disk ``disk1''.
+\item Click ``Ok''. You can now see your empty disk in the ``Browser`` view.
+\item Switch to the ``Server'' view by clicking on the ``Server'' tab at the top.
+\item Enter the base URL of the server (it defaults to http://localhost:8997/, which is exactly what we need)
+\item Click the ``Connect to server'' button below
+\item Switch back to the ``Browser'' view by clicking on the ``Browser'' tab above.
+\item Right-click the disk you created before, ``disk1'' and click ``Associate with server''. The disk is now being uploaded to the server. This only happens the first time you associate a disk with a server.
+\item Switch to client B.
+\item In client B, switch to the ``Server'' view.
+\item Connect to the server by clicking the ``Connect to server'' button. Your disk, ``disk1'' will appear in the table below.
+\item Right-click on ``disk1'' and click ``Download disk''. This creates an initial copy of the disk for client B. This only happens if you don't already have an associated copy of that disk for that client. 
+\item In client B, switch to the ``Browser'' view. You'll see ``disk1'' also appear here.
+\item Switch back to client A.
+\item In client A, right-click on ``disk1'' and click on ``Import''.
+\item Choose a file or folder to import (automatically happens recursively). Make sure that your disk's capacity is large enough for the folder.
+\item Still in client, right-click on ``disk1'' and click ``Synchronize disk with server''. Wait until the disk has been synchronized.
+\item Close client A. If you want, you can also delete the disk1.panda file in the working directory of client A.
+\item Switch to client B.
+\item In the ``Browser'' view , right-click ``disk1'' and click ``Synchronize disk with server''. Wait until synchronization is complete.
+\item The directory you imported in client A is now in your local copy of disk1. Click on the white arrow next to your disk to reveal it.
+\item Right-click on your directory and select ``Export''.
+\item Choose where the client should export your directory to.
+\item Close client B.
+\item Press any key on the server to shut it down.
 \end{enumerate}
-}
+
+\section{References and acknowledgements}
+\begin{description}
+\item[Panda.Core/Core/Internal/Extensions.cs] A collection of helper methods that I, Christian Klauser, have written and use for many of my C\# projects.
+On the web: \\ \href{https://github.com/SealedSun/prx/blob/master/Prexonite/Helper/Extensions.cs}{https://github.com/SealedSun/prx/blob/master/Prexonite/\\{}Helper/Extensions.cs}
+\item[EditableTextBox] The editable text box custom control (used to make renaming files and directories work inline, like in Explorer) was taken from a CodeProject contribution: \\ \href{http://www.codeproject.com/Articles/31592/Editable-TextBlock-in-WPF-for-In-place-Editing}{http://www.codeproject.com/Articles/31592/Editable-TextBlock-in-\\{}WPF-for-In-place-Editing}
+\item[Sparse files] The C\# bindings for the NTFS sparse files API was taken from a Microsoft provided example called CSSparseFile \\
+\href{http://code.msdn.microsoft.com/windowsdesktop/CSSparseFile-6e26dc97}{http://code.msdn.microsoft.com/windowsdesktop/\\{}CSSparseFile-6e26dc97}
+\item[Panda application icon] Taken from \href{http://www.visualpharm.com/}{http://www.visualpharm.com/} in exchange for this link (licensed as ``Linkware'')
+
+\end{description}
 
 
 \end{document}
