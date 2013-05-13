@@ -262,11 +262,11 @@ namespace Panda.Core.Internal
 
         private void _export(string path)
         {
-            Directory.CreateDirectory(path);
+            var thisPath = Path.Combine(path, Name);
+            Directory.CreateDirectory(thisPath);
             foreach (var de in this)
             {
-                path = Path.Combine(path, de.Name);
-                de.Export(path);
+                de.Export(thisPath);
             }
         }
 

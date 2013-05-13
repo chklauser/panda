@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace Panda.Core.Blocks
 {
@@ -69,6 +71,34 @@ namespace Panda.Core.Blocks
         public override string ToString()
         {
             return String.Format("Block {0} changed at {1}", _blockOffset, _date);
+        }
+
+        public static ISet<JournalEntry> ToJournalSet(IEnumerable<JournalEntry> journal)
+        {
+            return new HashSet<JournalEntry>(journal, OffsetOnlyComparer.Instance);
+        }
+
+        private class OffsetOnlyComparer : EqualityComparer<JournalEntry>
+        {
+            // ReSharper disable InconsistentNaming
+            [NotNull]
+            private static readonly OffsetOnlyComparer _instance = new OffsetOnlyComparer();
+            // ReSharper restore InconsistentNaming
+
+            public static OffsetOnlyComparer Instance
+            {
+                get { return _instance; }
+            }
+
+            public override bool Equals(JournalEntry x, JournalEntry y)
+            {
+                return x.BlockOffset.Equals(y.BlockOffset);
+            }
+
+            public override int GetHashCode(JournalEntry obj)
+            {
+                return obj.BlockOffset.GetHashCode();
+            }
         }
     }
 }

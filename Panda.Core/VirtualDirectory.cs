@@ -214,7 +214,7 @@ namespace Panda
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
+        public virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
         {
             var handler = CollectionChanged;
             if (handler != null)

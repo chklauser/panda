@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 
@@ -67,6 +68,18 @@ namespace Panda.UI.ViewModel
         {
             var handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        /// <summary>
+        /// Since we update the disk at a level way below the file system, we cannot know for sure
+        /// which files and directories are affected by the synchronization.
+        /// Therefore, we have to pessimistically assume that the entire disk has changed radically.
+        /// </summary>
+        public void NotifyDiskChangedExternally()
+        {
+            Disk.Root.OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+            OnPropertyChanged("Disk");
+            OnPropertyChanged("SynchronizingDisk");
         }
     }
 }

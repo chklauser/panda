@@ -6,12 +6,13 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
+using Panda.Core.Blocks;
 
 namespace Panda.Core.Internal
 {
     [DebuggerNonUserCode]
     public static class Extensions
-    {
+    {           
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "ignored",Justification = "The very purpose of this method, is to fake usage of a value in the eyes of static analysis tools like microsoft code analysis and resharper.It looks much less disrupting than a suppression annotation or comment and is much more granular.")]
         public static void Ignore<T>(this T ignored)
         {

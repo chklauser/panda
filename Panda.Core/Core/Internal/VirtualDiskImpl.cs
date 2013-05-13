@@ -105,7 +105,7 @@ namespace Panda.Core.Internal
                 throw new NotSupportedException(
                     "The block manager underlying this virtual disk does not support synchronization.");
 
-            return raw.GetJournalEntriesSince(LastTimeSynchronized);
+            return raw.GetJournalEntriesSince(lastSynchronization);
         }
 
         public virtual void ReceiveChanges(BlockOffset blockOffset, byte[] data)

@@ -124,5 +124,13 @@ namespace Panda.UI.ViewModel
         {
             get { return _disconnectServer; }
         }
+
+        [NotNullAttribute] private static readonly RoutedUICommand _synchronize = new RoutedUICommand("Synchronize disk with server", "Synchronize", typeof (Commands
+            ));
+
+        public static RoutedUICommand Synchronize
+        {
+            get { return _synchronize; }
+        }
     }
 }

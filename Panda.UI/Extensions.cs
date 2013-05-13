@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using ServiceStack.Service;
@@ -8,6 +9,12 @@ namespace Panda.UI
 {
     public static class Extensions
     {
+        public static bool IsEmpty<T>(this IEnumerable<T> sequence)
+        {
+            using (var e = sequence.GetEnumerator())
+                return !e.MoveNext();
+        }
+
          public static Task<T> GetAsync<T>(this IServiceClientAsync serviceClient, IReturn<T> requestMessage)
          {
              if (serviceClient == null)

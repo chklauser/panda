@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Reflection;
 using Funq;
@@ -23,6 +24,10 @@ namespace Panda.Server
         {
             // Makes the a disk repository available to service implementations
             container.RegisterAs<DiskRepository,IDiskRepository>();
+
+#if DEBUG
+            Trace.Listeners.Add(new ConsoleTraceListener(true));
+#endif
         }
     }
 }

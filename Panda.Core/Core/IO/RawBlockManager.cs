@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using Panda.Core.Blocks;
@@ -222,6 +223,11 @@ namespace Panda.Core.IO
                 Break = (BlockOffset) (Break.Offset - 1u);
                 if(Space.CanShrink)
                     Space.Resize(Break.Offset*BlockSize);
+
+                // We treat a freed block as a changed block since that
+                // allows us to retrieve the original version in case of
+                // a rollback
+                OnBlockChanged(blockOffset);
             }
             else
             {
@@ -239,7 +245,14 @@ namespace Panda.Core.IO
                     head = newHead;
                 }
 
-                head.Append(new[] { blockOffset }); 
+                head.Append(new[] { blockOffset });
+ 
+                // Here we don't need to record the block as changed since
+                // it is being left as it is by free block
+                // Should it be repurposed, that operation will generate
+                // a journal entry.
+                // This enables a relatively cheap restoration of deleted
+                // files if their blocks have not been reused yet.
             }
         }
 
@@ -542,7 +555,7 @@ namespace Panda.Core.IO
             while (nextJournalOffset != null)
             {
                 var journalBlock = GetJournalBlock(nextJournalOffset.Value);
-                foreach (var entry in journalBlock)
+                foreach (var entry in journalBlock.Reverse())
                 {
                     if (entry.Date <= lastSynchronizationTime)
                     {

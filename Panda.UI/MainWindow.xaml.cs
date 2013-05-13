@@ -709,5 +709,16 @@ namespace Panda.UI
         {
             e.CanExecute = ViewModel.IsConnected;
         }
+
+        private void ExecuteSynchronize(object sender, ExecutedRoutedEventArgs e)
+        {
+            ViewModel.Synchronize((DiskViewModel) e.Parameter);
+        }
+
+        private void CanSynchronize(object sender, CanExecuteRoutedEventArgs e)
+        {
+            var diskRecord = e.Parameter as DiskViewModel;
+            e.CanExecute = diskRecord != null && ViewModel.CanSynchronize(diskRecord);
+        }
     }
 }

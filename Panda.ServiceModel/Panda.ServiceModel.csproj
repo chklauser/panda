@@ -57,7 +57,6 @@
     <Compile Include="DownloadDisk.cs" />
     <Compile Include="GetBlock.cs" />
     <Compile Include="GetDiskInfo.cs" />
-    <Compile Include="Hello.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UploadDisk.cs" />
     <Compile Include="PushBlock.cs" />

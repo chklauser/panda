@@ -20,7 +20,8 @@ namespace Panda.Server.Persistence
         private volatile VirtualDisk _disk;
         private DateTime _lastAccess;
         private readonly TimeSpan _inactivityThreshold = TimeSpan.FromMinutes(1);
-        private readonly CancellationTokenSource _monitorCancellation = new CancellationTokenSource();
+        [NotNull]
+        private CancellationTokenSource _monitorCancellation = new CancellationTokenSource();
 
         public DiskHandler([NotNull] string diskName)
         {
@@ -60,7 +61,9 @@ namespace Panda.Server.Persistence
         private VirtualDisk _openDisk()
         {
             var disk = VirtualDisk.OpenExisting(DiskPath);
-
+            
+            _monitorCancellation.Cancel();
+            _monitorCancellation = new CancellationTokenSource();
             _monitorInactivity();
             return disk;
         }
@@ -88,16 +91,16 @@ namespace Panda.Server.Persistence
         {
             _monitorCancellation.Token.ThrowIfCancellationRequested();
 
-            if (DateTime.Now - LastAccess < _inactivityThreshold)
+            if (DateTime.Now - LastAccess > _inactivityThreshold)
             {
                 lock (this)
                 {
-                    if (DateTime.Now - LastAccess < _inactivityThreshold)
+                    if (DateTime.Now - LastAccess > _inactivityThreshold)
                     {
                         if (_disk != null)
                         {
-                            Trace.WriteLine(string.Format(
-                                "The disk {0} has been inactive since {1}. Closing the disk.", DiskName, LastAccess));
+                            Trace.TraceInformation(
+                                "The disk {0} has been inactive since {1}. Closing the disk at {2}.", DiskName, LastAccess,DateTime.Now);
                             _disk.Dispose();
                             _disk = null;
                             return;
@@ -105,8 +108,8 @@ namespace Panda.Server.Persistence
                     }
                 }
             }
-            Trace.WriteLine(string.Format("Activity detected in Disk {0}. Checking back in {1}.", DiskName,
-                _inactivityThreshold));
+            Trace.TraceInformation("Activity detected in Disk {0} at {2}. Checking back in {1}.", DiskName,
+                _inactivityThreshold,LastAccess);
             _monitorInactivity();
         }
 
@@ -124,8 +127,10 @@ namespace Panda.Server.Persistence
         {
             if (disposing)
             {
+                // ReSharper disable ConditionIsAlwaysTrueOrFalse
                 if(_monitorCancellation != null)
                     _monitorCancellation.Cancel(false);
+                // ReSharper restore ConditionIsAlwaysTrueOrFalse
 
 #pragma warning disable 420 // the whole point of interlocked exchange is to be thread safe
                 var disk = Interlocked.Exchange(ref _disk, null);

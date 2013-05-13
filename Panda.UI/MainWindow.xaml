@@ -28,6 +28,7 @@
         <CommandBinding Command="model:Commands.DisconnectDisk" Executed="ExecuteDisconnectDisk" CanExecute="CanDisconnectDisk" />
         <CommandBinding Command="model:Commands.DisconnectServer" Executed="ExecuteDisconnectServer" CanExecute="CanDisconnectServer" />
         <CommandBinding Command="model:Commands.DownloadDisk" Executed="ExecuteDownloadDisk" CanExecute="CanDownloadDisk" />
+        <CommandBinding Command="model:Commands.Synchronize" Executed="ExecuteSynchronize" CanExecute="CanSynchronize"/>
     </Window.CommandBindings>
     <Window.Resources>
         <internal:CommandLabelConverter x:Key="CommandLabelConverter" />
@@ -45,6 +46,7 @@
                         <MenuItem Command="Search" CommandParameter="{Binding}" />
                         <MenuItem Command="model:Commands.Associate" CommandParameter="{Binding}" />
                         <MenuItem Command="model:Commands.DisconnectDisk" CommandParameter="{Binding}" />
+                        <MenuItem Command="model:Commands.Synchronize" CommandParameter="{Binding}" />
                     </ContextMenu>
                 </StackPanel.ContextMenu>
                 <TextBlock Text="{Binding Path=Name}"/>

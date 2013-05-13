@@ -10,10 +10,14 @@ using ServiceStack.ServiceInterface;
 namespace Panda.ServiceModel
 {
     [Route("/disks/{DiskName}/{BlockOffset}", Verbs = "PUT,POST")]
-    public class PushBlock
+    public class PushBlock : IReturn<PushBlockResponse>
     {
         public String DiskName { get; set; }
         public long BlockOffset { get; set; }
         public byte[] Data { get; set; }
+    }
+
+    public class PushBlockResponse : DiskRecord
+    {
     }
 }

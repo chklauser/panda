@@ -167,19 +167,18 @@ namespace Panda.Core.Internal
 
         public override void Copy(VirtualDirectory destination)
         {
-            _copy((VirtualDirectoryImpl) destination);
+            _copy(destination);
         }
 
         public override Task ExportAsync(string path)
         {
             return Task.Run( () =>
                 {
+                    path = Path.Combine(path, Name);
                     using (var fs = File.Create(path))
+                    using (var stream = Open())
                     {
-                        using (var stream = this.Open())
-                        {
-                            stream.CopyTo(fs);
-                        }
+                        stream.CopyTo(fs);
                     }
                 }   
             );
