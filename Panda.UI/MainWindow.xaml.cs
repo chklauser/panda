@@ -14,7 +14,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using Borgstrup.EditableTextBlock;
+using Borgstrup;
 using JetBrains.Annotations;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using Panda.Core.Internal;
@@ -32,9 +32,9 @@ namespace Panda.UI
     {
         public const string FileSelectionFilter = "Panda Virtual Disks|*.panda|All files|*.*";
 
-        public Collection<VirtualNode> pasteBufferNodes = new Collection<VirtualNode>();
-        public VirtualDisk pasteBufferDisk;
-        public Boolean isCut;
+        private Collection<VirtualNode> _pasteBufferNodes = new Collection<VirtualNode>();
+        private VirtualDisk _pasteBufferDisk;
+        private Boolean _isCut;
 
         public MainWindow()
         {
@@ -49,9 +49,37 @@ namespace Panda.UI
             get { return _viewModel; }
         }
 
+        public Collection<VirtualNode> PasteBufferNodes
+        {
+            get { return _pasteBufferNodes; }
+        }
+
+        public VirtualDisk PasteBufferDisk
+        {
+            get { return _pasteBufferDisk; }
+            set { _pasteBufferDisk = value; }
+        }
+
+        public bool IsCut
+        {
+            get { return _isCut; }
+            set { _isCut = value; }
+        }
+
         protected void ExecuteOpenDisk(object sender, ExecutedRoutedEventArgs e)
         {
-            var ofd = new OpenFileDialog
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
+            var record = e.Parameter as DiskRecord;
+            if (record != null)
+            {
+                ViewModel.OpenDisk(record.Name + ".panda",Dispatcher);
+            }
+            else
+            {
+                // Open an unassociated disk
+                var ofd = new OpenFileDialog
                 {
                     CheckFileExists = true,
                     DefaultExt = ".panda",
@@ -61,15 +89,16 @@ namespace Panda.UI
                     InitialDirectory = Environment.CurrentDirectory,
                     Filter = FileSelectionFilter
                 };
-            var userClickedOk = ofd.ShowDialog(this);
+                var userClickedOk = ofd.ShowDialog(this);
 
-            // Abort if the user wasn't in the mood to open disks after all
-            if (!userClickedOk.Value) 
-                return;
+                // Abort if the user wasn't in the mood to open disks after all
+                if (!userClickedOk.Value)
+                    return;
 
-            // Open all the disks
-            foreach (var fileName in ofd.FileNames)
-                ViewModel.OpenDisk(fileName,Dispatcher);
+                // Open all the disks
+                foreach (var fileName in ofd.FileNames)
+                    ViewModel.OpenDisk(fileName, Dispatcher);
+            }
         }
 
         protected void ExecuteNewDisk(object sender, ExecutedRoutedEventArgs e)
@@ -103,11 +132,17 @@ namespace Panda.UI
 
         protected void CanNewDisk(object sender, CanExecuteRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             e.CanExecute = true;
         }
 
         protected void ExecuteCloseDisk(object sender, ExecutedRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             var dvm = e.Parameter as DiskViewModel;
             if (dvm != null)
             {
@@ -118,6 +153,9 @@ namespace Panda.UI
 
         protected void CanCloseDisk(object sender, CanExecuteRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             e.CanExecute = e.Parameter is DiskViewModel;
         }
 
@@ -128,11 +166,17 @@ namespace Panda.UI
 
         protected void CanDeleteDisk(object sender, CanExecuteRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             e.CanExecute = false;
         }
 
         protected void CanCopy(object sender, CanExecuteRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             var vd = e.Parameter as VirtualNode;
             if (vd != null)
             {
@@ -146,17 +190,20 @@ namespace Panda.UI
 
         protected void ExecuteCopy(object sender, ExecutedRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             // copy can only happen on a virtualnode
             var vn = e.Parameter as VirtualNode;
             if (vn != null)
             {
                 // buffer from which disk the node is
-                pasteBufferDisk = vn.Disk;
-                // empty pasteBufferNodes   
-                pasteBufferNodes.Clear();
-                // add selected node to pasteBufferNodes
-                pasteBufferNodes.Add(vn);
-                isCut = false;
+                _pasteBufferDisk = vn.Disk;
+                // empty _pasteBufferNodes   
+                _pasteBufferNodes.Clear();
+                // add selected node to _pasteBufferNodes
+                _pasteBufferNodes.Add(vn);
+                _isCut = false;
             }
             else
             {
@@ -184,12 +231,12 @@ namespace Panda.UI
             if (vn != null)
             {
                 // buffer from which disk the node is
-                pasteBufferDisk = vn.Disk;
-                // empty pasteBufferNodes   
-                pasteBufferNodes.Clear();
-                // add selected node to pasteBufferNodes
-                pasteBufferNodes.Add(vn);
-                isCut = true;
+                _pasteBufferDisk = vn.Disk;
+                // empty _pasteBufferNodes   
+                _pasteBufferNodes.Clear();
+                // add selected node to _pasteBufferNodes
+                _pasteBufferNodes.Add(vn);
+                _isCut = true;
             }
             else
             {
@@ -199,7 +246,7 @@ namespace Panda.UI
 
         private void CanPaste(object sender, CanExecuteRoutedEventArgs e)
         {
-            if (pasteBufferNodes.Count > 0)
+            if (_pasteBufferNodes.Count > 0)
             {
                 var targetDirectory = e.Parameter as VirtualDirectory;
                 var targetDisk = e.Parameter as DiskViewModel;
@@ -236,14 +283,14 @@ namespace Panda.UI
             
             if (targetDirectory != null)
             {
-                if (targetDirectory.Disk == pasteBufferDisk)
+                if (targetDirectory.Disk == _pasteBufferDisk)
                 {
-                    // pasteBufferNodes can also be a collection of VirtualDirectories
-                    foreach (VirtualNode buffernode in pasteBufferNodes)
+                    // _pasteBufferNodes can also be a collection of VirtualDirectories
+                    foreach (VirtualNode buffernode in _pasteBufferNodes)
                     {
                         try
                         {
-                            if (isCut)
+                            if (_isCut)
                             {
                                 buffernode.Move(targetDirectory);
                             }
@@ -264,12 +311,12 @@ namespace Panda.UI
                     try
                     {
                         // paste is on different disk
-                        // pasteBufferNodes can also be a collection of VirtualDirectories
-                        foreach (VirtualNode buffernode in pasteBufferNodes)
+                        // _pasteBufferNodes can also be a collection of VirtualDirectories
+                        foreach (VirtualNode buffernode in _pasteBufferNodes)
                         {
                             _doPasteToDifferentDisk(buffernode, targetDirectory);
                             // if the values were cutted, not copied, we have to delete them too
-                            if (isCut)
+                            if (_isCut)
                             {
                                 buffernode.Delete();
                             }
@@ -311,6 +358,9 @@ namespace Panda.UI
 
         protected void ExecuteRename(object sender, ExecutedRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             // In order to make the text block editable, we need to find the corresponding element in the tree view
             // FindVisualChild only works if the element in question is currently visible (not part of a collapsed subtree)
 
@@ -321,28 +371,26 @@ namespace Panda.UI
 
         protected void CanRename(object sender, CanExecuteRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             e.CanExecute = e.Parameter is VirtualNode;
         }
 
         protected void ExecuteExport(object sender, ExecutedRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             var fbd = new FolderBrowserDialog
             {
                 SelectedPath = Environment.CurrentDirectory,
             };
 
-            //if (fbd.ShowDialog() == DialogResult.OK)
-            //    return;
-
-            //var result = fbd.ShowDialog();
-            //if (!(result ?? false))
-            //    return;
-
-            var userClickedOk = fbd.ShowDialog();
-
-            //// Abort if the user wasn't in the mood to open disks after all
-            //if (!userClickedOk.Value)
-            //    return;
+            var dialogResult = fbd.ShowDialog();
+            if (dialogResult != System.Windows.Forms.DialogResult.OK 
+                && dialogResult != System.Windows.Forms.DialogResult.Yes)
+                return;
 
             var dvm = e.Parameter as DiskViewModel;
             var vd = e.Parameter as VirtualDirectory;
@@ -376,6 +424,9 @@ namespace Panda.UI
 
         protected void CanExport(object sender, CanExecuteRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             e.CanExecute = true;
         }
 
@@ -454,12 +505,19 @@ namespace Panda.UI
 
         protected void CanImport(object sender, CanExecuteRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             e.CanExecute = true;
         }
 
         protected void CanOpenDisk(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = true;
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
+            var record = e.Parameter as DiskRecord;
+            e.CanExecute = record == null || File.Exists(record.Name + ".panda");
         }
 
         protected void ExecuteCloseBrowser(object sender, ExecutedRoutedEventArgs e)
@@ -469,6 +527,9 @@ namespace Panda.UI
 
         protected void CanCloseBrowser(object sender, CanExecuteRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             e.CanExecute = true;
         }
 
@@ -480,6 +541,9 @@ namespace Panda.UI
 
         protected void ExecuteNewDirectory(object sender, ExecutedRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             var dvm = e.Parameter as DiskViewModel;
             var vd = e.Parameter as VirtualDirectory;
             string parentName;
@@ -504,7 +568,7 @@ namespace Panda.UI
             ViewModel.StatusText = "Directory created in " + parentName;
         }
 
-        private Panda.VirtualDirectory _newDirectory(VirtualDirectory parent)
+        private static void _newDirectory(VirtualDirectory parent)
         {
             var names = new HashSet<String>(parent.ContentNames);
             var counter = 1;
@@ -516,13 +580,14 @@ namespace Panda.UI
                 counter++;
             }
 
-            var dir = parent.CreateDirectory(name);
-
-            return dir;
+            parent.CreateDirectory(name);
         }
 
         protected void CanNewDirectory(object sender, CanExecuteRoutedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException("e");
+            
             e.CanExecute = e.Parameter is DiskViewModel || e.Parameter is VirtualDirectory;
         }
 
@@ -548,6 +613,7 @@ namespace Panda.UI
             e.Handled = true;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode",Justification = "False positive. The method is bound to the Edited event of the EditableTextBlock custom control.")]
         private void RenameNode_Edited(object sender, EventArgs eventArgs)
         {
             var element = sender as EditableTextBlock;
@@ -614,18 +680,6 @@ namespace Panda.UI
 
             // ideally we would like to display the search result in the main browser
             // but the TreeView does not make it easy to select a particular node.
-        }
-
-        private IEnumerable<VirtualNode> _nodePath(VirtualNode virtualNode)
-        {
-            var buffer = new LinkedList<VirtualNode>();
-            while (virtualNode != null)
-            {
-                buffer.AddLast(virtualNode);
-                virtualNode = virtualNode.ParentDirectory;
-            }
-
-            return buffer;
         }
 
         private async void ExecuteConnect(object sender, ExecutedRoutedEventArgs e)

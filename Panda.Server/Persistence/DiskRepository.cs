@@ -19,9 +19,14 @@ namespace Panda.Server.Persistence
             }
         }
 
-        public IEnumerable<string> GetKnownDiskNames()
+        public IEnumerable<string> KnownDiskNames
         {
-            return Directory.EnumerateFiles(Environment.CurrentDirectory, "*.panda", SearchOption.TopDirectoryOnly).Select(Path.GetFileNameWithoutExtension);
+            get
+            {
+                return
+                    Directory.EnumerateFiles(Environment.CurrentDirectory, "*.panda", SearchOption.TopDirectoryOnly)
+                        .Select(Path.GetFileNameWithoutExtension);
+            }
         }
 
         #region Disposal

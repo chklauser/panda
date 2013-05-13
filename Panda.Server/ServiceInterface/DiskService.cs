@@ -28,6 +28,11 @@ namespace Panda.Server.ServiceInterface
         [UsedImplicitly]
         public Stream Any(DownloadDisk downloadRequest)
         {
+            if (downloadRequest == null)
+                throw new ArgumentNullException("downloadRequest");
+            if (downloadRequest.DiskName == null)
+                throw new ArgumentException("DiskName is missing.","downloadRequest");
+
             using (var lease = DiskRepository[downloadRequest.DiskName])
             {
                 Trace.TraceInformation("Download({0}) begin", downloadRequest.DiskName);
@@ -47,6 +52,11 @@ namespace Panda.Server.ServiceInterface
         [UsedImplicitly]
         public DiskRecord Any(UploadDisk uploadDiskRequest)
         {
+            if (uploadDiskRequest == null)
+                throw new ArgumentNullException("uploadDiskRequest");
+            if(String.IsNullOrWhiteSpace(uploadDiskRequest.DiskName))
+                throw new ArgumentException("DiskName is missing.","uploadDiskRequest");
+
             using (var req = uploadDiskRequest.RequestStream)
             {
                 Trace.TraceInformation("Upload({0}) begin", uploadDiskRequest.DiskName);
@@ -83,6 +93,11 @@ namespace Panda.Server.ServiceInterface
         [UsedImplicitly]
         public GetDiskInfoResponse Any(GetDiskInfo getDiskInfoRequest)
         {
+            if (getDiskInfoRequest == null)
+                throw new ArgumentNullException("getDiskInfoRequest");
+            if(String.IsNullOrWhiteSpace(getDiskInfoRequest.DiskName))
+                throw new ArgumentException("DiskName is missing","getDiskInfoRequest");
+
             try
             {
                 Trace.TraceInformation("GetDiskInfo({0}) begin", getDiskInfoRequest.DiskName);
@@ -104,11 +119,12 @@ namespace Panda.Server.ServiceInterface
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "getDisksRequest", Justification = "The ServiceStack framework uses the parameter type to distinguish server-side handlers. It does not carry any information at runtime. It is just used to configure the server.")]
         [UsedImplicitly]
-        public List<DiskRecord> Get(GetDisks getDisksRequest)
+        public IList<DiskRecord> Get(GetDisks getDisksRequest)
         {
             Trace.TraceInformation("GetDisks() begin");
-            return DiskRepository.GetKnownDiskNames().AsParallel().Select(knownDiskName =>
+            return DiskRepository.KnownDiskNames.AsParallel().Select(knownDiskName =>
                 {
                     using (var lease = DiskRepository[knownDiskName])
                     {
@@ -121,6 +137,11 @@ namespace Panda.Server.ServiceInterface
         [UsedImplicitly]
         public ChangedBlocksResponse Any(ChangedBlocks changedBlocksRequest)
         {
+            if (changedBlocksRequest == null)
+                throw new ArgumentNullException("changedBlocksRequest");
+            if(String.IsNullOrWhiteSpace(changedBlocksRequest.DiskName))
+                throw new ArgumentException("DiskName is missing.","changedBlocksRequest");
+
             try
             {
                 Trace.TraceInformation("ChangedBlocks({0}, {1}) begin", changedBlocksRequest.DiskName, changedBlocksRequest.ChangesSince);
@@ -148,6 +169,13 @@ namespace Panda.Server.ServiceInterface
         [UsedImplicitly]
         public PushBlockResponse Any(PushBlock pushRequest)
         {
+            if (pushRequest == null)
+                throw new ArgumentNullException("pushRequest");
+            if(String.IsNullOrWhiteSpace(pushRequest.DiskName))
+                throw new ArgumentException("DiskName is missing","pushRequest");
+            if(pushRequest.Data == null)
+                throw new ArgumentException("Data is missing","pushRequest");
+
             try
             {
                 Trace.TraceInformation("PushBlock({0},{1},byte[{2}])", pushRequest.DiskName, pushRequest.BlockOffset, pushRequest.Data.Length);
@@ -170,6 +198,11 @@ namespace Panda.Server.ServiceInterface
         [UsedImplicitly]
         public Stream Any(GetBlock getBlockRequest)
         {
+            if (getBlockRequest == null)
+                throw new ArgumentNullException("getBlockRequest");
+            if(String.IsNullOrWhiteSpace(getBlockRequest.DiskName))
+                throw new ArgumentException("DiskName is missing.","getBlockRequest");
+
             try
             {
                 Trace.TraceInformation("GetBlock({0},{1})", getBlockRequest.DiskName, getBlockRequest.BlockOffset);

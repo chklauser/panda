@@ -11,6 +11,7 @@ namespace Panda.ServiceModel
     {
         public string DiskName { get; set; }
         public long BlockOffset { get; set; }
-        public List<long> BatchBlockOffsets { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly", Justification = "This is a ServiceStack request data transfer object. The property is being assigned by the ServiceStack framework.")]
+        public IList<long> BatchBlockOffsets { get; set; }
     }
 }

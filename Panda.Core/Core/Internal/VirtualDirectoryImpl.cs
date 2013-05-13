@@ -343,6 +343,14 @@ namespace Panda.Core.Internal
 
         public override Task<VirtualFile> CreateFileAsync(string name, Stream dataSource)
         {
+            if (dataSource == null)
+                throw new ArgumentNullException("dataSource");
+            if (name == null)
+                throw new ArgumentNullException("name");
+            if(String.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("File name cannot be blank.");
+            
+
             // check if the stream is readable
             if (!dataSource.CanRead)
             {

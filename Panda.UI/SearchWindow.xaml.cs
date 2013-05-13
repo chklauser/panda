@@ -206,6 +206,9 @@ namespace Panda.UI
         [NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
+            if (propertyName == null)
+                throw new ArgumentNullException("propertyName");
+            
             var handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
         }

@@ -64,6 +64,7 @@ namespace Panda.UI.ViewModel
         public event PropertyChangedEventHandler PropertyChanged;
 
         [NotifyPropertyChangedInvocator]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed", Justification = "CallerMemberName requires parameter to be optional. See http://msdn.microsoft.com/en-us/library/system.runtime.compilerservices.callermembernameattribute.aspx")]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;

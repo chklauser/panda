@@ -11,11 +11,14 @@ namespace Panda.UI
     {
         public static bool IsEmpty<T>(this IEnumerable<T> sequence)
         {
+            if (sequence == null)
+                throw new ArgumentNullException("sequence");
+            
             using (var e = sequence.GetEnumerator())
                 return !e.MoveNext();
         }
 
-         public static Task<T> GetAsync<T>(this IServiceClientAsync serviceClient, IReturn<T> requestMessage)
+         public static Task<T> GetAsync<T>(this IRestClientAsync serviceClient, IReturn<T> requestMessage)
          {
              if (serviceClient == null)
                  throw new ArgumentNullException("serviceClient");
@@ -25,7 +28,7 @@ namespace Panda.UI
              return tcs.Task;
          }
 
-         public static Task<T> PostAsync<T>(this IServiceClientAsync serviceClient, IReturn<T> requestMessage)
+         public static Task<T> PostAsync<T>(this IRestClientAsync serviceClient, IReturn<T> requestMessage)
          {
              if (serviceClient == null)
                  throw new ArgumentNullException("serviceClient");
@@ -35,7 +38,7 @@ namespace Panda.UI
              return tcs.Task;
          }
 
-         public static Task<T> PutAsync<T>(this IServiceClientAsync serviceClient, IReturn<T> requestMessage)
+         public static Task<T> PutAsync<T>(this IRestClientAsync serviceClient, IReturn<T> requestMessage)
          {
              if (serviceClient == null)
                  throw new ArgumentNullException("serviceClient");
@@ -43,9 +46,9 @@ namespace Panda.UI
              serviceClient.PutAsync(requestMessage, tcs.SetResult,
                  (r, e) => tcs.SetException(e));
              return tcs.Task;
-         } 
+         }
 
-         public static Task<T> HeadAsync<T>(this IServiceClientAsync serviceClient, IReturn<T> requestMessage)
+         public static Task<T> HeadAsync<T>(this IRestClientAsync serviceClient, IReturn<T> requestMessage)
          {
              if (serviceClient == null)
                  throw new ArgumentNullException("serviceClient");

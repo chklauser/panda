@@ -123,13 +123,16 @@ namespace Panda.Server.Persistence
             GC.SuppressFinalize(this);
         }
 
-        protected void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (disposing)
             {
                 // ReSharper disable ConditionIsAlwaysTrueOrFalse
-                if(_monitorCancellation != null)
+                if (_monitorCancellation != null)
+                {
                     _monitorCancellation.Cancel(false);
+                    _monitorCancellation.Dispose();
+                }
                 // ReSharper restore ConditionIsAlwaysTrueOrFalse
 
 #pragma warning disable 420 // the whole point of interlocked exchange is to be thread safe

@@ -17,7 +17,8 @@ namespace Panda.ServiceModel
         public String DiskName { get; set; }
         public DateTime ChangesSince{ get; set; }
         public DateTime LastUpdated { get; set; }
-        public List<ChangeRecord> Changes { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly",Justification = "This is a ServiceStack request data transfer object. The property is being assigned by the ServiceStack framework.")]
+        public IList<ChangeRecord> Changes { get; set; }
     }
 
     public class ChangeRecord

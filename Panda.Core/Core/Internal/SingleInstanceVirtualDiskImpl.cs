@@ -133,6 +133,9 @@ namespace Panda.Core.Internal
 
         protected internal override void OnDelete(ICacheKeyed<BlockOffset> node)
         {
+            if (node == null)
+                throw new ArgumentNullException("node");
+            
             base.OnDelete(node);
             _lock.Wait();
             try

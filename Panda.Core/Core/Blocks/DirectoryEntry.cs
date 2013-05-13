@@ -78,6 +78,7 @@ namespace Panda.Core.Blocks
         }
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1028:EnumStorageShouldBeInt32",Justification = "The enum is used to write to and read from raw memory. It's representation is important.")]
     [Flags]
     public enum DirectoryEntryFlags : byte
     {

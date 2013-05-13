@@ -25,6 +25,6 @@ namespace Panda.Server.Persistence
         /// <summary>
         /// Returns a sequence of disk names known to the server.
         /// </summary>
-        IEnumerable<string> GetKnownDiskNames();
+        IEnumerable<string> KnownDiskNames { get; }
     }
 }

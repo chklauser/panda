@@ -75,6 +75,8 @@ namespace Panda
 
         public event PropertyChangedEventHandler PropertyChanged;
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design",
+            "CA1026:DefaultParametersShouldNotBeUsed", Justification = "The CallerMemberName automatically provides the name of the caller (usually the propery that is being changed). It must be optional for this compiler transformation to apply.")]
         [NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {

@@ -1,8 +1,7 @@
-﻿<UserControl x:Class="Borgstrup.EditableTextBlock.EditableTextBlock"
+﻿<UserControl x:Class="Borgstrup.EditableTextBlock"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:Borgstrup.EditableTextBlock"
-                x:Name="mainControl">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Borgstrup"
+             x:Name="mainControl">
     <!-- Taken from http://www.codeproject.com/Articles/31592/Editable-TextBlock-in-WPF-for-In-place-Editing -->
     <UserControl.Resources>
 

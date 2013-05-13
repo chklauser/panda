@@ -9,6 +9,7 @@ using System.Windows.Data;
 
 namespace Panda.UI.Internal
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1812:AvoidUninstantiatedInternalClasses",Justification = "False positive. Instantiated from WPF/XAML")]
     class CommandLabelConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

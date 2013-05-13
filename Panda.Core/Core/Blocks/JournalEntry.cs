@@ -7,7 +7,7 @@ namespace Panda.Core.Blocks
     /// <summary>
     /// Tuple used in <see cref="IJournalBlock"/>s to represent a known change in a block at a certain time.
     /// </summary>
-    public class JournalEntry : IEquatable<JournalEntry>, IComparable<JournalEntry>
+    public class JournalEntry : IEquatable<JournalEntry>
     {
         private readonly DateTime _date;
         private readonly BlockOffset _blockOffset;
@@ -92,13 +92,21 @@ namespace Panda.Core.Blocks
 
             public override bool Equals(JournalEntry x, JournalEntry y)
             {
+                if (x == null && y == null)
+                    return true;
+                else if (x == null || y == null)
+                    return false;
                 return x.BlockOffset.Equals(y.BlockOffset);
             }
 
             public override int GetHashCode(JournalEntry obj)
             {
+                if (obj == null)
+                    return 45786;
                 return obj.BlockOffset.GetHashCode();
             }
         }
+
+
     }
 }

@@ -36,7 +36,7 @@ namespace Panda.UI.ViewModel
 
         public DiskCreationViewModel()
         {
-            Capacity = 10*1024*1024;
+            _capacity = 10*1024*1024;
         }
 
         private string _fileName;
@@ -44,7 +44,8 @@ namespace Panda.UI.ViewModel
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        [NotifyPropertyChangedInvocator]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed", Justification = "CallerMemberName requires parameter to be optional. See http://msdn.microsoft.com/en-us/library/system.runtime.compilerservices.callermembernameattribute.aspx"), 
+        NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;

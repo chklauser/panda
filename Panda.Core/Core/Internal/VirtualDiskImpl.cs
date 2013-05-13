@@ -125,7 +125,7 @@ namespace Panda.Core.Internal
                 throw new NotSupportedException(
                     "The block manager underlying this virtual disk does not support synchronization.");
 
-            raw.ReadDataBlock(blockOffset, destination, index);
+            raw.ReadDataBlock(blockOffset, destination, index,0,null);
         }
 
         public string ServerAssociation

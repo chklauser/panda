@@ -4,7 +4,7 @@
         xmlns:core="clr-namespace:Panda;assembly=Panda.Core"
         xmlns:model="clr-namespace:Panda.UI.ViewModel" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:borgstrup="clr-namespace:Borgstrup.EditableTextBlock" xmlns:internal="clr-namespace:Panda.UI.Internal"
+        xmlns:internal="clr-namespace:Panda.UI.Internal" xmlns:borgstrup="clr-namespace:Borgstrup"
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525" d:DataContext="{d:DesignInstance Type=model:BrowserViewModel}">
     <Window.CommandBindings>
@@ -116,6 +116,10 @@
                             <MenuItem 
                                 Command="model:Commands.DownloadDisk" CommandParameter="{Binding}"
                                 Header="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"/>
+                            <MenuItem 
+                                Command="Open" CommandParameter="{Binding}"
+                                Header="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text, Converter={StaticResource CommandLabelConverter}}"/>
+
                         </ContextMenu>
                         <Style x:Key="DefaultRowStyle" TargetType="{x:Type DataGridRow}">
                             <Setter Property="ContextMenu" Value="{StaticResource RowMenu}" />

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Reflection;
@@ -22,6 +23,9 @@ namespace Panda.Server
 
         public override void Configure(Container container)
         {
+            if (container == null)
+                throw new ArgumentNullException("container");
+            
             // Makes the a disk repository available to service implementations
             container.RegisterAs<DiskRepository,IDiskRepository>();
 

@@ -16,7 +16,7 @@ using System.Windows.Threading;
 // Taken from http://www.codeproject.com/Articles/31592/Editable-TextBlock-in-WPF-for-In-place-Editing
 
 // ReSharper disable CheckNamespace
-namespace Borgstrup.EditableTextBlock
+namespace Borgstrup
 // ReSharper restore CheckNamespace
 {
     public partial class EditableTextBlock : UserControl
@@ -98,7 +98,7 @@ namespace Borgstrup.EditableTextBlock
             get { return (string)GetValue(TextFormatProperty); }
             set
             {
-                if (value == "") value = "{0}";
+                if (String.IsNullOrEmpty(value)) value = "{0}";
                 SetValue(TextFormatProperty, value);
             }
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -51,7 +52,7 @@ namespace Panda.Core.IO
             }
         }
 
-        public static unsafe void Initialize(
+        internal static unsafe void Initialize(
             [NotNull]
             IRawPersistenceSpace space,
             uint blockCount,
@@ -143,7 +144,18 @@ namespace Panda.Core.IO
         /// </summary>
         /// <param name="leaveUninitialized">Indicates whether to leave the block uninitialized. Iff false, block will be initialized to zero.</param>
         /// <returns>The offset of the newly allocated block.</returns>
-        protected BlockOffset AllocateBlock(bool leaveUninitialized = false)
+        protected BlockOffset AllocateBlock()
+        {
+            return AllocateBlock(false);
+        }
+
+        /// <summary>
+        /// Allocates a new block in the underlying persistence space
+        /// and optionally initializes it to zero.
+        /// </summary>
+        /// <param name="leaveUninitialized">Indicates whether to leave the block uninitialized. Iff false, block will be initialized to zero.</param>
+        /// <returns>The offset of the newly allocated block.</returns>
+        protected BlockOffset AllocateBlock(bool leaveUninitialized)
         {
             var head = GetEmptyListBlock(EmptyListOffset);
             BlockOffset newOffset;
@@ -306,9 +318,9 @@ namespace Panda.Core.IO
                 *ptr = 0;
         }
 
-        public virtual unsafe void ReadDataBlock(BlockOffset blockOffset, byte[] destination, int destinationIndex = 0,
-                                  int blockIndex = 0,
-                                  int? count = null)
+        public virtual unsafe void ReadDataBlock(BlockOffset blockOffset, byte[] destination, int destinationIndex,
+                                  int blockIndex,
+                                  int? count)
         {
             if (destination == null)
                 throw new ArgumentNullException("destination");
@@ -399,9 +411,11 @@ namespace Panda.Core.IO
                 bytePtr++;
                 var maxCount = BlockSize - (bytePtr - (byte*) Space.Pointer);
                 if (count > maxCount)
-                    throw new PandaException(
-                        string.Format("Illegal server disk name length {0} where only {1} bytes are available.", count,
-                            maxCount));
+                {
+                    Trace.TraceError("Illegal server disk name length {0} where only {1} bytes are available.", count,
+                        maxCount);
+                    return null;
+                }
                 var buffer = new byte[count];
                 Marshal.Copy((IntPtr) bytePtr, buffer, 0, count);
                 return RawDirectoryEntryListBlock.TextEncoding.GetString(buffer);

@@ -13,20 +13,15 @@ namespace Panda.Core.IO.MemoryMapped
 {
     public class MemoryMappedFileSpace : MemoryMappedSpace
     {
-        [NotNull]
-        private readonly String _path;
-
         private uint _nonSparseSize;
 
         public MemoryMappedFileSpace([NotNull] string path)
             : base(_mapExistingFile(path))
         {
-            _path = path;
         }
 
-        protected MemoryMappedFileSpace([NotNull] MemoryMappedFile mappedFile, [NotNull] string path, uint nonSparseSize) : base(mappedFile)
+        protected MemoryMappedFileSpace([NotNull] MemoryMappedFile mappedFile, uint nonSparseSize) : base(mappedFile)
         {
-            _path = path;
             _nonSparseSize = nonSparseSize;
         }
 
@@ -69,7 +64,7 @@ namespace Panda.Core.IO.MemoryMapped
                     SparseFile.SetSparseRange(file.SafeFileHandle, blockSize,clCapa-blockSize);
                 }
             }
-            return new MemoryMappedFileSpace(MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, capacity, MemoryMappedFileAccess.ReadWrite),path,clCapa);
+            return new MemoryMappedFileSpace(MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, capacity, MemoryMappedFileAccess.ReadWrite),clCapa);
         }
 
         public override bool CanGrow

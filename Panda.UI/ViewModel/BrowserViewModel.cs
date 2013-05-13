@@ -26,14 +26,14 @@ namespace Panda.UI.ViewModel
     {
         private readonly ObservableCollection<DiskViewModel> _openDisks = new ObservableCollection<DiskViewModel>();
         private string _statusText;
-        private string _serverUrl;
+        private Uri _serverUrl;
         private IServiceClient _serviceClient;
         private readonly ObservableCollection<DiskRecord> _serverDiskRecords = new ObservableCollection<DiskRecord>();
 
         public BrowserViewModel()
         {
             _openDisks.CollectionChanged += _openDisksCollectionChanged;
-            _serverUrl = Settings.Default.ServerUrl;
+            _serverUrl = new Uri(Settings.Default.ServerUrl);
         }
 
         void _openDisksCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -74,7 +74,8 @@ namespace Panda.UI.ViewModel
         // Any optional method argument annotated with [CallerMemberName]
         // will automatically be supplied with the name of the caller
         // e.g. if you call it from StatusText, the propertyName will be "StatusText"
-        [NotifyPropertyChangedInvocator]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed", Justification = "For the CallerMemberName mechanism (compiler automatically supplied name of calling method, in this case usually the property being changed) to work, the parameter needs to be optional. See http://msdn.microsoft.com/en-us/library/system.runtime.compilerservices.callermembernameattribute.aspx"), 
+            NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
@@ -94,7 +95,7 @@ namespace Panda.UI.ViewModel
             }
         }
 
-        public string ServerUrl
+        public Uri ServerUrl
         {
             get { return _serverUrl; }
             set
@@ -125,7 +126,7 @@ namespace Panda.UI.ViewModel
             if (_serviceClient != null)
                 _serviceClient.Dispose();
 
-            _serviceClient = ServerUrl != null ? new JsonServiceClient(ServerUrl) : null;
+            _serviceClient = ServerUrl != null ? new JsonServiceClient(ServerUrl.ToString()) : null;
             OnPropertyChanged("IsConnected");
             OnPropertyChanged("CanConnect");
         }
@@ -154,7 +155,7 @@ namespace Panda.UI.ViewModel
 
         public bool CanAssociateDisk(DiskViewModel diskView)
         {
-            return IsConnected && diskView.SynchronizingDisk.ServerAssociation == null;
+            return diskView != null && IsConnected && diskView.SynchronizingDisk.ServerAssociation == null;
         }
 
         public async Task AssociateDiskAsync(DiskViewModel diskView)
@@ -251,7 +252,7 @@ namespace Panda.UI.ViewModel
 
         public bool CanDownloadDiks([NotNull] DiskRecord diskRecord)
         {
-            return IsConnected && OpenDisks.All(diskViewModel => !diskRecord.Name.Equals(diskViewModel.Name));
+            return IsConnected && OpenDisks.All(diskViewModel => !diskRecord.Name.Equals(diskViewModel.Name)) && ! File.Exists(diskRecord.Name + ".panda");
         }
 
         public void OpenDisk(string fileName, Dispatcher dispatcher)
@@ -275,6 +276,13 @@ namespace Panda.UI.ViewModel
 
         public void RegisterDisk(string fileName, VirtualDisk vdisk, [NotNull] Dispatcher dispatcher)
         {
+            if (fileName == null)
+                throw new ArgumentNullException("fileName");
+            if (vdisk == null)
+                throw new ArgumentNullException("vdisk");
+            if (dispatcher == null)
+                throw new ArgumentNullException("dispatcher");
+            
             var name = Path.GetFileNameWithoutExtension(fileName) ??
                 "disk" + Interlocked.Increment(ref _uniqueDiskNameCounter);
             
@@ -337,7 +345,7 @@ namespace Panda.UI.ViewModel
             }
         }
 
-        private async Task _mergeRemoteBlocksAsync(DiskViewModel diskModel, List<ChangeRecord> remoteChanges, byte[] buffer)
+        private async Task _mergeRemoteBlocksAsync(DiskViewModel diskModel, IList<ChangeRecord> remoteChanges, byte[] buffer)
         {
             var blocksProcessed = 0;
             foreach (var remoteChange in remoteChanges)
@@ -443,7 +451,7 @@ namespace Panda.UI.ViewModel
 
         public bool CanSynchronize(DiskViewModel diskModel)
         {
-            return IsConnected && diskModel.SynchronizingDisk.ServerAssociation != null;
+            return diskModel != null && IsConnected && diskModel.SynchronizingDisk.ServerAssociation != null;
         }
     }
 }

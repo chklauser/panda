@@ -14,6 +14,7 @@ namespace Panda.ServiceModel
     {
         public String DiskName { get; set; }
         public long BlockOffset { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays",Justification = "byte[] is a signal to the ServiceStack framework to expect binary data. Since this is just a data transfer object, the usual concerns about exposed internal arrays do not apply.")]
         public byte[] Data { get; set; }
     }
 
